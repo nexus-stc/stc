@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import sys
+from typing import Tuple
 
 import aiohttp
 import fire
@@ -80,7 +81,7 @@ class StcCliTools(StcTools):
 
 async def stc_tools_cli(
     ipfs_http_endpoint: str = 'http://127.0.0.1:8080',
-    paths: tuple[str] = ('/ipns/standard-template-construct.org/data/nexus_science/',),
+    paths: Tuple[str] = ('/ipns/standard-template-construct.org/data/nexus_science/',),
 ):
     stc_tools_client = StcCliTools(ipfs_http_endpoint, paths)
     return {

@@ -1,4 +1,5 @@
 import re
+from typing import List, Tuple
 from urllib.parse import urlparse
 
 import aiohttp
@@ -19,7 +20,7 @@ class StcTools:
     def __init__(
         self,
         ipfs_http_endpoint: str = 'http://127.0.0.1:8080',
-        paths: tuple[str] = ('/ipns/standard-template-construct.org/data/nexus_science/',),
+        paths: Tuple[str] = ('/ipns/standard-template-construct.org/data/nexus_science/',),
         cache_size: int = 256 * 1024 * 1024,
     ):
         self.ipfs_http_endpoint = ipfs_http_endpoint
@@ -43,5 +44,5 @@ class StcTools:
             self.descriptions[description['default_index_name']] = description
         return self.descriptions
 
-    async def search(self, query: list[dict]):
+    async def search(self, query: List[dict]):
         return await self.index_registry.search(query)
