@@ -1,2 +1,3 @@
 aiohttp
 summa_embed
+termcolor

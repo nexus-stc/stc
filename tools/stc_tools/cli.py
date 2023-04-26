@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import json
+import sys
 
 import aiohttp
 import fire
+from termcolor import colored
+
 from stc_tools.client import StcTools
 
 
@@ -29,16 +32,20 @@ class StcCliTools(StcTools):
         Examples: `doi:10.1234/abc, isbns:9781234567890, "fetal hemoglobin"`
 
         :param query: query in Summa match format
+        :param index_name:
         :param limit: how many results to return, higher values incurs LARGE performance penalty.
+        :param default_fields:
+
         :return: metadata records
         """
-        print(f'Setting up index {self.path}...')
+        print(f"{colored('INFO', 'green')}: Setting up indices: {', '.join(self.paths)}...")
         await self.setup()
-        print(f'Searching {query}...')
+        print(f"{colored('INFO', 'green')}: Searching {query}...")
         response = await super().search([{
             "index_alias": index_name,
             "query": {"query": {"match": {"value": query, "default_fields": default_fields, 'field_boosts': {}}}},
-            "collectors": [{"collector": {"top_docs": {"limit": limit}}}]
+            "collectors": [{"collector": {"top_docs": {"limit": limit}}}],
+            "is_fieldnorms_scoring_enabled": False,
         }])
         return list(map(lambda x: json.loads(x['document']), response[0]['collector_output']['documents']['scored_documents']))
 
@@ -49,13 +56,15 @@ class StcCliTools(StcTools):
 
         :param query: query in Summa match format
         :param output_path: filepath for writing file
+        :param index_name:
+
         :return: file if record has corresponding CID
         """
         results = await self.search(query, index_name=index_name)
         if results:
-            print(f'Found {query}')
+            print(f"{colored('INFO', 'green')}: Found {query}")
             if 'cid' in results[0]:
-                print(f'Receiving file...')
+                print(f"{colored('INFO', 'green')}: Receiving file {query}...")
                 async with aiohttp.ClientSession() as session:
                     async with session.get(f'{self.ipfs_http_endpoint}/ipfs/{results[0]["cid"]}') as resp:
                         data = await resp.read()
@@ -64,9 +73,9 @@ class StcCliTools(StcTools):
                             f.close()
                             print(f'File {output_path} is written')
             else:
-                print(f'Not found CID for {query}')
+                print(f"{colored('ERROR', 'red')}: Not found CID for {query}", file=sys.stderr)
         else:
-            print(f'Not found {query}')
+            print(f"{colored('ERROR', 'red')}: Not found {query}", file=sys.stderr)
 
 
 async def stc_tools_cli(
