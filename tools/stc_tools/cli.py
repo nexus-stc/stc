@@ -23,7 +23,7 @@ class CidNotFound(Exception):
 
 
 class StcCliTools(StcTools):
-    async def search(self, query: str, limit: int = 1, default_fields = ('title', 'abstract',)):
+    async def search(self, query: str, index_name: str = 'nexus_science', limit: int = 1, default_fields = ('title', 'abstract',)):
         """
         Searches in STC using default Summa match queries.
         Examples: `doi:10.1234/abc, isbns:9781234567890, "fetal hemoglobin"`
@@ -36,13 +36,13 @@ class StcCliTools(StcTools):
         await self.setup()
         print(f'Searching {query}...')
         response = await super().search([{
-            "index_alias": self.description['default_index_name'],
+            "index_alias": index_name,
             "query": {"query": {"match": {"value": query, "default_fields": default_fields, 'field_boosts': {}}}},
             "collectors": [{"collector": {"top_docs": {"limit": limit}}}]
         }])
         return list(map(lambda x: json.loads(x['document']), response[0]['collector_output']['documents']['scored_documents']))
 
-    async def download(self, query: str, output_path: str):
+    async def download(self, query: str, output_path: str, index_name: str = 'nexus_science'):
         """
         Download file from STC using default Summa match queries.
         Examples: `doi:10.1234/abc, isbns:9781234567890`
@@ -51,7 +51,7 @@ class StcCliTools(StcTools):
         :param output_path: filepath for writing file
         :return: file if record has corresponding CID
         """
-        results = await self.search(query)
+        results = await self.search(query, index_name=index_name)
         if results:
             print(f'Found {query}')
             if 'cid' in results[0]:
@@ -71,9 +71,9 @@ class StcCliTools(StcTools):
 
 async def stc_tools_cli(
     ipfs_http_endpoint: str = 'http://127.0.0.1:8080',
-    path: str = '/ipns/standard-template-construct.org/data/nexus_science/',
+    paths: tuple[str] = ('/ipns/standard-template-construct.org/data/nexus_science/',),
 ):
-    stc_tools_client = StcCliTools(ipfs_http_endpoint, path)
+    stc_tools_client = StcCliTools(ipfs_http_endpoint, paths)
     return {
         'search': stc_tools_client.search,
         'download': stc_tools_client.download,

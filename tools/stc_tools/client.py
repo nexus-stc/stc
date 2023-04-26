@@ -19,23 +19,29 @@ class StcTools:
     def __init__(
         self,
         ipfs_http_endpoint: str = 'http://127.0.0.1:8080',
-        path: str = '/ipns/standard-template-construct.org/data/nexus_science/',
+        paths: tuple[str] = ('/ipns/standard-template-construct.org/data/nexus_science/',),
+        cache_size: int = 256 * 1024 * 1024,
     ):
         self.ipfs_http_endpoint = ipfs_http_endpoint
-        self.path = path.rstrip('/') + '/'
+        self.paths = [path.rstrip('/') + '/' for path in paths]
+        self.cache_size = cache_size
         self.index_registry = summa_embed.IndexRegistry()
-        self.description = None
+        self.descriptions = {}
 
     async def setup(self):
-        full_path = self.ipfs_http_endpoint + self.path
-        headers_template = {"range": "bytes={start}-{end}"}
-        if host_header := await detect_host_header(full_path):
-            headers_template['host'] = host_header
-        self.description = await self.index_registry.add({'config': {'remote': {
-            'method': 'GET',
-            'url_template': f'{full_path}{{file_name}}',
-            'headers_template': headers_template,
-        }}})
+        for path in self.paths:
+            full_path = self.ipfs_http_endpoint + path
+            headers_template = {"range": "bytes={start}-{end}"}
+            if host_header := await detect_host_header(full_path):
+                headers_template['host'] = host_header
+            description = await self.index_registry.add({'config': {'remote': {
+                'method': 'GET',
+                'url_template': f'{full_path}{{file_name}}',
+                'headers_template': headers_template,
+                'cache_config': {'cache_size': self.cache_size},
+            }}})
+            self.descriptions[description['default_index_name']] = description
+        return self.descriptions
 
-    async def search(self, query: dict):
+    async def search(self, query: list[dict]):
         return await self.index_registry.search(query)
