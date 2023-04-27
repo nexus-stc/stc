@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os.path
 import sys
 
 import aiohttp
@@ -77,17 +78,23 @@ class StcCliTools(StcTools):
         :return: file if record has corresponding CID
         """
         results = await self.search(query)
+        output_path, output_path_ext = os.path.splitext(output_path)
+        output_path_ext = output_path_ext.lstrip('.')
         if results:
             print(f"{colored('INFO', 'green')}: Found {query}")
             if 'cid' in results[0]:
                 print(f"{colored('INFO', 'green')}: Receiving file {query}...")
+                if (real_extension := results[0].get('extension', 'pdf')) != output_path_ext:
+                    print(f"{colored('WARN', 'yellow')}: Receiving file extension `{real_extension}` is not matching with your output path extension `{output_path_ext}`. Changed to correct one.")
+                    output_path_ext = real_extension
                 async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
                     async with session.get(f'{self.ipfs_http_endpoint}/ipfs/{results[0]["cid"]}') as resp:
                         data = await resp.read()
-                        with open(output_path, 'wb') as f:
+                        final_file_name = output_path + '.' + output_path_ext
+                        with open(final_file_name, 'wb') as f:
                             f.write(data)
                             f.close()
-                            print(f"{colored('INFO', 'green')}: File {output_path} is written")
+                            print(f"{colored('INFO', 'green')}: File {final_file_name} is written")
             else:
                 print(f"{colored('ERROR', 'red')}: Not found CID for {query}", file=sys.stderr)
         else:

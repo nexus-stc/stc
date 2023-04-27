@@ -1,0 +1,3 @@
+*.session
+*.session-journal
+venv
