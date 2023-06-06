@@ -1,0 +1,746 @@
+---
+# yamllint disable rule:line-length
+
+en:
+  ABOUT_US: |
+    **About us**
+    Among the most impactful inventions of humanity such as the wheel, semiconductors or the wing were the invention of writing and advent of mass printing. Use of printing press made possible wide spread of ideas and knowledge. This burst increased the number of educated people and in its turn people started the Age of Enlightenment and shaped modern civilization.
+
+    Why printing provoked such dramatic changes in society?
+    Sane beings and knowledge live in a natural symbiosis: knowledge are fruiting and growing while circulated among people and people do the same. We may even note that complexity of human civilization, its achievements and technological progress during all its history have been correlated with the amount of accumulated knowledge and possibility to share and navigate through it.
+
+    Last advances in knowledge management has been brought by modern machines together with AI. It empowered our skills of storing and searching through huge amounts of information to the very high. Today, machines are able to understand all data we've stored in digital form, derive new knowledge, find out inconsistencies in our researches and reveal hidden gems in researches. Today, machines are able to help us to reach the [technological singularity](https://en.wikipedia.org/wiki/Technological_singularity).
+
+    However, there is one remaining issue: knowledge is usurped by large publishers, corporations such as Elsevier, Springer, Wiley, T&F etc. Held by copyright, the knowledge remains out of reach for many researchers and for many enterprises that could launch the new Age of Enlightenment.
+
+    Knowledge is not just usurped, an entire system has been built which is putting in chains researchers, academia and readers:
+    - Large publishers promote and lobby approaches that encourage evaluation of researchers using the number of published articles in journals having high-impact
+    - Publishers make authors to pay for publishing tax-funded researches, then readers to pay for access to published tax-funded researches, while peer-reviewing is done for free by other researchers and this activity is considered as "honorable" in academia
+    - Publishers such as Elsevier repeatedly carried and carry campaigns against open access
+
+    Publishers managed to own knowledge at a time when anything could be owned. Afterwards, they ignored the advent of the Internet that made copying and mass reading free and went on collecting tribute. Since that times, modern publishers like Elsevier, Springer and others did nothing to spread knowledge but have only built paywalls for keeping knowledge away from those who cannot pay.
+
+    The world is obviously lagging behind modern state of the technologies. The copyrights on scientific publications should have been canceled decades ago but publishers' lobbying and mere slowness of political systems made us to live in the world where almost all researchers are using tools to bypass paywalls.
+
+    Why exactly knowledge and information cannot be a subject of property rights? There are three reasons.
+
+    Firstly, unlike material things, knowledge can be spread without costs. Every bit of knowledge increases prosperity of the entire society in a much greater degree than it takes from its author.
+
+    Paywalls built by copyright holders are making access unreasonably expensive and it deals a huge damage to our future:
+    - Doctors can't learn new medicine protocols that may save lives of our children.
+    - Engineers can't learn new approaches to build reliable and safe machines.
+    - Students can't learn how to build fair and modern society.
+    - Your neighbour will remain an ignorant person denying vaccines and supporting wars
+
+    Finally, what is knowledge? The preexistent order of things, it may be discovered by explorers but not changed or owned. Knowledge has no master.
+
+    Our goals, includes but not limited by:
+    - Cancelling any restrictions on spread of knowledge
+    - Making knowledge replicated reliably, available and navigable for every person on our pale blue dot
+    - Bridging AI and accumulated knowledge
+    - Promoting continuous education and building the cult of knowledge
+  ABSTRACT: Abstract
+  ACCEPTED: Accepted!
+  ALREADY_DOWNLOADING: Already downloading
+  AUTHORS: Authors
+  BANNED: |
+    You are banned until **{datetime} UTC**.
+    Reason: **{reason}**
+  BANNED_FOR_SECONDS: |
+    You are banned for **{seconds} second(s)**
+    Reason: **{reason}**
+  BAN_MESSAGE_TOO_MANY_REQUESTS: Too many requests
+  CLOSE: Close
+  CONNECTOME_OPTION: Connectome
+  COPYRIGHT_DESCRIPTION: |
+    If you wish to make a copyright infringement complaint:
+
+    - Start your message with /copyright, then add the new line
+    - Paste view links of items you are claiming about. View link is an item
+    you are clicking on the search page result, i.e. `/v_ip6qnAOB_893608_1749642_3`
+    - Add as a single file (*.zip) all documents confirming you are legal copyright owner or an agent authorized to act on the owner’s behalf.
+
+    Your claim will be considered during 24 hour.
+    Descision to satisfy the claim will make unable the subject to be downloaded but it will be still searchable.
+  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
+    Your claim for copyright infringement has been accepted.
+  COULD_NOT_FIND_ANYTHING: Could not find anything:(
+  DELETION_FORBIDDEN_DUE_TO_AGE: Telegram doesn't allow me to remove messages older than 2 days :(
+  DESCRIPTION: Description
+  DISABLE_DISCOVERY: If you don't want to get personalized feed, you can disable Nexus Discovery in /settings
+  DISCOVERY_OPTION: Discovery
+  DISCOVERY_PROMPT: 🦘 **Look at what I've found for you:** 🦘
+  DOWNLOAD: Download
+  DOWNLOADED: downloaded
+  DOWNLOADING: downloading...
+  DOWNLOAD_AND_SEARCH_MORE: Download and search more
+  DOWNLOAD_CANCELED: |
+    We are reloading our backends.
+    Please, try to download `{document}` in a minute.
+  EDITION: Edition
+  FILE: File
+  FILE_TOO_BIG_ERROR: File is too big, contact @nexus_search
+  FOUND_N_ITEMS: '{count} results'
+  HELP: |
+    Hi! I'm **Nexus** bot!
+    I can search books or scientific articles by titles, authors or DOIs.
+
+    Just type your request in plain words.
+
+    **Examples**
+    - `Divine Comedy Dante`
+    - `https://doi.org/10.1159/000477855`
+    - Search in the books only: `📚 JavaScript`
+    - Search by author: `authors:Jack authors:London`
+    - Exact match: `"Fetal Hemoglobin"`
+    - Filter formats (all except pdf): `+JavaScript format:+epub`
+    - Filter languages: `+JavaScript 🇪🇸`
+
+    **Extended syntax**
+    `+` sign makes words or filtration by field mandatory:
+    - `+JavaScript language:en` returns **all** JavaScript books but books in English will be ranked higher
+    - `+JavaScript language:+en` returns JavaScript books **only** in English
+
+    `-` sign removes documents with the word
+    - `fetal -hemoglobin` returns all articles about fetal whatever but not hemoglobin
+
+    Possible fields for ordering: `date`
+
+    `date` - issuing unixtime
+
+    **Navigation**
+    I can help to navigate through references and journals. There are multiple links and buttons
+    on view screen:
+
+    - Tags are clickable. Tap them. Particular versions of Telegram requires to tap appeared button `Start` after the tap on links.
+    - 📰 button opens articles from the same journal
+    - 🔗 button opens articles referring the currently opened one
+
+    **Commands**
+    /aboutus - tell about us
+    /help - show this help
+    /howtohelp - learn how to help us
+    /rank - get importance statistics of articles
+    /riot - clone this bot
+    /roll <query> - get a random book <by the query>
+    /seed - learn how to become a seeder
+    /trends - plot trends graph
+
+    What are you going to read today?
+  HELP_FOR_GROUPS: |
+    Hi! I'm **Nexus** bot!
+    I can search books or scientific articles by titles, authors or DOIs.
+
+    Just type your request in plain words prepending **with /search**.
+
+    **Examples**
+    - `/search Divine Comedy Dante`
+    - `/search https://doi.org/10.1159/000477855`
+    - Search in the books only: `/search 📚 JavaScript`
+    - Search by author: `/search authors:Jack authors:London`
+    - Exact match: `/search "Fetal Hemoglobin"`
+    - Filter formats (all except pdf): `/search +JavaScript format:+epub`
+    - Filter languages: `/search +JavaScript 🇪🇸`
+
+    **Extended syntax**
+    `+` sign makes words or filtration by field mandatory:
+    - `+JavaScript lang:en` returns **all** JavaScript books but books in English will be ranked higher
+    - `+JavaScript lang:+en` returns JavaScript books **only** in English
+
+    `-` sign removes documents with the word
+    - `fetal -hemoglobin` returns all articles about fetal whatever but not hemoglobin
+
+    Possible fields for ordering: `date`
+
+    **Navigation**
+    I can help to navigate through references and journals. There are multiple links and buttons
+    on view screen:
+
+    - Tags are clickable. Tap them. Particular versions of Telegram requires to tap appeared button `Start` after the tap on links.
+    - 📰 button opens articles from the same journal
+    - 🔗 button opens articles referring the currently opened one
+
+    **Commands**
+    /aboutus - tell about us
+    /help - show this help
+    /howtohelp - learn how to help us
+    /profile - show your profile
+    /rank - get importance statistics of articles
+    /riot - clone this bot
+    /roll <query> - get a random book <by the query>
+    /trends - plot trends graph
+
+    What are we going to read today?
+  HOW_TO_HELP: |
+    What you can do now to make knowledge free?
+
+    **Subscribe**: [Telegram](https://t.me/{related_channel}) - [Twitter]({twitter_contact_url})
+
+    **Donate access**
+    Contact [Nexus community](https://t.me/joinchat/SKgGpCnrzMdkMRxJ) if you wish to share institutional access to libraries. We are looking for persons who are able to provide:
+
+    - Android 4.4+ phone connected to an academic WiFi 
+    - VPS (low-grade, located in UK/US/Singapore) in Oracle / Digital Ocean / GitHub
+    - University VPNs credentials without 2FA
+    - One computer inside your university network for deploying safe v2ray server
+
+    **Become a seeder**
+    Books and articles should not be stored in a single place. For these purposes, databases are replicated by torrents and [IPFS](https://en.wikipedia.org/wiki/InterPlanetary_File_System). You can easily become a participant and use your drive and network to replicate data. Every piece you seed increases overall reliability and makes knowledge available for more people.
+    Just click at /seed to learn how to become a seeder
+  INVALID_SYNTAX_ERROR: |
+    ```Oops, something wrong with your query. Probably it is too clever for me.
+    Try to send me DOI, MD5 or just the name of what you are looking for!
+    Tip: use brackets, add +/- before words or remove them all.```[‌]({too_difficult_picture_url})
+  JOURNAL: Journal
+  LEGACY: We've updated and old widgets stopped working:( Please, do search again.
+  LINKS: Links
+  LOOKING_AT: 'looking at {source}...'
+  MAINTENANCE: |
+    ```Oops! Something goes wrong and we are trying hard to revive. Please, try a little bit later.```
+    
+    Meanwhile, you may visit [Standard Template Construct](http://standard-template-construct.org) and find your book there
+    [‌]({error_picture_url})
+  MAINTENANCE_WO_PIC: Oops! Please, try a little bit later.
+  NAMELESS: Without name
+  NEXUS_CONNECTOME_DESCRIPTION: |
+    **Nexus Connectome** allows other users to see your profile and find you by your interests and last read articles.
+  NEXUS_DISCOVERY_DESCRIPTION: |
+    **Nexus Discovery** notifies you about newly arrived publications you were looking for before.
+  NO_DOI_HINT: Can't guess what is DOI of this file. Send it as a response to existing request or add DOI in your message with file
+  OUTDATED_VIEW_LINK: Link has been ourdated. Please, do your search again and click on the new link.
+  PROCESSING_PAPER: '`File {filename} is processed...`'
+  PROMO: |
+    **Nexus Search - Update and News**
+    @{related_channel}
+  READ_ONLY_WARNING: ⚠️ Bot now has reduced availability of papers due to its maintenance, try in an hour.
+  REFERENCED_BY: Referenced by
+  REPLY_MESSAGE_HAS_BEEN_DELETED: Search message has been (re-)moved. Do search again.
+  REPORT_CORRECT_FILE: ✅ Correct
+  REPORT_INCORRECT_FILE: ❌ Incorrect
+  REQUESTED_TOO_MUCH: Sorry, you have requested too much. Decrease page size down to {page_size} or lesser.
+  SEARCHING: '`searching...`'
+  SEED_GENERATION: '`wait, we are generating file...`'
+  SEED_HELP: |
+    Seeding involves downloading and then sharing for others. You have the choice to seed all or just part of a collection of papers.
+    To start, you'll need some knowledge of how to use terminal tools.
+
+    **Installation:**
+    
+    Download [IPFS-Desktop](https://docs.ipfs.tech/install/ipfs-desktop/) (optional) and [IPFS CLI]((https://docs.ipfs.tech/install/command-line/)) (required).
+    
+    **Requesting to seed:**
+
+    After installation, ask the bot what you want to seed. Here's how you do it:
+    
+    Specific Papers:
+
+    Use the /seed command to get papers by their date of issue. For example, to get 500 papers on JavaScript, type 
+    ```/seed 0 500 
+    javascript```
+    
+    To get the next 500 papers, type
+    ```/seed 1 500 
+    javascript```
+    
+    To get the next 500 papers with filenames created by a specific template, type 
+    ```/seed 2 500 {doi}_{suggested_filename}`
+    javascript```
+    
+    Random Papers:
+
+    Use the /rseed command to get a random set of papers. For example, `/rseed 1000` will give you a random 1000 papers. If you send this command multiple times, you'll get different sets of papers which may overlap.
+    In response to both commands, you'll receive a CAR file containing a directory with files named according to your chosen template.
+
+    **Sharing the files (Seeding):**
+
+    Save the CAR file to any directory on your computer. For instance, you could save it to `/home/reader/javascript-0-1000-1000.car`.
+    Start sharing these files by typing this command in your terminal: `ipfs dag import /home/reader/javascript-0-1000-1000.car`. This may take some time.
+    Once done, you've stored the files on your computer and made them accessible to thousands of others. Great job!
+    **Note:** Add `--pin-roots=false` to the command if you don't want to pin all content locally and just want to browse the content.
+
+    **Viewing the files:**
+
+    To view the directory, open your browser and navigate to https://ipfs.io/ipfs/<cid>. 
+    Here, CID is the identifier you receive from /(r)seed output (marked as Root CID).
+    You can also see the directory in your terminal by typing `ipfs ls --resolve-type=false --size=false -s <cid>`.
+    You can share these directories with other users after importing them. Just share the CID with anyone and ensure you're online.
+    
+    **Name template fields**: 
+    `md5`, `doi`, `title`, `authors`, `suggested_filename`, `issued_at`
+  SEND_YOUR_LOCATION: Send your location (through the left attach button)
+  SETUP_AUTOMATICALLY: Setup automatically
+  SETUP_MANUALLY: Setup manually
+  SOMEONE_UPLOADED_FILE: '⚡️ Someone uploaded `{document}` on your request.'
+  SOURCES_UNAVAILABLE: '`{document}` is unavailable right now. I will text you if someone will upload this article.'
+  SUBSCRIBE_TO_CHANNEL: Subscribe to @{related_channel} to continue using this bot.
+  SYSTEM_MESSAGING_OPTION: Bot News Notifications
+  TAGS: Tags
+  TANKS_BRUH: Tank ya bruuuh!
+  TOO_LONG_QUERY_FOR_SHORTLINK: |
+    Your query is too long (limit is about 35-40 characters).
+  TOO_MANY_DOWNLOADS: Too many active downloads. Please, wait them to complete.
+  TOO_SHORT_QUERY: Too short query, type more...
+  TRANSMITTED_FROM: 'transmitted from {source}'
+  TRENDS_HELP: |
+    ```/trends <start_date> to <end_date>
+    <query_1>
+    <query_2>
+    ...
+    <query_n>
+    ```
+    **Dates**
+    Passed in free form, I'm clear enough to understand various options
+
+    **Queries**
+    Set as in the search. Remember that all queries by default returns documents that contains at least one word from the query.
+    If you pass `fetal hemoglobin` documents containing only `fetal` or only `hemoglobin` will be accounted too. It might be not what you meant.
+    Restrict query to `+fetal +hemoglobin`. This query returns only documents which contain both words.
+
+    **Examples**
+    Physics of fluids vs. molecular biology
+    ```/trends 2000 to 2020
+    +physics +fluids
+    "molecular biology"
+    ```
+    Communism vs. memes
+    ```/trends 2017 to 2022-08
+    communism
+    memes
+    ```
+  UNAVAILABLE_METADATA_ERROR: 'Cannot acquire metadata for {doi} from CrossRef API. Ensure it is resolvable before uploading. If you are sure, you can write DOI in the same message together with file.'
+  UNKNOWN_FILE_FORMAT_ERROR: Only PDF files are supported
+  UNPARSABLE_DOCUMENT_ERROR: Cannot parse `{filename}`
+  UNPARSABLE_DOI_ERROR: DOI cannot be found in `{filename}`
+  UPGRADE_MAINTENANCE: |
+    ```Major update is going on, come back to us tomorrow```[‌]({upgrade_maintenance_picture_url})
+  UPLOADED_TO_TELEGRAM: uploaded to Telegram...
+  UPSTREAM_RETURNS_BROKEN_FILE: PDF file that we have received is broken. Highly likely it is related to the errors at the publisher side. Please, attempt to download this paper in a day or two.
+  VIEWS_CANNOT_BE_SHARED: Do your own search, commands cannot be shared.
+  YEAR: Year
+  ZIP_FILES_ARE_NOT_SUPPORTED_IN_GROUP_MODE: Zip files are not supported in groups. Upload them directly to the bot
+es:
+  ABSTRACT: Resumen
+  ALREADY_DOWNLOADING: Ya descargando
+  AUTHORS: Autores
+  BANNED: |
+    Has sido baneado hasta la(s) **{datetime} UTC**.
+    Razón: **{reason}**
+  BANNED_FOR_SECONDS: |
+    Has sido baneado por **{seconds} segundo(s)**
+    Razón: **{reason}**
+  BAN_MESSAGE_TOO_MANY_REQUESTS: Demasiadas peticiones
+  CLOSE: Cerrar
+  COPYRIGHT_DESCRIPTION: |
+    Si deseas presentar una queja por infracción de derechos de autor:
+
+    - Comienza tu mensaje con /copyright, luego agregua la nueva línea
+    - Pega los enlaces a los ítems sobre los que estás reclamando. Un enlace a un ítem
+    es aquel sobre el que estás haciendo clic en el resultado de la página de búsqueda, es decir, `/vb_FH5fWn2o_3512868_1675254_2`
+    - Agrega como un solo archivo (*.zip) todos los documentos que confirman que eres el propietario legal de los derechos de autor o un agente autorizado para actuar en nombre del propietario.
+
+    Tu reclamo será considerado durante 24 horas.
+    La decisión de satisfacer el reclamo impedirá que se descargue el ítem, pero aún se podrá buscar.
+  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
+    Se ha aceptado su reclamo por infracción de derechos de autor.
+  COULD_NOT_FIND_ANYTHING: No pude encontrar nada :(
+  DESCRIPTION: Descripción
+  DISABLE_DISCOVERY: Si no deseas obtener un feed personalizado, puedes deshabilitar Nexus Discovery en /settings
+  DISCOVERY_PROMPT: 🦘 **Mira lo que encontré para ti:** 🦘
+  DOWNLOAD: Descargar
+  DOWNLOADED: descargado
+  DOWNLOADING: descargando...
+  DOWNLOAD_AND_SEARCH_MORE: Descarga y busca más
+  DOWNLOAD_CANCELED: |
+    Estamos recargando nuestros backends.
+    Por favor, intente descargar `{document}` en un minuto.
+  EDITION: Edición
+  FILE: Archivo
+  INVALID_SYNTAX_ERROR: |
+    ```Oops, algo anda mal con tu consulta. Probablemente sea demasiado inteligente para mí.
+    ¡Intenta enviarme DOI, MD5 o simplemente el nombre de lo que estás buscando!
+    Tip: usa corchetes, agrega más +/- o quítalos todos.```[‌]({too_difficult_picture_url})
+  JOURNAL: Revista
+  LEGACY: Hemos actualizado y los widgets antiguos dejaron de funcionar :( Por favor, vuelva a buscar.
+  LOOKING_AT: 'buscando en {source}...'
+  MAINTENANCE: |
+    ```¡Oops! Algo salió mal y estamos esforzándonos por revivir.
+    Por favor, inténtalo más tarde.```[‌]({error_picture_url})
+  MAINTENANCE_WO_PIC: ¡Oops! Por favor, intenta más tarde.
+  NAMELESS: Sin nombre
+  NEXUS_CONNECTOME_DESCRIPTION: |
+    **Nexus Connectome** permite que otros usuarios vean tu perfil y te encuentren por tus intereses y últimos artículos leídos.
+  NEXUS_DISCOVERY_DESCRIPTION: |
+    **Nexus Discovery** también te notifica sobre publicaciones recién llegadas que estabas buscando antes.
+  PROMO: |
+    **Nexus Search - Actualizaciones y Noticias**
+    @{related_channel}
+  REFERENCED_BY: Referenciado por
+  REPLY_MESSAGE_HAS_BEEN_DELETED: El mensaje de búsqueda ha sido (re)movido. Vuelve a buscar.
+  SEARCHING: '`buscando...`'
+  SEND_YOUR_LOCATION: Envía tu ubicación (a través del botón de adjuntar de la izquierda)
+  SETUP_AUTOMATICALLY: Configurar automáticamente
+  SETUP_MANUALLY: Configurar manualmente
+  SOURCES_UNAVAILABLE: '`{document}` no está disponible en este momento. Por favor intenta más tarde.'
+  SUBSCRIBE_TO_CHANNEL: Suscríbete a @{related_channel} para seguir usando este bot.
+  SYSTEM_MESSAGING_OPTION: Notificaciones de actualización de bot
+  TAGS: Tags
+  TANKS_BRUH: Tank ya bruuuh!
+  TOO_LONG_QUERY_FOR_SHORTLINK: |
+    Su consulta es demasiado larga (el límite es de 35 a 40 caracteres).
+  TOO_MANY_DOWNLOADS: Demasiadas descargas activas. Por favor, espera a que finalicen.
+  TRANSMITTED_FROM: 'transmitido desde {source}'
+  UPGRADE_MAINTENANCE: |
+    ```Se está llevando a cabo una actualización importante, vuelve con nosotros mañana```[‌]({upgrade_maintenance_picture_url})
+  UPLOADED_TO_TELEGRAM: subido a Telegram...
+  VIEWS_CANNOT_BE_SHARED: Haga su propia búsqueda, los comandos no se pueden compartir.
+  YEAR: Año
+it:
+  ABSTRACT: Sintesi
+  ALREADY_DOWNLOADING: Sto già scaricando
+  AUTHORS: Autori
+  BANNED: |
+    Sei bannato fino a **{datetime} UTC**.
+    Reason: **{reason}**
+  BANNED_FOR_SECONDS: |
+    Sei bannato per **{seconds} secondi(s)**
+    Motivo: **{reason}**
+  BAN_MESSAGE_TOO_MANY_REQUESTS: Troppe richieste
+  CLOSE: Chiudi
+  COPYRIGHT_DESCRIPTION: |
+    Se vuoi fare un reclamo per violazione di copyright:
+
+    - Inizia il tuo messaggio con /copyright, poi aggiungi una nuova linea
+    - Incolla i link di visualizzazione di tali contenuti. Un link di visualizzazione è un elemento
+    che puoi cliccare sulla pagina dei risultati di ricerca, es. `/v_ip6qnAOB_893608_1749642_3`
+    - Allega come singolo file (*.zip) tutti i documenti che certificano che detieni i diritti di copyright oppure agisci in modo autorizzato per conto del proprietario.
+
+    La tua segnalazione verrà esaminata entro 24 ore.
+    Se accettata, il contenuto non sarà più scaricabile, ma rimarrà comunque cercabile.
+  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
+    La tua segnalazione di violazione di copyright è stata accettata
+  COULD_NOT_FIND_ANYTHING: Non ho trovato niente :(
+  DESCRIPTION: Descrizione
+  DISABLE_DISCOVERY: Se non vuoi ricevere un feed personalizzato, puoi disabilitare Nexus Discovery in /settings
+  DISCOVERY_PROMPT: 🦘 **Guarda cosa ho trovato per te:** 🦘
+  DOWNLOAD: Scarica
+  DOWNLOADED: scaricato
+  DOWNLOADING: scaricamento in corso...
+  DOWNLOAD_AND_SEARCH_MORE: Scarica e cerca qualcos'altro
+  DOWNLOAD_CANCELED: |
+    Stiamo riavviando la nostra infrastruttura.
+    Per favore, prova a scaricare `{document}` tra un minuto.
+  EDITION: Edizione
+  FILE: File
+  INVALID_SYNTAX_ERROR: |
+    ```Oops, c'è qualcosa di sbagliato nella tua richiesta. Probabilmente è troppo avanzata per me.
+    Prova a mandarmi il DOI, MD5 o semplicemente il nome di quello che cerchi!
+    Suggerimento: usa le parentesi, aggiungi più +/- o toglili.```[‌]({too_difficult_picture_url})
+  JOURNAL: Rivista
+  LEGACY: Abbiamo fatto un aggiornamento e i vecchi widget hanno smesso di funzionare :( Per favore, ripeti la ricerca.
+  LOOKING_AT: 'cercando {source}...'
+  MAINTENANCE: |
+    ```Oops! Qualcosa è andato storto e stiamo facendo del nostro meglio per tornare operativi.
+    Per favore, prova un po' più tardi.```[‌]({error_picture_url})
+  MAINTENANCE_WO_PIC: Oops! Per favore, prova un po' più tardi.
+  NAMELESS: Senza nome
+  NEXUS_CONNECTOME_DESCRIPTION: |
+    **Nexus Connectome** consente ad altri utenti di vedere il tuo profilo e trovarti in base ai tuoi interessi e agli ultimi articoli letti.
+  NEXUS_DISCOVERY_DESCRIPTION: |
+    **Nexus Discovery** è un servizio di raccomandazione. Ti segnala anche le pubblicazioni appena arrivate che hai provato a cercare precedentemente.
+  PROMO: |
+    **Nexus Search - Aggiornamenti e novità**
+    @{related_channel}
+  REFERENCED_BY: Riferito da
+  REPLY_MESSAGE_HAS_BEEN_DELETED: Il messaggio di ricerca è stato (ri-)mosso. Ripeti la ricerca.
+  SEARCHING: '`ricerca in corso...`'
+  SEND_YOUR_LOCATION: Invia la tua posizione (tramite il pulsante allegato a sinistra)
+  SETUP_AUTOMATICALLY: Configura automaticamente
+  SETUP_MANUALLY: Configura manualmente
+  SOURCES_UNAVAILABLE: '`{document}` non è disponibile adesso. Per favore, prova più tardi.'
+  SUBSCRIBE_TO_CHANNEL: Iscriviti a @{related_channel} per continuare ad usare questo bot.
+  SYSTEM_MESSAGING_OPTION: Notifiche Aggiornamento Bot
+  TAGS: Tag
+  TANKS_BRUH: Grazie bro!
+  TOO_LONG_QUERY_FOR_SHORTLINK: |
+    La tua richiesta è troppo lunga (il limite è circa 35-40 caratteri).
+  TOO_MANY_DOWNLOADS: Troppi download in corso. Per favore, attendi il completamento.
+  TRANSMITTED_FROM: 'inviato da {source}'
+  UPGRADE_MAINTENANCE: |
+    ```Un grosso aggiornamento è in corso, riprova domani```[‌]({upgrade_maintenance_picture_url})
+  UPLOADED_TO_TELEGRAM: caricato su Telegram...
+  VIEWS_CANNOT_BE_SHARED: Effettua la tua ricerca, i comandi non possono essere condivisi.
+  YEAR: Anno
+pb:
+  ABSTRACT: Resumo
+  ALREADY_DOWNLOADING: Já baixando
+  AUTHORS: Autores
+  BANNED: |
+    Você está banido até **{datetime} UTC**.
+    Motivo: **{reason}**
+  BANNED_FOR_SECONDS: |
+    Você está banido por **{seconds} segundo(s)**
+    Motivo: **{reason}**
+  BAN_MESSAGE_TOO_MANY_REQUESTS: Muitas solicitações
+  CLOSE: Fechar
+  COPYRIGHT_DESCRIPTION: |
+    Se você deseja fazer uma reclamação de violação de direitos autorais:
+
+    - Comece sua mensagem com /copyright, então adicionei uma nova linha
+    - Cole os links de visualização dos itens sobre os quais você está reivindicando. O link de visualização é um item em que você clica no resultado da página de pesquisa, ou seja, `/v_ip6qnAOB_893608_1749642_3`
+    - Adicione como um único arquivo (*.zip) todos os documentos que confirmam que você é o proprietário legal dos direitos autorais ou um agente autorizado a agir em nome do proprietário.
+
+    Sua reivindicação será considerada em 24 horas.
+
+    A decisão de atender à reivindicação impossibilitará o download do item, mas ainda será pesquisável.
+  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
+    Sua reivindicação por violação de direitos autorais foi aceita.
+  COULD_NOT_FIND_ANYTHING: Não foi possível encontrar nada :(
+  DESCRIPTION: Descrição
+  DISABLE_DISCOVERY: Se você não deseja obter um feed personalizado, pode desativar o Nexus Discovery em /settings
+  DISCOVERY_PROMPT: 🦘 **Veja o que encontrei para você:** 🦘
+  DOWNLOAD: Baixar
+  DOWNLOADED: Baixado
+  DOWNLOADING: baixando...
+  DOWNLOAD_AND_SEARCH_MORE: Baixar e pesquisar mais
+  DOWNLOAD_CANCELED: |
+    Estamos recarregando nossos backends.
+    Por favor, tente baixar o `{document}` em um minuto.
+  EDITION: Edição
+  FILE: Arquivo
+  INVALID_SYNTAX_ERROR: |
+    ```Eita, algo errado com sua consulta. Provavelmente é muito inteligente para mim.
+    Tente me enviar DOI, MD5 ou apenas o nome do que você procura!
+    Dica: use colchetes, adicione mais +/- ou remova todos eles.```[‌]({too_difficult_picture_url})
+  JOURNAL: Revista
+  LEGACY: Atualizamos e os widgets antigos pararam de funcionar :( Por favor, pesquise novamente.
+  LOOKING_AT: 'Buscando em {source}...'
+  MAINTENANCE: |
+    ```Eita! Algo está errado e estamos nos esforçando para reviver.
+    Por favor, tente um pouco mais tarde.```[‌]({error_picture_url})
+  MAINTENANCE_WO_PIC: Eita! Por favor, tente um pouco mais tarde.
+  NAMELESS: Sem nome
+  NEXUS_CONNECTOME_DESCRIPTION: |
+    O **Nexus Connectome** permite que outros usuários vejam seu perfil e encontrem você de acordo com seus interesses e artigos lidos pela última vez.
+  NEXUS_DISCOVERY_DESCRIPTION: |
+    **Nexus Discovery** é um serviço de recomendação. Também o notifica sobre publicações recém-chegadas que você estava procurando.
+  PROMO: |
+    **Nexus Search - Atualizações e Notícias**
+    @{related_channel}
+  REFERENCED_BY: Referenciado por
+  REPLY_MESSAGE_HAS_BEEN_DELETED: A mensagem de pesquisa foi (re)movida. Pesquise novamente.
+  SEARCHING: '`procurando...`'
+  SEND_YOUR_LOCATION: Envie sua localização (através do botão esquerdo anexar)
+  SETUP_AUTOMATICALLY: Configurar automaticamente
+  SETUP_MANUALLY: Configurar manualmente
+  SOURCES_UNAVAILABLE: '`{document}` está indisponível nesse momento. Por favor, tente mais tarde.'
+  SUBSCRIBE_TO_CHANNEL: Inscreva-se em @{related_channel} para continuar usando este bot.
+  SYSTEM_MESSAGING_OPTION: Notificações de Atualização do Bot
+  TAGS: Marcadores
+  TANKS_BRUH: Valeuzaum manooo!
+  TOO_LONG_QUERY_FOR_SHORTLINK: |
+    Sua consulta é muito longa (o limite é de cerca de 35-40 caracteres).
+  TOO_MANY_DOWNLOADS: Muitos downloads ativos. Por favor, espere que eles terminem.
+  TRANSMITTED_FROM: 'transmitido de {source}'
+  UPGRADE_MAINTENANCE: |
+    ```Uma grande atualização está acontecendo, volte aqui amanhã```[‌]({upgrade_maintenance_picture_url})
+  UPLOADED_TO_TELEGRAM: carregado para o Telegram...
+  VIEWS_CANNOT_BE_SHARED: Faça sua própria pesquisa, os comandos não podem ser compartilhados.
+  YEAR: Ano
+ru:
+  ABSTRACT: Аннотация
+  ALREADY_DOWNLOADING: Уже качаем!
+  AUTHORS: Авторы
+  BANNED: |
+    Вы заблокированы до **{datetime} UTC**.
+    Причина: **{reason}**
+  BANNED_FOR_SECONDS: |
+    Вы заблокированы на **{seconds} сек.**
+    Причина: **{reason}**
+  BAN_MESSAGE_TOO_MANY_REQUESTS: Слишком частые запросы
+  CLOSE: Закрыть
+  COULD_NOT_FIND_ANYTHING: Ничего не найдено:(
+  DESCRIPTION: Описание
+  DISABLE_DISCOVERY: Если вы не хотите получать персонализированые рекомендации, то вы можете выключить Nexus Discovery в /settings
+  DISCOVERY_PROMPT: 🦘 **Посмотрите-ка что я нашел для вас:** 🦘
+  DOWNLOAD: Загрузить
+  DOWNLOADED: загружено
+  DOWNLOADING: загружаем...
+  DOWNLOAD_CANCELED: |
+    Наши сервера перезагружаются.
+    Пожалуйста, повторите попытку загрузки `{document}` через 1 минуту.
+  EDITION: Редакция
+  FILE: Файл
+  HELP: |
+    Привет! Я бот **Nexus**!
+    Я могу искать книги и публикации по тексту, авторам или DOI.
+
+    Просто напишите мне что вы хотите найти.
+
+    **Примеры**
+    - `Божественная комедия Данте`
+    - `https://doi.org/10.1159/000477855`
+    - Искать только книги: `📚 JavaScript`
+    - Искать по автору: `authors:Jack authors:London`
+    - Точное совпадение: `"Fetal Hemoglobin"`
+    - Отфильтровать по формату (кроме pdf): `+JavaScript format:+epub`
+    - Отфильтровать по языку: `+JavaScript 🇪🇸`
+    - Упорядочить по дате: `JavaScript order_by:date`
+
+    **Экспертный синтаксис**
+    `+` помечаются слова или фильтры, которые обязаны быть в результатах:
+    - `+JavaScript lang:ru` найдет **все** JavaScript книги, но книги на русском будут выше в поиске
+    - `+JavaScript lang:+ru` найдет JavaScript книги **только** на русском
+
+    `-` помечаются слова, которых не должно быть в результатах
+    - `fetal -hemoglobin` вернет все статьи со словом fetal, но без hemoglobin
+
+    Поля для сортировки: `date`
+
+    `date` - время выпуска статьи (unixtime)
+
+    **Навигация**
+    На экране просмотра статьи есть несколько кнопок для дальнейшей навигации
+
+    - Все ссылки кликабельны. В некоторых версиях Telegram после клика на ссылку нужно нажать появишуюся кнопку Start.
+    - 📰 открыть статьи из того же журнала
+    - 🔗 открыть статьи, ссылающиеся на открытую
+
+    **Commands**
+    /aboutus - про нас
+    /copyright - пожаловаться на нарушение авторских прав
+    /help - показать эту страничку
+    /howtohelp - как помочь нам?
+    /profile - ваш профиль
+    /rank - показать подробную статистику по запросу
+    /riot - клонировать бота
+    /roll <запрос> - случайная книга по <запросу>
+    /seed - как раздавать публикации другим?
+    /settings - настройки бота
+    /trends - нарисовать график трендов в науке
+
+    Что будем читать сегодня?
+  HOW_TO_HELP: |
+    Как вы можете помочь нам?
+
+    **Подпишитесь**: [Telegram](https://t.me/{related_channel}) - [Twitter]({twitter_contact_url})
+
+    **Поделитесь доступом к статьям**
+    Напишите в [Nexus community](https://t.me/joinchat/SKgGpCnrzMdkMRxJ) если вы хотите поделиться вашим доступом к научным статьям. Нам могут помочь:
+
+    - Телефоны с Android 4.4+, подлюченные к институтским WiFi. Через них мы поможем организовать точку доступа к статьям
+    - VPS (небольшие, размещенные в UK/US/Singapore) в Oracle / Digital Ocean / GitHub
+    - Университетские VPNs профили без 2FA
+    - Компьютеры внутри вашей университетской сети, к которым вы имеете доступ для размещения v2ray сервера
+
+    **Станьте сидером**
+    Книги и статьи необходимо хранить распределенно и тогда не будет возможности уничтожить хранилище. Такие технологии как торренты и [IPFS](https://en.wikipedia.org/wiki/InterPlanetary_File_System) позволяют сохранить к себе часть базы данных статей и книг, а затем раздавать их нуждающимся. Все происходит в автоматическом режиме, от вас требуется лишь место на жестком диске и соединение с интернетом.
+    Кликните на /seed, чтобы узнать как стать сидером.
+  INVALID_SYNTAX_ERROR: |
+    ```Ух, сложноватый запрос для меня, кто-то где-то перемудрил:)
+    Пришли мне DOI, MD5 или просто название того документа, который ты хотел найти!
+    Попробуйте поставить скобки или убрать/добавить больше +/-.```[‌]({too_difficult_picture_url})
+  JOURNAL: Журнал
+  LEGACY: Мы обновились, старые виджеты теперь не работают:( Пожалуйста, выполните
+    поиск заново.
+  LOOKING_AT: 'ищем в {source}...'
+  MAINTENANCE: |
+    ```Упс! Что-то сломалось, но мы уже в курсе и чиним.
+    Загляните к нам чуть позже.```
+    
+    Пока можете поискать свою книгу в библиотеке [Стандартных Шаблонных Конструкций](http://standard-template-construct.org)
+    [‌]({error_picture_url})
+  MAINTENANCE_WO_PIC: Упс! Загляните к нам чуть позже.
+  NAMELESS: Без названия
+  NEXUS_CONNECTOME_DESCRIPTION: |
+    **Nexus Connectome** позволяет другим пользователям просматривать ваш профиль и находить вас по вашим интересам и последним прочитанным статьям.
+  NEXUS_DISCOVERY_DESCRIPTION: |
+    **Nexus Discovery** - сервис рекомендаций и уведомлений о новых статьях, которые вы искали ранее.
+  PROMO: |
+    **Nexus Search - Новости и обновления**
+    @{related_channel}
+  REFERENCED_BY: Ссылки
+  REPLY_MESSAGE_HAS_BEEN_DELETED: Сообщение с запросом было удалено/перемещено, выполните поиск заново.
+  SEARCHING: '`ищем...`'
+  SEND_YOUR_LOCATION: Отправьте вашу геопозицию (кнопка прикрепления файла слева)
+  SETUP_AUTOMATICALLY: Установить автоматически
+  SETUP_MANUALLY: Установить вручную
+  SOMEONE_UPLOADED_FILE: '⚡️ Кто-то загрузил `{document}` для вас. Попробуйте поискать сейчас.'
+  SOURCES_UNAVAILABLE: 'Прямо сейчас `{document}` недоступен. Если кто-то загрузит статью для вас в бота, я напишу вам об этом.'
+  SUBSCRIBE_TO_CHANNEL: Подпишитесь на @{related_channel}, чтобы использовать этот бот.
+  SYSTEM_MESSAGING_OPTION: Сообщения об обновлениях
+  TAGS: Теги
+  TANKS_BRUH: И тебе того же, братишка!
+  TOO_LONG_QUERY_FOR_SHORTLINK: |
+    Слишком длинный запрос для shortlink (допускается 35-40 символов запроса).
+  TOO_MANY_DOWNLOADS: Слишком много активных загрузок. Пожалуйста, дождитесь их завершения.
+  TRANSMITTED_FROM: 'передано из {source}'
+  UPGRADE_MAINTENANCE: |
+    ```Идет большое обновление, загляните к нам на огонек завтра```[‌]({upgrade_maintenance_picture_url})
+  UPLOADED_TO_TELEGRAM: загружено в Телеграм...
+  VIEWS_CANNOT_BE_SHARED: Выполните поиск сами, команду нельзя передавать другому пользователю.
+  YEAR: Год
+uk:
+  ABSTRACT: Анотація
+  ALREADY_DOWNLOADING: Вже завантажується
+  AUTHORS: Автори
+  BANNED: |
+    Ви заблоковані до **{datetime} UTC**.
+    Причина: **{reason}**
+  BANNED_FOR_SECONDS: |
+    Ви заблоковані на **{seconds} сек.**
+    Причина: **{reason}**
+  BAN_MESSAGE_TOO_MANY_REQUESTS: Занадто часті запити
+  CLOSE: Закрити
+  COULD_NOT_FIND_ANYTHING: Нічого не знайдено:(
+  DESCRIPTION: Опис
+  DISABLE_DISCOVERY: Якщо ви не бажаєте отримувати персональні рекомендації, то ви можете вимкнути Nexus Discovery в /settings
+  DISCOVERY_PROMPT: 🦘 **Подивіться, що я знайшов для вас:** 🦘
+  DOWNLOAD: завантажити
+  DOWNLOADED: завантажено
+  DOWNLOADING: завантажуємо...
+  DOWNLOAD_CANCELED: |
+    Наші сервери перезавантажуються.
+    Будь ласка, повторіть спробу завантаження `{document}` через 1 хвилину.
+  EDITION: Редакція
+  FILE: Файл
+  INVALID_SYNTAX_ERROR: |
+    ```Ух, важкуватий запит для мене, хтось десь перемудрив:)
+    Надішліть мені DOI, MD5 або просто назву того документа, який ви хотіли знайти!
+    Спробуйте поставити дужки або прибрати/додати більше AND/OR.```[‌]({too_difficult_picture_url})
+  JOURNAL: Журнал
+  LEGACY: Ми оновилися, старі віджети тепер не працюють:( Будь ласка, виконайте
+    пошук ще раз.
+  MAINTENANCE: |
+    ```Упс! Щось зламалося, але ми вже в курсі та виправляємо це.
+    Загляньте до нас трохи згодом.```[‌]({error_picture_url})
+  MAINTENANCE_WO_PIC: Упс! Загляньте до нас трохи згодом.
+  NAMELESS: Без назви
+  NEXUS_CONNECTOME_DESCRIPTION: |
+    **Nexus Connectome** дозволяє іншим користувачам бачити ваш профіль і знаходити вас за інтересами та останніми прочитаними статтями.
+  NEXUS_DISCOVERY_DESCRIPTION: |
+    **Nexus Discovery** - сервіс рекомендацій та повідомлень про нові статті, які ви шукали раніше.
+  PROMO: |
+    **Nexus Search - Новини та оновлення**
+    @{related_channel}
+  REFERENCED_BY: Посилання
+  REPLY_MESSAGE_HAS_BEEN_DELETED: Повідомлення із запитом було видалено/переміщено, виконайте пошук знову.
+  SEARCHING: '`шукаємо...`'
+  SEND_YOUR_LOCATION: Надішліть вашу геопозицію (кнопка прикріплення файлу зліва)
+  SETUP_AUTOMATICALLY: Встановити автоматично
+  SETUP_MANUALLY: Встановити вручну
+  SOURCES_UNAVAILABLE: 'Зараз `{document}` недоступний. Спробуйте скачати його пізніше.'
+  SUBSCRIBE_TO_CHANNEL: Підпишіться на @{related_channel}, щоб мати можливість використовувати цього бота.
+  SYSTEM_MESSAGING_OPTION: Повідомлення про оновлення
+  TAGS: Теги
+  TANKS_BRUH: І тобі того ж, серденько!
+  TOO_LONG_QUERY_FOR_SHORTLINK: |
+    Занадто довгий запит для shortlink (допускається 35-40 символів запиту).
+    Спробуйте використати NID для створення запиту.
+    Відкрийте сторінку книги або статті, якими хочете поділитися, скопіюйте звідти NID
+    та створіть запит виду `NID: <NID>`. Для цього ж запиту ви можете створити shortlink.
+  TOO_MANY_DOWNLOADS: Занадто багато активних завантажень. Будь ласка, дочекайтеся їх завершення.
+  UPGRADE_MAINTENANCE: |
+    ```Йде велике оновлення, загляньте до нас на вогник завтра```[‌]({upgrade_maintenance_picture_url})
+  UPLOADED_TO_TELEGRAM: завантажено в Телеграм...
+  VIEWS_CANNOT_BE_SHARED: Виконайте пошук власноруч, цю команду не можна передавати іншому користувачеві.
+  YEAR: Рік

@@ -1,0 +1,17 @@
+services:
+  ipfs:
+    image: ipfs/kubo:latest
+    environment:
+      IPFS_PROFILE: server
+  tgbot:
+    build:
+      args:
+        MODE: light
+      context: .
+      dockerfile: tgbot/Dockerfile
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    env_file:
+      - .env.light
+    restart: always

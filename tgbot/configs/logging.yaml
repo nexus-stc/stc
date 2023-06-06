@@ -1,0 +1,86 @@
+---
+
+logging:
+  disable_existing_loggers: false
+  formatters:
+    base:
+      class: izihawa_loglib.formatters.BaseFormatter
+    default:
+      class: izihawa_loglib.formatters.DefaultFormatter
+    traceback:
+      class: izihawa_loglib.formatters.TracebackFormatter
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: WARNING
+      stream: 'ext://sys.stderr'
+    debug:
+      class: izihawa_loglib.handlers.BaseFileHandler
+      filename: '{{ log_path }}/debug.log'
+      formatter: default
+      level: DEBUG
+    error:
+      class: izihawa_loglib.handlers.BaseFileHandler
+      filename: '{{ log_path }}/error.log'
+      formatter: default
+      level: ERROR
+    operation:
+      class: izihawa_loglib.handlers.BaseFileHandler
+      filename: '{{ log_path }}/operation.log'
+      formatter: base
+      level: DEBUG
+    statbox:
+      class: izihawa_loglib.handlers.BaseFileHandler
+      filename: '{{ log_path }}/statbox.log'
+      formatter: default
+      level: INFO
+    traceback:
+      class: izihawa_loglib.handlers.BaseFileHandler
+      filename: '{{ log_path }}/traceback.log'
+      formatter: traceback
+      level: ERROR
+    warning:
+      class: izihawa_loglib.handlers.BaseFileHandler
+      filename: '{{ log_path }}/warning.log'
+      formatter: default
+      level: WARNING
+  loggers:
+    aiobaseclient:
+      handlers:
+        - error
+        - warning
+      propagate: false
+    chardet:
+      handlers:
+        - error
+      propagate: false
+    debug:
+      handlers:
+        - debug
+      propagate: false
+    error:
+      handlers:
+        - console
+        - error
+        - traceback
+        - warning
+      propagate: false
+    operation:
+      handlers:
+        - operation
+      propagate: false
+    statbox:
+      handlers:
+        - statbox
+      propagate: false
+    telethon:
+      handlers:
+        - error
+        - warning
+      propagate: false
+  root:
+    handlers:
+      - console
+      - debug
+    level: DEBUG
+  version: 1

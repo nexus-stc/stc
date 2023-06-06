@@ -1,0 +1,4 @@
+aiohttp
+summa_embed>=0.15.18
+termcolor
+fire

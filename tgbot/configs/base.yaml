@@ -1,0 +1,101 @@
+---
+
+application:
+  bot_version: 2.0.0
+  btc_donate_address: '357vJAFsYeCtLU36MYEgaDueg34rr5ajCy'
+  # List of chat IDs that is allowed to bypass maintenance mode
+  bypass_maintenance: []
+  data_directory: /usr/lib/stc-tgbot
+  # Debugging mode
+  debug: true
+  # URL of picture to show in error message
+  error_picture_url:
+  eth_donate_address: '0x199bECe965e4e1e2fE3065d3F551Ebe8520AC555'
+  # Enabled indices
+  # All users (except `bypass_maintenance` ones) will get UPGRADE_MAINTENANCE message in response
+  is_maintenance_mode: false
+  # Set to true for restricting writing operations (such as submitting files or requesting new ones)
+  is_read_only: false
+  # Default page size for SERP
+  page_size: 5
+  # Length of generated Request-ID used for tracking requests across all backends
+  request_id_length: 12
+  # Length of generated Session-ID used in commands to clue user sessions
+  session_id_length: 8
+  sol_donate_address: 'FcJG17cEyG8LnNkdJg8HCAQQZKxqpwTupD9fc3GXMqxD'
+  # URL of picture to show in the message about queries with invalid syntax
+  too_difficult_picture_url:
+  # URL of picture to show in maintenance message
+  upgrade_maintenance_picture_url:
+  xmr_donate_address: '42HZx5Cg1uQ2CtCrq7QabP23BN7gBrGu6U6QumkMmR4bKS61gcoP8xyNzP5cJCbjac9yaWFhLsDmM3adMWyBKBXn1d9WiUb'
+  xrp_donate_address: 'rw2ciyaNshpHe7bCHo4bRWq6pqqynnWKQg'
+  xrp_donate_tag: '1968122674'
+  # Number of async routines for starting all boots
+  workers: 8
+# File Flow service for storing files. Cannot be used in light mode
+file_flow:
+  enabled: false
+ipfs:
+  # Base URL for IPFS Gateway. You can choose any public gateway, such as https://dweb.link/ or https://ipfs.io/
+  # or setup your own gateway locally and set it with http://127.0.0.1:8080
+  base_url: http://ipfs:8080/
+# Configure Librarian service for uploading files. Cannot be used in light mode
+librarian:
+  # Credentials of admin account for managing Aaron's groups
+  admin:
+    app_id:
+    app_hash:
+    phone:
+  # Credentials of bot account for posting messages
+  bot:
+    app_id:
+    app_hash:
+    bot_name:
+    bot_token:
+  enabled: false
+  group_name: 'nexus_aaron'
+  moderators: []
+  # How large should be difference between correct and incorrect votes for approving
+  required_votes: 2
+  # Can solely approve uploaded items
+  super_moderators: []
+log_path: /var/log/stc-tgbot
+# Configure Metadate retriever for ingesting new files. Cannot be used in light mode
+metadata_retriever:
+  # Configuration of Crossref API Client
+  crossref_api:
+    timeout: 15
+    user_agent: anon@example.com
+  enabled: false
+  # Index for committing changes
+  index_alias: nexus_science
+telegram:
+  # Enabled handlers
+  command_handlers:
+    - tgbot.handlers.aboutus.AboutusHandler
+    - tgbot.handlers.close.CloseHandler
+    - tgbot.handlers.download.DownloadHandler
+    - tgbot.handlers.howtohelp.HowToHelpHandler
+    - tgbot.handlers.help.HelpHandler
+    - tgbot.handlers.riot.RiotHandler
+    - tgbot.handlers.riot.RiotBFHandler
+    - tgbot.handlers.riot.RiotOldHandler
+    - tgbot.handlers.riot.RiotCredHandler
+    - tgbot.handlers.roll.RollHandler
+    - tgbot.handlers.shortlink.ShortlinkHandler
+    - tgbot.handlers.start.StartHandler
+    - tgbot.handlers.stop.StopHandler
+    - tgbot.handlers.view.ViewHandler
+    - tgbot.handlers.noop.NoopHandler
+  # Channel that will be shown in /help, /howtohelp and in promotions
+  related_channel: nexus_search
+  search_handlers:
+    - tgbot.handlers.search.SearchHandler
+    - tgbot.handlers.search.SearchEditHandler
+    - tgbot.handlers.search.SearchPagingHandler
+    - tgbot.handlers.search.InlineSearchHandler
+summa:
+  query_processor:
+    profile: full
+twitter:
+  contact_url: https://twitter.com/the_superpirate

@@ -1,0 +1,9 @@
+aiosumma==2.40.2
+beautifulsoup4
+ipfs-hamt-directory-py
+izihawa_nlptools
+lxml
+pandas
+PyCryptodome
+pypdf==3.8.1
+seaborn

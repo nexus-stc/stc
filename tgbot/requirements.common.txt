@@ -1,0 +1,14 @@
+aiobaseclient
+aiocrossref
+aiokit
+aiosqlite
+base36
+dateparser
+emoji
+izihawa_configurator
+izihawa_loglib
+izihawa_utils
+lru-dict
+sqlalchemy
+telethon
+uvloop

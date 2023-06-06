@@ -1,2 +1,0 @@
-stc-tools>=1.0.17
-telethon==1.28.5
