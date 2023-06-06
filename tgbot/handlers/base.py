@@ -94,6 +94,9 @@ class BaseHandler(ABC):
         self.application = application
         self.bot_config = bot_config
         self.extra_warning = extra_warning
+        self.bot_index_aliases = [
+            index_alias for index_alias in bot_config['index_aliases'].split(',')
+        ]
 
     async def get_scored_document(self, index_aliases, field: str, value: str):
         queries = self.application.query_processor.process(

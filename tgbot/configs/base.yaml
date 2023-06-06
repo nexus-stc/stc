@@ -8,6 +8,9 @@ application:
   data_directory: /usr/lib/stc-tgbot
   # Debugging mode
   debug: true
+  # Default indices for new rioted bots
+  default_riot_indices:
+    - nexus_books
   # URL of picture to show in error message
   error_picture_url:
   eth_donate_address: '0x199bECe965e4e1e2fE3065d3F551Ebe8520AC555'

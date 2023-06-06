@@ -26,7 +26,7 @@ class RollHandler(BaseHandler):
             self.application.query_processor.process(
                 query,
                 page_size=1,
-                index_aliases=self.bot_config['index_aliases'].split(',')
+                index_aliases=self.bot_index_aliases
             )
         )
         documents = response.collector_outputs[0].documents.scored_documents

@@ -112,7 +112,7 @@ class SeedHandler(BaseHandler):
             queries = self.application.query_processor.process(
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
-                index_aliases=self.bot_config['index_aliases'].split(','),
+                index_aliases=self.bot_index_aliases,
                 extra_filter={'exists': {'field': 'cid'}},
                 fields=['cid', 'doi', 'md5', 'title', 'authors', 'issued_at', 'metadata', 'filesize'],
                 collector='reservoir_sampling',
@@ -126,7 +126,7 @@ class SeedHandler(BaseHandler):
             queries = self.application.query_processor.process(
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
-                index_aliases=self.bot_config['index_aliases'].split(','),
+                index_aliases=self.bot_index_aliases,
                 extra_filter={'exists': {'field': 'cid'}},
                 fields=['cid', 'doi', 'md5', 'title', 'authors', 'issued_at', 'metadata', 'filesize'],
                 page=page,

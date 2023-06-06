@@ -49,7 +49,7 @@ class ViewHandler(BaseHandler):
 
         try:
             scored_document = await self.get_scored_document(
-                self.bot_config['index_aliases'].split(','),
+                self.bot_index_aliases,
                 'cid',
                 cid,
             )

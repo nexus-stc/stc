@@ -75,7 +75,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                 request_context=request_context,
                 chat=request_context.chat,
                 query=query,
-                index_aliases=self.bot_config['index_aliases'].split(','),
+                index_aliases=self.bot_index_aliases,
                 is_group_mode=request_context.is_group_mode(),
             )
         except InvalidSearchError:
@@ -106,7 +106,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                     request_context=request_context,
                     chat=request_context.chat,
                     query=query,
-                    index_aliases=self.bot_config['index_aliases'].split(','),
+                    index_aliases=self.bot_index_aliases,
                     is_group_mode=request_context.is_group_mode(),
                 )
 
@@ -141,7 +141,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                             request_context=request_context,
                             chat=request_context.chat,
                             query=query,
-                            index_aliases=self.bot_config['index_aliases'].split(','),
+                            index_aliases=self.bot_index_aliases,
                             is_group_mode=request_context.is_group_mode(),
                         )
                         holder = BaseHolder.create(search_widget.scored_documents[0])
@@ -258,7 +258,7 @@ class InlineSearchHandler(BaseSearchHandler):
                 request_context=request_context,
                 chat=request_context.chat,
                 query=query,
-                index_aliases=self.bot_config['index_aliases'].split(','),
+                index_aliases=self.bot_index_aliases,
                 is_group_mode=request_context.is_group_mode(),
             )
             items = inline_search_widget.render(builder=builder, request_context=request_context)
@@ -348,7 +348,7 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
                 request_context=request_context,
                 chat=request_context.chat,
                 query=query,
-                index_aliases=self.bot_config['index_aliases'].split(','),
+                index_aliases=self.bot_index_aliases,
                 page=page,
             )
         except (InvalidSearchError, UnavailableSummaError):

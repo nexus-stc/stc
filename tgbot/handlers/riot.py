@@ -33,6 +33,7 @@ class RiotBFHandler(BaseHandler):
                 bot_name=bot_name,
                 bot_token=bot_token,
                 user_id=int(event.message.peer_id.user_id),
+                index_aliases=self.application.config['application']['default_riot_indices'],
             )
             await event.reply(
                 'Done! Now you should provide application credentials for launching your bot.\n'
@@ -90,7 +91,6 @@ class RiotCredHandler(BaseHandler):
     is_group_handler = False
 
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
-        request_context.statbox(action='cred', mode='riot')
         bot_name = event.pattern_match.group(1)
         app_id = event.pattern_match.group(2)
         app_hash = event.pattern_match.group(3)
