@@ -38,7 +38,7 @@ class RiotBFHandler(BaseHandler):
                 'Done! Now you should provide application credentials for launching your bot.\n'
                 'Follow [guide](https://core.telegram.org/api/obtaining_api_id#obtaining-api-id) and '
                 'then send here bot credentials in the following format:\n'
-                '`/riot @{bot_name.strip()} <api_id> <api_hash>`\n'
+                f'`/riot @{bot_name.strip()} <api_id> <api_hash>`\n'
                 'N.B: The only required fields will be App Name and Short Name'
             )
             raise events.StopPropagation()

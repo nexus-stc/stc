@@ -174,7 +174,7 @@ class DynamicBotManager(AioThing):
                             target_bots[row['bot_name']] = row
                     logging.getLogger('statbox').info({
                         'action': 'reload',
-                        'mode': 'started_reloading',
+                        'mode': 'dynamic_bot',
                         'bots': len(target_bots)
                     })
                     ready_bots = []
