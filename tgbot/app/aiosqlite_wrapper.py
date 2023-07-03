@@ -17,6 +17,3 @@ class AioSqlite(AioThing):
     async def start(self):
         self.db = await self.db
         self.db.row_factory = dict_factory
-
-    def __getattr__(self, item):
-        return getattr(self.db, item)

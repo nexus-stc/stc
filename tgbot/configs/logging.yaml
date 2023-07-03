@@ -12,7 +12,7 @@ logging:
   handlers:
     console:
       class: logging.StreamHandler
-      level: WARNING
+      level: INFO
       stream: 'ext://sys.stderr'
     debug:
       class: izihawa_loglib.handlers.BaseFileHandler
@@ -71,6 +71,7 @@ logging:
       propagate: false
     statbox:
       handlers:
+        - console
         - statbox
       propagate: false
     telethon:
@@ -80,7 +81,6 @@ logging:
       propagate: false
   root:
     handlers:
-      - console
       - debug
     level: DEBUG
   version: 1

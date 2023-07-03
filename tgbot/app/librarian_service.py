@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import time
+import traceback
 from datetime import datetime, timedelta
 
 from aiokit import AioThing
@@ -13,18 +14,12 @@ from library.pdftools.exceptions import PdfProcessingError, PyPdfError
 from library.regexes import DOI_REGEX
 from library.telegram.base import BaseTelegramClient
 from library.telegram.utils import safe_execution
+from tgbot.app.query_builder import get_type_icon
 from tgbot.views.telegram.base_holder import BaseHolder
 from tgbot.views.telegram.common import vote_button
 
-icons = {
-    'book': '📚',
-    'monograph': '📚',
-    'chapter': '🔖',
-    'book-chapter': '🔖',
-}
 
-
-async def add_extra_links(request_text, doi, crossref_client=None):
+async def add_publisher_links(request_text, doi, crossref_client=None):
     if doi.startswith('10.1080/'):
         request_text += f' - [T&F](https://www.tandfonline.com/doi/pdf/{doi}?download=true)'
     elif doi.startswith('10.1111/'):
@@ -73,14 +68,14 @@ class LibrarianService(AioThing):
     async def cleanup(self, collect_task):
         try:
             while 1:
-                logging.getLogger('statbox').info({
+                logging.getLogger('debug').debug({
                     'action': 'delete_outdated',
                     'mode': 'librarian_service',
                     'n': len(self.requests),
                 })
                 await self.delete_messages(before_date=time.mktime((datetime.utcnow() - timedelta(hours=46)).timetuple()))
                 await collect_task
-                logging.getLogger('statbox').info({
+                logging.getLogger('debug').debug({
                     'action': 'check_already_uploaded',
                     'mode': 'librarian_service',
                     'n': len(self.requests),
@@ -91,17 +86,18 @@ class LibrarianService(AioThing):
                         'doi',
                         doi.lower()
                     ):
-                        if 'cid' in document:
+                        if 'links' in document and document['links']['type'] == 'primary':
                             await self.delete_request(doi)
                 await asyncio.sleep(3600)
         except Exception as e:
-            logging.getLogger('debug').error({
+            logging.getLogger('error').error({
                 'action': 'cleanup_failed',
                 'mode': 'librarian_service',
                 'error': str(e),
+                'tb': traceback.format_tb()
             })
         except asyncio.CancelledError:
-            logging.getLogger('debug').error({
+            logging.getLogger('debug').debug({
                 'action': 'cleanup_cancelled',
                 'mode': 'librarian_service',
             })
@@ -145,10 +141,74 @@ class LibrarianService(AioThing):
             if doi_regex:
                 return doi_regex.group(1) + '/' + doi_regex.group(2)
 
+    def try_download_media(self, message):
+        return message.download_media(file=bytes)
+
     async def collect_all_requests(self):
+        logging.getLogger('debug').debug({
+            'action': 'collecting_requests',
+            'mode': 'librarian_service',
+            'is_grobid_enabled': bool(self.application.grobid_client),
+        })
         async for message in self.admin_telegram_client.iter_messages(self.group_name):
             if doi := self.is_request(message):
                 self.requests[doi] = message.id
+            if False and self.application.grobid_client:
+                if data := await self.try_download_media(message):
+                    logging.getLogger('debug').debug({
+                        'action': 'found_media',
+                        'mode': 'librarian_service',
+                        'filesize': len(data),
+                    })
+                    processed_document = await self.application.grobid_client.process_fulltext_document(pdf_file=data)
+                    if not processed_document or 'doi' not in processed_document:
+                        continue
+                    doi = processed_document['doi'].lower().strip()
+                    reply_message = await message.get_reply_message()
+                    if reply_message:
+                        if doi_hint := self.is_request(reply_message):
+                            if doi_hint != doi:
+                                logging.getLogger('debug').debug({
+                                    'action': 'doi_hint_mismatch',
+                                    'mode': 'librarian_service',
+                                    'doi': doi,
+                                    'doi_hint': doi_hint,
+                                })
+                                continue
+                    if doi not in self.requests:
+                        logging.getLogger('debug').debug({
+                            'action': 'missing_request',
+                            'mode': 'librarian_service',
+                            'doi': doi,
+                        })
+                        await self.admin_telegram_client.delete_messages(self.group_name, [message.id])
+                        continue
+                    document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi)
+                    try:
+                        data = await asyncio.wait_for(
+                            asyncio.get_running_loop().run_in_executor(
+                                None,
+                                lambda: clean_metadata(data, doi=doi)
+                            ),
+                            timeout=600.0,
+                        )
+                    except asyncio.TimeoutError:
+                        logging.getLogger('warning').warning({
+                            'action': 'timeout',
+                            'mode': 'librarian_service',
+                            'doi': doi,
+                        })
+                    await self.application.file_flow.pin_add(document, data)
+                    try:
+                        await self.admin_telegram_client.delete_messages(self.group_name, [message.id])
+                        await self.delete_request(doi)
+                    except Exception as e:
+                        logging.getLogger('error').error({
+                            'action': 'fail_to_delete',
+                            'doi': doi,
+                            'mode': 'librarian_service',
+                            'error': str(e)
+                        })
         logging.getLogger('debug').debug({
             'action': 'collect',
             'mode': 'librarian_service',
@@ -157,15 +217,15 @@ class LibrarianService(AioThing):
 
     async def request(self, doi: str, type_):
         if doi not in self.requests:
-            logging.getLogger('debug').debug({
+            logging.getLogger('statbox').info({
                 'action': 'send_request',
                 'mode': 'librarian_service',
                 'doi': doi,
                 'type': type_,
             })
             prefix = doi.split('/')[0].split('.', 1)[1].replace('.', '_')
-            request_text = f'#request #p_{prefix} {icons.get(type_, "🔬")} https://doi.org/{doi}'
-            request_text = await add_extra_links(request_text, doi, self.application.metadata_retriever.crossref_client)
+            request_text = f'#request #p_{prefix} {get_type_icon(type_)} https://doi.org/{doi}'
+            request_text = await add_publisher_links(request_text, doi, self.application.metadata_retriever.crossref_client)
             message = await self.bot_telegram_client.send_message(
                 self.group_name,
                 request_text,
@@ -176,7 +236,7 @@ class LibrarianService(AioThing):
 
     async def delete_request(self, doi: str):
         message_id = self.requests.pop(doi, None)
-        logging.getLogger('debug').debug({
+        logging.getLogger('statbox').info({
             'action': 'delete_request',
             'mode': 'librarian_service',
             'doi': doi,
@@ -213,7 +273,7 @@ class LibrarianService(AioThing):
         short_abstract = (
             holder.view_builder(request_context.chat['language'])
             .add_short_abstract()
-            .add_doi_link(label=True, on_newline=True)
+            .add_external_provider_link(label=True, on_newline=True, text=holder.doi)
             .build()
         )
         caption = f"{short_abstract}\n\n#voting"

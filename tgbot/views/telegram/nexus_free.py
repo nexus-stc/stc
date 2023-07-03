@@ -1,9 +1,9 @@
 from typing import Optional
 
-from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder, highlight_markdown
+from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder
 
 
-class NexusBooksButtonsBuilder(BaseButtonsBuilder):
+class NexusFreeButtonsBuilder(BaseButtonsBuilder):
     def add_default_layout(self, bot_name, position: int = 0, is_group_mode: bool = False):
         if is_group_mode:
             return (
@@ -17,9 +17,7 @@ class NexusBooksButtonsBuilder(BaseButtonsBuilder):
             )
 
 
-class NexusBooksViewBuilder(BaseViewBuilder):
-    icon = '📚'
-
+class NexusFreeViewBuilder(BaseViewBuilder):
     def add_edition(self, with_brackets=True, bold=False):
         edition = self.document_holder.edition
         if edition:
@@ -41,6 +39,10 @@ class NexusBooksViewBuilder(BaseViewBuilder):
 
     def add_title(self, bold=True):
         title = self.document_holder.title or ''
+        if self.document_holder.iso_id:
+            title = f'{self.document_holder.iso_id.upper()} - {title}'
+        elif self.document_holder.bs_id:
+            title = f'{self.document_holder.bs_id.upper()} - {title}'
         if self.document_holder.periodical:
             if title:
                 title += f' ({self.document_holder.periodical})'
@@ -55,18 +57,11 @@ class NexusBooksViewBuilder(BaseViewBuilder):
         self.add_edition(with_brackets=True, bold=bold)
         return self
 
-    def add_snippet(self, on_newline=True):
-        snippet = self.document_holder.snippets.get('abstract')
-        if snippet and snippet.highlights:
-            if on_newline:
-                self.add_new_line()
-            self.add(highlight_markdown(snippet), escaped=True)
-        return self
-
-    def add_locator(self, first_n_authors=1, markup=True):
+    def add_locator(self, first_n_authors=1, markup=True, bot_name=None):
         return (
-            self.add_authors(first_n_authors=first_n_authors, on_newline=True)
+            self.add_authors(first_n_authors=first_n_authors, on_newline=True, bot_name=None)
                 .add_formatted_datetime()
+                .add_pages()
         )
 
     def add_filedata(self, show_filesize=False, with_leading_pipe=False):

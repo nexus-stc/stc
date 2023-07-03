@@ -96,7 +96,7 @@ class RiotCredHandler(BaseHandler):
         app_hash = event.pattern_match.group(3)
         request_context.statbox(action='cred', mode='riot', target_bot_name=bot_name, app_id=app_id, app_hash=app_hash)
         if bot_name and app_id and app_hash:
-            async with self.application.database.bots_db.execute("select owner_id from user_bots where bot_name = ?", (bot_name.strip(),)) as cursor:
+            async with self.application.database.bots_db_wrapper.db.execute("select owner_id from user_bots where bot_name = ?", (bot_name.strip(),)) as cursor:
                 async for row in cursor:
                     if row['owner_id'] != int(event.message.peer_id.user_id):
                         await event.reply(

@@ -50,20 +50,9 @@ en:
     You are banned for **{seconds} second(s)**
     Reason: **{reason}**
   BAN_MESSAGE_TOO_MANY_REQUESTS: Too many requests
+  CID_DISAPPEARED: Wow, we moved file while you were trying to download it. Try to search it again, sorry for inconvenience.
   CLOSE: Close
   CONNECTOME_OPTION: Connectome
-  COPYRIGHT_DESCRIPTION: |
-    If you wish to make a copyright infringement complaint:
-
-    - Start your message with /copyright, then add the new line
-    - Paste view links of items you are claiming about. View link is an item
-    you are clicking on the search page result, i.e. `/v_ip6qnAOB_893608_1749642_3`
-    - Add as a single file (*.zip) all documents confirming you are legal copyright owner or an agent authorized to act on the owner’s behalf.
-
-    Your claim will be considered during 24 hour.
-    Descision to satisfy the claim will make unable the subject to be downloaded but it will be still searchable.
-  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
-    Your claim for copyright infringement has been accepted.
   COULD_NOT_FIND_ANYTHING: Could not find anything:(
   DELETION_FORBIDDEN_DUE_TO_AGE: Telegram doesn't allow me to remove messages older than 2 days :(
   DESCRIPTION: Description
@@ -83,19 +72,43 @@ en:
   FOUND_N_ITEMS: '{count} results'
   HELP: |
     Hi! I'm **Nexus** bot!
-    I can search books or scientific articles by titles, authors or DOIs.
+    I can search books or scientific articles by titles, authors, DOIs, their contents etc.
 
     Just type your request in plain words.
 
     **Examples**
     - `Divine Comedy Dante`
     - `https://doi.org/10.1159/000477855`
-    - Search in the books only: `📚 JavaScript`
-    - Search by author: `authors:Jack authors:London`
+    - Filter by item type: `📚 JavaScript`
     - Exact match: `"Fetal Hemoglobin"`
-    - Filter formats (all except pdf): `+JavaScript format:+epub`
     - Filter languages: `+JavaScript 🇪🇸`
-
+    - For ordering by date, add `order_by:date` to your query
+    - Search by specific field in the database: `authors:London`, `pub:"Elsevier BV"`, `ser:"Medieval Media Cultures"`
+    
+    **List of fields:**
+    `abstract`, `authors`, `concepts`, `content`, `doi`, `ev`(event), `extra` (see below), `isbns`, `issued_at` (in Unixtime), `issns`,
+    `pub`(publisher), `ser`(series), `tags`, `title`
+    
+    **Extra field**
+    Contains out-of-scheme fields, for example - ISO/BS standard numbers that can be used in the following way: `extra:"iso iec 10279 1991"`
+    
+    **Item types**
+    - book - `📚`
+    - book-chapter - `🔖`
+    - chapter - `🔖`
+    - dataset - `📊`
+    - component - `📊`
+    - dissertation - `🧑‍🎓`
+    - edited-book - `📚`
+    - journal-article - `🔬`
+    - monograph - `📚`
+    - peer-review - `🤝`
+    - proceedings - `📚`
+    - proceedings-article - `🔬`
+    - reference-book - `📚`
+    - report - `📝`
+    - standard - `🛠`
+    
     **Extended syntax**
     `+` sign makes words or filtration by field mandatory:
     - `+JavaScript language:en` returns **all** JavaScript books but books in English will be ranked higher
@@ -103,10 +116,6 @@ en:
 
     `-` sign removes documents with the word
     - `fetal -hemoglobin` returns all articles about fetal whatever but not hemoglobin
-
-    Possible fields for ordering: `date`
-
-    `date` - issuing unixtime
 
     **Navigation**
     I can help to navigate through references and journals. There are multiple links and buttons
@@ -120,7 +129,6 @@ en:
     /aboutus - tell about us
     /help - show this help
     /howtohelp - learn how to help us
-    /rank - get importance statistics of articles
     /riot - clone this bot
     /roll <query> - get a random book <by the query>
     /seed - learn how to become a seeder
@@ -136,21 +144,43 @@ en:
     **Examples**
     - `/search Divine Comedy Dante`
     - `/search https://doi.org/10.1159/000477855`
-    - Search in the books only: `/search 📚 JavaScript`
-    - Search by author: `/search authors:Jack authors:London`
+    - Filter by item type: `/search 📚 JavaScript`
     - Exact match: `/search "Fetal Hemoglobin"`
-    - Filter formats (all except pdf): `/search +JavaScript format:+epub`
     - Filter languages: `/search +JavaScript 🇪🇸`
+    - For ordering by date, add `order_by:date` to your query
+    - Search by specific field in the database: `authors:London`, `pub:"Elsevier BV"`, `ser:"Medieval Media Cultures"`
 
+    **List of fields:**
+    `abstract`, `authors`, `concepts`, `content`, `doi`, `ev`(event), `extra` (see below), `isbns`, `issued_at` (in Unixtime), `issns`,
+    `pub`(publisher), `ser`(series), `tags`, `title`
+    
+    **Extra field**
+    Contains out-of-scheme fields, for example - ISO/BS standard numbers that can be used in the following way: `extra:"iso iec 10279 1991"`
+    
+    **Item types**
+    - book - `📚`
+    - book-chapter - `🔖`
+    - chapter - `🔖`
+    - dataset - `📊`
+    - component - `📊`
+    - dissertation - `🧑‍🎓`
+    - edited-book - `📚`
+    - journal-article - `🔬`
+    - monograph - `📚`
+    - peer-review - `🤝`
+    - proceedings - `📚`
+    - proceedings-article - `🔬`
+    - reference-book - `📚`
+    - report - `📝`
+    - standard - `🛠`
+    
     **Extended syntax**
     `+` sign makes words or filtration by field mandatory:
-    - `+JavaScript lang:en` returns **all** JavaScript books but books in English will be ranked higher
-    - `+JavaScript lang:+en` returns JavaScript books **only** in English
+    - `+JavaScript language:en` returns **all** JavaScript books but books in English will be ranked higher
+    - `+JavaScript language:+en` returns JavaScript books **only** in English
 
     `-` sign removes documents with the word
     - `fetal -hemoglobin` returns all articles about fetal whatever but not hemoglobin
-
-    Possible fields for ordering: `date`
 
     **Navigation**
     I can help to navigate through references and journals. There are multiple links and buttons
@@ -164,8 +194,6 @@ en:
     /aboutus - tell about us
     /help - show this help
     /howtohelp - learn how to help us
-    /profile - show your profile
-    /rank - get importance statistics of articles
     /riot - clone this bot
     /roll <query> - get a random book <by the query>
     /trends - plot trends graph
@@ -207,7 +235,7 @@ en:
   NEXUS_DISCOVERY_DESCRIPTION: |
     **Nexus Discovery** notifies you about newly arrived publications you were looking for before.
   NO_DOI_HINT: Can't guess what is DOI of this file. Send it as a response to existing request or add DOI in your message with file
-  OUTDATED_VIEW_LINK: Link has been ourdated. Please, do your search again and click on the new link.
+  OUTDATED_VIEW_LINK: Link has been outdated. Please, do your search again and click on the new link.
   PROCESSING_PAPER: '`File {filename} is processed...`'
   PROMO: |
     **Nexus Search - Update and News**
@@ -266,7 +294,7 @@ en:
     You can share these directories with other users after importing them. Just share the CID with anyone and ensure you're online.
     
     **Name template fields**: 
-    `md5`, `doi`, `title`, `authors`, `suggested_filename`, `issued_at`
+    `md5`, `doi`, `title`, `suggested_filename`, `issued_at`
   SEND_YOUR_LOCATION: Send your location (through the left attach button)
   SETUP_AUTOMATICALLY: Setup automatically
   SETUP_MANUALLY: Setup manually
@@ -330,18 +358,6 @@ es:
     Razón: **{reason}**
   BAN_MESSAGE_TOO_MANY_REQUESTS: Demasiadas peticiones
   CLOSE: Cerrar
-  COPYRIGHT_DESCRIPTION: |
-    Si deseas presentar una queja por infracción de derechos de autor:
-
-    - Comienza tu mensaje con /copyright, luego agregua la nueva línea
-    - Pega los enlaces a los ítems sobre los que estás reclamando. Un enlace a un ítem
-    es aquel sobre el que estás haciendo clic en el resultado de la página de búsqueda, es decir, `/vb_FH5fWn2o_3512868_1675254_2`
-    - Agrega como un solo archivo (*.zip) todos los documentos que confirman que eres el propietario legal de los derechos de autor o un agente autorizado para actuar en nombre del propietario.
-
-    Tu reclamo será considerado durante 24 horas.
-    La decisión de satisfacer el reclamo impedirá que se descargue el ítem, pero aún se podrá buscar.
-  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
-    Se ha aceptado su reclamo por infracción de derechos de autor.
   COULD_NOT_FIND_ANYTHING: No pude encontrar nada :(
   DESCRIPTION: Descripción
   DISABLE_DISCOVERY: Si no deseas obtener un feed personalizado, puedes deshabilitar Nexus Discovery en /settings
@@ -406,18 +422,6 @@ it:
     Motivo: **{reason}**
   BAN_MESSAGE_TOO_MANY_REQUESTS: Troppe richieste
   CLOSE: Chiudi
-  COPYRIGHT_DESCRIPTION: |
-    Se vuoi fare un reclamo per violazione di copyright:
-
-    - Inizia il tuo messaggio con /copyright, poi aggiungi una nuova linea
-    - Incolla i link di visualizzazione di tali contenuti. Un link di visualizzazione è un elemento
-    che puoi cliccare sulla pagina dei risultati di ricerca, es. `/v_ip6qnAOB_893608_1749642_3`
-    - Allega come singolo file (*.zip) tutti i documenti che certificano che detieni i diritti di copyright oppure agisci in modo autorizzato per conto del proprietario.
-
-    La tua segnalazione verrà esaminata entro 24 ore.
-    Se accettata, il contenuto non sarà più scaricabile, ma rimarrà comunque cercabile.
-  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
-    La tua segnalazione di violazione di copyright è stata accettata
   COULD_NOT_FIND_ANYTHING: Non ho trovato niente :(
   DESCRIPTION: Descrizione
   DISABLE_DISCOVERY: Se non vuoi ricevere un feed personalizzato, puoi disabilitare Nexus Discovery in /settings
@@ -482,18 +486,6 @@ pb:
     Motivo: **{reason}**
   BAN_MESSAGE_TOO_MANY_REQUESTS: Muitas solicitações
   CLOSE: Fechar
-  COPYRIGHT_DESCRIPTION: |
-    Se você deseja fazer uma reclamação de violação de direitos autorais:
-
-    - Comece sua mensagem com /copyright, então adicionei uma nova linha
-    - Cole os links de visualização dos itens sobre os quais você está reivindicando. O link de visualização é um item em que você clica no resultado da página de pesquisa, ou seja, `/v_ip6qnAOB_893608_1749642_3`
-    - Adicione como um único arquivo (*.zip) todos os documentos que confirmam que você é o proprietário legal dos direitos autorais ou um agente autorizado a agir em nome do proprietário.
-
-    Sua reivindicação será considerada em 24 horas.
-
-    A decisão de atender à reivindicação impossibilitará o download do item, mas ainda será pesquisável.
-  COPYRIGHT_INFRINGEMENT_ACCEPTED: |
-    Sua reivindicação por violação de direitos autorais foi aceita.
   COULD_NOT_FIND_ANYTHING: Não foi possível encontrar nada :(
   DESCRIPTION: Descrição
   DISABLE_DISCOVERY: Se você não deseja obter um feed personalizado, pode desativar o Nexus Discovery em /settings
@@ -570,55 +562,6 @@ ru:
     Пожалуйста, повторите попытку загрузки `{document}` через 1 минуту.
   EDITION: Редакция
   FILE: Файл
-  HELP: |
-    Привет! Я бот **Nexus**!
-    Я могу искать книги и публикации по тексту, авторам или DOI.
-
-    Просто напишите мне что вы хотите найти.
-
-    **Примеры**
-    - `Божественная комедия Данте`
-    - `https://doi.org/10.1159/000477855`
-    - Искать только книги: `📚 JavaScript`
-    - Искать по автору: `authors:Jack authors:London`
-    - Точное совпадение: `"Fetal Hemoglobin"`
-    - Отфильтровать по формату (кроме pdf): `+JavaScript format:+epub`
-    - Отфильтровать по языку: `+JavaScript 🇪🇸`
-    - Упорядочить по дате: `JavaScript order_by:date`
-
-    **Экспертный синтаксис**
-    `+` помечаются слова или фильтры, которые обязаны быть в результатах:
-    - `+JavaScript lang:ru` найдет **все** JavaScript книги, но книги на русском будут выше в поиске
-    - `+JavaScript lang:+ru` найдет JavaScript книги **только** на русском
-
-    `-` помечаются слова, которых не должно быть в результатах
-    - `fetal -hemoglobin` вернет все статьи со словом fetal, но без hemoglobin
-
-    Поля для сортировки: `date`
-
-    `date` - время выпуска статьи (unixtime)
-
-    **Навигация**
-    На экране просмотра статьи есть несколько кнопок для дальнейшей навигации
-
-    - Все ссылки кликабельны. В некоторых версиях Telegram после клика на ссылку нужно нажать появишуюся кнопку Start.
-    - 📰 открыть статьи из того же журнала
-    - 🔗 открыть статьи, ссылающиеся на открытую
-
-    **Commands**
-    /aboutus - про нас
-    /copyright - пожаловаться на нарушение авторских прав
-    /help - показать эту страничку
-    /howtohelp - как помочь нам?
-    /profile - ваш профиль
-    /rank - показать подробную статистику по запросу
-    /riot - клонировать бота
-    /roll <запрос> - случайная книга по <запросу>
-    /seed - как раздавать публикации другим?
-    /settings - настройки бота
-    /trends - нарисовать график трендов в науке
-
-    Что будем читать сегодня?
   HOW_TO_HELP: |
     Как вы можете помочь нам?
 

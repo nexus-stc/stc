@@ -2,8 +2,10 @@ import asyncio
 import logging
 import os
 
+from aiogrobid import GrobidClient
 from aiokit import AioRootThing
 from izihawa_utils.importlib import import_object
+from stc_geck.client import StcGeck
 
 from library.ipfs import IpfsHttpClient
 from library.telegram.dynamic_bot_manager import DynamicBotManager
@@ -11,7 +13,6 @@ from library.telegram.promotioner import Promotioner
 from library.user_manager import UserManager
 from tgbot.app.database import Database
 from tgbot.app.query_builder import QueryProcessor
-from tgbot.app.summa_wrapper import SummaWrapper
 from tgbot.promotions import get_promotions
 
 
@@ -43,13 +44,33 @@ class TelegramApplication(AioRootThing):
             default_bot=config['application'].get('default_bot')
         )
         self.starts.append(self.dynamic_bot_manager)
-        self.summa_client = SummaWrapper(self.config['summa'])
+        self.geck = StcGeck(
+            ipfs_http_base_url=self.config['ipfs']['http']['base_url'],
+            ipfs_data_directory=self.config['summa']['embed']['ipfs_data_directory'],
+            index_aliases=self.config['summa']['embed']['index_aliases'],
+            grpc_api_endpoint=self.config['summa']['endpoint'],
+            embed=self.config['summa']['embed'].get('enabled', True),
+        )
+        self.starts.append(self.geck)
+        self.summa_client = self.geck.get_summa_client()
 
         self.starts.append(self.summa_client)
         self.query_processor = QueryProcessor(self.config['summa']['query_processor']['profile'])
 
-        self.ipfs_http_client = IpfsHttpClient(base_url=config['ipfs']['base_url'], retry_delay=5.0)
+        self.ipfs_http_client = IpfsHttpClient(base_url=config['ipfs']['http']['base_url'], retry_delay=5.0)
         self.starts.append(self.ipfs_http_client)
+
+        self.cloudflare_ipfs_http_client = IpfsHttpClient(base_url='https://cloudflare-ipfs.com', retry_delay=5.0)
+        self.starts.append(self.cloudflare_ipfs_http_client)
+
+        self.grobid_client = None
+        if (
+            'grobid' in self.config
+            and self.config['grobid'].get('enabled', True)
+            and not self.is_read_only()
+        ):
+            self.grobid_client = GrobidClient(base_url=config['grobid']['base_url'])
+            self.starts.append(self.grobid_client)
 
         self.metadata_retriever = None
         if (
@@ -68,7 +89,6 @@ class TelegramApplication(AioRootThing):
         if (
             'librarian' in self.config
             and self.config['librarian'].get('enabled', True)
-            and not self.is_read_only()
         ):
             from tgbot.app.librarian_service import LibrarianService
             self.librarian_service = LibrarianService(
@@ -86,7 +106,7 @@ class TelegramApplication(AioRootThing):
             and not self.is_read_only()
         ):
             from library.integral.file_flow import FileFlow
-            self.file_flow = FileFlow(self.summa_client, self.config['file_flow'])
+            self.file_flow = FileFlow(self.summa_client, self.config['file_flow'], index_alias='nexus_science', ipfs_config=config['ipfs'])
             self.starts.append(self.file_flow)
 
         self.promotioner = Promotioner(
@@ -102,9 +122,13 @@ class TelegramApplication(AioRootThing):
 
     async def start(self):
         await self.summa_client.wait_started()
+        logging.getLogger('statbox').info({
+            'mode': 'application',
+            'action': 'started',
+        })
 
     def is_read_only(self):
-        return self.config['application'].get('is_read_only', False) or self.summa_client.is_read_only
+        return self.config['application'].get('is_read_only', False) or self.geck.embed
 
     def set_handlers(self, telegram_client, bot_config: dict, extra_handlers=None, extra_warning=None):
         for handler in (
@@ -121,6 +145,10 @@ class TelegramApplication(AioRootThing):
     async def stop(self):
         self.dynamic_bot_manager.reloading_task.cancel()
         n = len(self.long_tasks)
+        logging.getLogger('debug').debug({
+            'action': 'stopping_long_tasks',
+            'tasks': n,
+        })
         for download in set(self.long_tasks):
             await download.external_cancel()
         await asyncio.gather(*map(lambda x: x.task, self.long_tasks))

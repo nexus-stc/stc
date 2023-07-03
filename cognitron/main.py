@@ -72,7 +72,7 @@ async def main():
     texts = await request_documents(stc_geck, topic)
 
     embeddings = OpenAIEmbeddings()
-    db = Chroma.from_documents(texts, embeddings, persist_directory="docs.bots_db")
+    db = Chroma.from_documents(texts, embeddings, persist_directory="docs.bots_db_wrapper")
     retriever = db.as_retriever()
     qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type="stuff", retriever=retriever)
     while True:

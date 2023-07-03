@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from telethon import events, functions
@@ -27,27 +28,16 @@ class ViewHandler(BaseHandler):
         messages = await self.application.get_telegram_client(request_context.bot_name)(get_message_request)
         return messages.messages[0]
 
-    async def process_widgeting(self, has_found_old_widget, old_message, request_context: RequestContext):
-        if has_found_old_widget and is_earlier_than_2_days(old_message):
-            message_id = old_message.id
-        else:
-            prefetch_message = await self.application.get_telegram_client(request_context.bot_name).send_message(
-                request_context.chat['chat_id'],
-                t("SEARCHING", request_context.chat['language']),
-                reply_to=old_message.reply_to_msg_id,
-            )
-            message_id = prefetch_message.id
-        return message_id
-
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
         cid = self.parse_pattern(event)
 
-        request_context.add_default_fields(mode='view')
+        request_context.add_default_fields(mode='view', cid=cid)
         request_context.statbox(action='view')
 
         language = request_context.chat['language']
 
         try:
+            prefetch_message = await event.reply(t("SEARCHING", request_context.chat['language']))
             scored_document = await self.get_scored_document(
                 self.bot_index_aliases,
                 'cid',
@@ -57,15 +47,14 @@ class ViewHandler(BaseHandler):
                 return await event.reply(t("OUTDATED_VIEW_LINK", language))
             holder = BaseHolder.create(scored_document)
             promo = self.application.promotioner.choose_promotion(language)
-            view_builder = holder.view_builder(
-                language
-            ).add_view(
-                bot_name=request_context.bot_name
-            ).add_new_line(2).add(promo, escaped=True)
+            view_builder = holder.view_builder(language).add_view(bot_name=request_context.bot_name).add_new_line(2).add(promo, escaped=True)
             buttons = holder.buttons_builder(language).add_default_layout(
                 bot_name=request_context.bot_name,
                 is_group_mode=request_context.is_group_mode(),
             ).build()
-            return await event.reply(view_builder.build(), buttons=buttons, link_preview=False)
+            return await asyncio.gather(
+                event.delete(),
+                prefetch_message.edit(view_builder.build(), buttons=buttons, link_preview=holder.has_cover()),
+            )
         except MessageIdInvalidError:
             return await event.reply(t("VIEWS_CANNOT_BE_SHARED", language))

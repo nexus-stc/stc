@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stc-geck"
-version = "1.0.0"
+version = "1.2.0"
 authors = [{ name = "Interdimensional Walker" }]
 description = "GECK (Garden Of Eden Creation Kit) is a toolkit for setting up and maintaning STC"
 readme = "README.md"
@@ -15,7 +15,7 @@ classifiers = [
 dynamic = ["dependencies"]
 
 [project.scripts]
-stc-geck = "stc_geck.cli:main"
+geck = "stc_geck.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/nexus-stc/stc"

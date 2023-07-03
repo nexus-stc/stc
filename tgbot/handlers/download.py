@@ -1,15 +1,15 @@
 import asyncio
 import time
 
+import aiohttp
 from aiobaseclient.exceptions import ServiceUnavailableError, TemporaryError
 from izihawa_utils.common import filter_none
-from telethon import events
+from telethon import Button, events
 from telethon.errors import rpcerrorlist
 from telethon.tl.types import DocumentAttributeFilename
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from library.telegram.base import RequestContext
-from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
 from tgbot.app.exceptions import DownloadError
 from tgbot.translations import t
@@ -20,34 +20,41 @@ from tgbot.views.telegram.progress_bar import ProgressBar, ProgressBarLostMessag
 from .base import BaseCallbackQueryHandler, LongTask
 
 
-async def delayed_task(create_task, t):
+async def download_thumb(isbns, timeout=5.0):
+    if not isbns:
+        return
     try:
-        await asyncio.sleep(t)
-        task = create_task()
-        await task
-    except asyncio.CancelledError:
-        pass
+        return await asyncio.wait_for(do_download_thumb(isbns[0], timeout), timeout)
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        return
+
+
+async def do_download_thumb(isbn, timeout=5.0):
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
+        async with session.get(f'https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg') as resp:
+            data = await resp.read()
+            if resp.status == 200 and data[:6] != b'GIF89a':
+                return data
+
+
+async def first_task(*tasks):
+    done, pending = await asyncio.wait(tasks, timeout=1200, return_when=asyncio.FIRST_COMPLETED)
+    for task in pending:
+        task.cancel()
+    for task in done:
+        return task.result()
 
 
 class DownloadTask(LongTask):
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_fixed(5.0),
-        retry=retry_if_exception_type(TemporaryError),
-        reraise=True,
-    )
-    async def download_document(self, document_holder, progress_bar, request_context, filesize=None):
-        request_context.statbox(
-            action='do_request',
-            cid=document_holder.cid,
-        )
-        await progress_bar.show_banner()
-        collected = bytearray()
-        async for chunk in self.application.ipfs_http_client.get_iter(document_holder.cid):
-            collected.extend(chunk)
-            if progress_bar:
-                await progress_bar.callback(len(chunk), filesize)
-        return bytes(collected)
+    def __init__(
+        self,
+        application,
+        request_context,
+        document_holder,
+        download_link,
+    ):
+        super().__init__(application, request_context, document_holder)
+        self.download_link = download_link
 
     async def long_task(self, request_context: RequestContext):
         throttle_secs = 3.0
@@ -61,13 +68,14 @@ class DownloadTask(LongTask):
                 buttons=request_context.personal_buttons()
             )
 
-        telegram_file_id = await self.application.database.get_cached_file(request_context.bot_name, self.document_holder.cid)
+        telegram_file_id = await self.application.database.get_cached_file(request_context.bot_name, self.download_link['cid'])
         if not telegram_file_id:
-            telegram_file_id = self.application.get_telegram_client(request_context.bot_name).get_cached_file_id(self.document_holder.cid)
+            telegram_file_id = self.application.get_telegram_client(request_context.bot_name).get_cached_file_id(self.download_link['cid'])
         if telegram_file_id:
             async with safe_execution(error_log=request_context.error_log):
                 await self.send_file(
                     document_holder=self.document_holder,
+                    download_link=self.download_link,
                     file=telegram_file_id,
                     request_context=request_context,
                 )
@@ -79,7 +87,7 @@ class DownloadTask(LongTask):
             on_fail=_on_fail,
         ):
             start_time = time.time()
-            filename = self.document_holder.get_filename()
+            filename = self.document_holder.get_purified_name(self.download_link) + '.' + self.download_link['extension']
             progress_bar_download = ProgressBar(
                 telegram_client=self.application.get_telegram_client(request_context.bot_name),
                 request_context=request_context,
@@ -91,11 +99,12 @@ class DownloadTask(LongTask):
                 last_call=start_time,
             )
             try:
+                thumb_task = asyncio.create_task(download_thumb(self.document_holder.isbns))
                 file = await self.download_document(
-                    document_holder=self.document_holder,
+                    cid=self.download_link['cid'],
                     progress_bar=progress_bar_download,
                     request_context=request_context,
-                    filesize=self.document_holder.filesize
+                    filesize=self.download_link.get('filesize'),
                 )
                 if file:
                     request_context.statbox(
@@ -115,11 +124,17 @@ class DownloadTask(LongTask):
                     )
                     uploaded_message = await self.send_file(
                         document_holder=self.document_holder,
+                        download_link=self.download_link,
                         file=file,
                         progress_callback=progress_bar_upload.callback,
                         request_context=self.request_context,
+                        thumb=await thumb_task
                     )
-                    await self.application.database.put_cached_file(request_context.bot_name, self.document_holder.cid, uploaded_message.file.id)
+                    asyncio.create_task(self.application.database.put_cached_file(
+                        request_context.bot_name,
+                        self.download_link['cid'],
+                        uploaded_message.file.id,
+                    ))
                     request_context.statbox(
                         action='uploaded',
                         duration=time.time() - start_time,
@@ -134,15 +149,16 @@ class DownloadTask(LongTask):
                         request_context=request_context,
                         document_holder=self.document_holder,
                     )
-            except (ServiceUnavailableError, DownloadError):
-                await self.external_cancel()
+            except (ServiceUnavailableError, DownloadError) as e:
+                request_context.error_log(e)
+                raise
             except ProgressBarLostMessageError:
                 self.request_context.statbox(
                     action='user_canceled',
                     duration=time.time() - start_time,
                 )
             except asyncio.CancelledError:
-                request_context.statbox(action='canceled')
+                await self.external_cancel()
             finally:
                 messages = filter_none([progress_bar_download.message])
                 if messages:
@@ -164,6 +180,26 @@ class DownloadTask(LongTask):
         )
 
     @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_fixed(5.0),
+        retry=retry_if_exception_type(TemporaryError),
+        reraise=True,
+    )
+    async def download_document(self, cid, request_context, progress_bar=None, filesize=None):
+        request_context.statbox(
+            action='do_request',
+            cid=cid,
+        )
+        if progress_bar:
+            await progress_bar.show_banner()
+        collected = bytearray()
+        async for chunk in self.application.ipfs_http_client.get_iter(cid):
+            collected.extend(chunk)
+            if progress_bar:
+                await progress_bar.callback(len(chunk), filesize)
+        return bytes(collected)
+
+    @retry(
         reraise=True,
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type((rpcerrorlist.TimeoutError, ValueError)),
@@ -171,24 +207,27 @@ class DownloadTask(LongTask):
     async def send_file(
         self,
         document_holder,
+        download_link,
         file,
         request_context,
-        close=False,
         progress_callback=None,
         chat_id=None,
         reply_to=None,
+        thumb=None,
     ):
         buttons = []
-        if close:
-            buttons += [
-                close_button()
-            ]
+        if request_context.is_personal_mode() and document_holder.index_alias == 'nexus_science':
+            buttons.append(Button.switch_inline(
+                text='👎 Broken or incorrect file',
+                query=f'/r_{download_link["cid"]}',
+                same_peer=True
+            ))
         if not buttons:
             buttons = None
         short_abstract = (
             document_holder.view_builder(request_context.chat["language"])
             .add_short_abstract()
-            .add_doi_link(label=True, on_newline=True)
+            .add_external_provider_link(label=True, on_newline=True, text=document_holder.doi)
             .build()
         )
         caption = (
@@ -196,14 +235,17 @@ class DownloadTask(LongTask):
             f"@{self.application.config['telegram']['related_channel']}"
         )
         if self.application.get_telegram_client(request_context.bot_name):
+            filename = document_holder.get_purified_name(download_link) + '.' + download_link['extension']
+
             message = await self.application.get_telegram_client(request_context.bot_name).send_file(
-                attributes=[DocumentAttributeFilename(document_holder.get_filename())],
+                attributes=[DocumentAttributeFilename(filename)],
                 buttons=buttons,
                 caption=caption,
                 entity=chat_id or request_context.chat['chat_id'],
                 file=file,
                 progress_callback=progress_callback,
                 reply_to=reply_to,
+                thumb=thumb,
             )
             request_context.statbox(action='sent')
             return message
@@ -221,22 +263,33 @@ class DownloadHandler(BaseCallbackQueryHandler):
         cid = self.parse_pattern(event)
         request_context.add_default_fields(mode='download', cid=cid)
         request_context.statbox(action='get')
-        document_holder = BaseHolder.create(await self.get_scored_document(self.bot_config['index_aliases'].split(','), 'cid', cid))
+        scored_document = await self.get_scored_document(self.bot_index_aliases, 'cid', cid)
+        if not scored_document:
+            return await event.answer(
+                f'{t("CID_DISAPPEARED", request_context.chat["language"])}',
+            )
+        document_holder = BaseHolder.create(scored_document)
+        download_link = None
+        for link in document_holder.links:
+            if link['cid'] == cid:
+                download_link = link
+
         if self.application.user_manager.has_task(request_context.chat['chat_id'], DownloadTask.task_id_for(document_holder)):
             async with safe_execution(is_logging_enabled=False):
                 await event.answer(
                     f'{t("ALREADY_DOWNLOADING", request_context.chat["language"])}',
                 )
-                await remove_button(event, '⬇️', and_empty_too=True)
+                await remove_button(event, '⬇️', and_empty_too=True, link_preview=document_holder.has_cover())
                 return
         if self.application.user_manager.hit_limits(request_context.chat['chat_id']):
             async with safe_execution(is_logging_enabled=False):
                 return await event.answer(
                     f'{t("TOO_MANY_DOWNLOADS", request_context.chat["language"])}',
                 )
-        await remove_button(event, '⬇️', and_empty_too=True)
+        await remove_button(event, '⬇️', and_empty_too=True, link_preview=document_holder.has_cover())
         return DownloadTask(
             application=self.application,
             document_holder=document_holder,
             request_context=request_context,
+            download_link=download_link,
         ).schedule()

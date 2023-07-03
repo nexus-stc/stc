@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from abc import ABC
 from functools import partial
 
@@ -11,6 +12,14 @@ from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
 from tgbot.app.application import TelegramApplication
 from tgbot.translations import t
+
+
+async def delayed_task(task, t):
+    try:
+        await asyncio.sleep(t)
+        return await task
+    except asyncio.CancelledError:
+        pass
 
 
 def get_username(event: events.ChatAction, chat):
@@ -92,10 +101,11 @@ class BaseHandler(ABC):
 
     def __init__(self, application: TelegramApplication, bot_config, extra_warning=None):
         self.application = application
+        self.banned_chat_ids = set(self.application.config['application']['banned_chat_ids'])
         self.bot_config = bot_config
         self.extra_warning = extra_warning
         self.bot_index_aliases = [
-            index_alias for index_alias in bot_config['index_aliases'].split(',')
+            index_alias for index_alias in bot_config.get('index_aliases', '').split(',')
         ]
 
     async def get_scored_document(self, index_aliases, field: str, value: str):
@@ -104,6 +114,7 @@ class BaseHandler(ABC):
             page_size=1,
             is_fieldnorms_scoring_enabled=False,
             index_aliases=index_aliases,
+            skip_doi_isbn_term_field_mapper=True,
         )
         response = await self.application.summa_client.search(queries)
         if response.collector_outputs[0].documents.scored_documents:
@@ -161,6 +172,11 @@ class BaseHandler(ABC):
             )
             raise events.StopPropagation()
 
+    async def _check_banned(self, event: events.ChatAction):
+        if event.chat_id in self.banned_chat_ids:
+            logging.getLogger('statbox').info({'action': 'hit_banned', 'chat_id': event.chat_id})
+            raise events.StopPropagation()
+
     async def _process_chat(self, event: events.ChatAction, request_id: str):
         event_chat = await event.get_chat()
         username = get_username(event, event_chat)
@@ -178,6 +194,7 @@ class BaseHandler(ABC):
 
         await self._check_maintenance(event=event)
         await self._check_read_only(event)
+        await self._check_banned(event)
 
         request_id = RequestContext.generate_request_id(self.application.config['application']['request_id_length'])
         chat = await self._process_chat(event=event, request_id=request_id)

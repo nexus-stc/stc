@@ -2,6 +2,7 @@ import asyncio
 import re
 import time
 from abc import ABC
+from typing import List, Tuple
 
 from izihawa_utils.exceptions import NeedRetryError
 from telethon import events
@@ -54,11 +55,9 @@ class BaseSearchHandler(BaseHandler, ABC):
     async def setup_widget(
         self,
         request_context: RequestContext,
-        prefetch_message,
         query: str,
         is_shortpath_enabled: bool = False,
-    ) -> tuple:
-        message_id = prefetch_message.id
+    ) -> Tuple[str, List, bool]:
         request_context.add_default_fields(
             is_group_mode=request_context.is_group_mode(),
             mode='search',
@@ -67,45 +66,46 @@ class BaseSearchHandler(BaseHandler, ABC):
         language = request_context.chat['language']
         librarian_service_id = None
 
-        query, is_upstream, omit_telegram_cache = self.application.query_processor.process_upstream_requesting(query)
+        preprocessed_query = self.application.query_processor.preprocess_query(query)
 
         try:
             search_widget = await SearchWidget.create(
                 application=self.application,
                 request_context=request_context,
                 chat=request_context.chat,
-                query=query,
+                preprocessed_query=preprocessed_query,
                 index_aliases=self.bot_index_aliases,
                 is_group_mode=request_context.is_group_mode(),
             )
         except InvalidSearchError:
             return t('INVALID_SYNTAX_ERROR', language).format(
                 too_difficult_picture_url=self.application.config['application'].get('too_difficult_picture_url', ''),
-            ), [close_button()]
+            ), [close_button()], True
         except UnavailableSummaError:
             return t('MAINTENANCE', language).format(
                 error_picture_url=self.application.config['application'].get('error_picture_url', ''),
-            ), [close_button()],
+            ), [close_button()], True
 
         request_context.statbox(
             action='documents_retrieved',
             duration=time.time() - start_time,
-            query=query,
+            query=preprocessed_query.query,
             page=0,
             scored_documents=len(search_widget.scored_documents),
         )
 
         if len(search_widget.scored_documents) == 0:
             if not self.application.metadata_retriever or self.application.is_read_only():
-                return await search_widget.render(message_id=message_id, request_context=request_context)
+                text, buttons = await search_widget.render(request_context=request_context)
+                return text, buttons, False
 
-            doi = is_doi_query(query)
+            doi = is_doi_query(preprocessed_query.query)
             if doi and await self.application.metadata_retriever.try_to_download_metadata(doi):
                 search_widget = await SearchWidget.create(
                     application=self.application,
                     request_context=request_context,
                     chat=request_context.chat,
-                    query=query,
+                    preprocessed_query=preprocessed_query,
                     index_aliases=self.bot_index_aliases,
                     is_group_mode=request_context.is_group_mode(),
                 )
@@ -114,33 +114,33 @@ class BaseSearchHandler(BaseHandler, ABC):
             holder = BaseHolder.create(search_widget.scored_documents[0])
 
             if isinstance(holder, NexusScienceHolder):
-                if holder.has_field('doi') and not holder.has_field('cid') or is_upstream:
+                if holder.has_field('doi') and not holder.has_field('links') or preprocessed_query.skip_ipfs or preprocessed_query.is_upstream:
                     if self.application.is_read_only() or not self.application.started:
-                        text, buttons = await search_widget.render(message_id=message_id, request_context=request_context)
+                        text, buttons = await search_widget.render(request_context=request_context)
                         if self.application.is_read_only():
                             text = f'{t("READ_ONLY_WARNING")}\n\n{text}'
-                        return text, buttons
+                        return text, buttons, False
                     if self.application.user_manager.has_task(request_context.chat['chat_id'], RetrieveTask.task_id_for(holder)):
-                        return t("ALREADY_DOWNLOADING", request_context.chat["language"]), [close_button()]
+                        return t("ALREADY_DOWNLOADING", request_context.chat["language"]), [close_button()], False
                     if self.application.user_manager.hit_limits(request_context.chat['chat_id']):
-                        return t("TOO_MANY_DOWNLOADS", request_context.chat["language"]), [close_button()]
+                        return t("TOO_MANY_DOWNLOADS", request_context.chat["language"]), [close_button()], False
 
-                    old_cid = holder.has_field('cid') and holder.cid
+                    old_primary_link = holder.primary_link
 
                     if file := await RetrieveTask(
                         self.application,
                         request_context,
                         holder,
-                        is_upstream=is_upstream,
+                        is_upstream=preprocessed_query.is_upstream,
                         ignore_clean_errors=True,
                     ).schedule():
-                        if old_cid:
-                            await self.application.database.delete_cached_file(old_cid)
+                        if old_primary_link:
+                            await self.application.database.delete_cached_file(old_primary_link['cid'])
                         search_widget = await SearchWidget.create(
                             application=self.application,
                             request_context=request_context,
                             chat=request_context.chat,
-                            query=query,
+                            preprocessed_query=preprocessed_query,
                             index_aliases=self.bot_index_aliases,
                             is_group_mode=request_context.is_group_mode(),
                         )
@@ -154,10 +154,10 @@ class BaseSearchHandler(BaseHandler, ABC):
                     elif self.application.librarian_service:
                         librarian_service_id = await self.application.librarian_service.request(holder.doi, holder.type)
 
-            if omit_telegram_cache and holder.has_field('cid'):
+            if (preprocessed_query.skip_telegram_cache or preprocessed_query.skip_ipfs) and holder.primary_link:
                 request_context.statbox(**{
                     'action': 'omit_cache',
-                    'cid': holder.cid,
+                    'cid': holder.primary_link['cid'],
                 })
                 await self.application.database.delete_cached_file(holder.cid)
 
@@ -171,9 +171,10 @@ class BaseSearchHandler(BaseHandler, ABC):
                     position=0,
                     is_group_mode=request_context.is_group_mode(),
                 ).build()
-                return view, buttons
+                return view, buttons, holder.has_cover()
 
-        return await search_widget.render(message_id=message_id, request_context=request_context)
+        view, buttons = await search_widget.render(request_context=request_context)
+        return view, buttons, False
 
 
 class SearchHandler(BaseSearchHandler):
@@ -213,9 +214,8 @@ class SearchHandler(BaseSearchHandler):
             t("SEARCHING", language),
         )
         try:
-            text, buttons = await self.setup_widget(
+            text, buttons, link_preview = await self.setup_widget(
                 request_context=request_context,
-                prefetch_message=prefetch_message,
                 query=query,
                 is_shortpath_enabled=True,
             )
@@ -226,13 +226,10 @@ class SearchHandler(BaseSearchHandler):
                 prefetch_message.id,
                 text,
                 buttons=buttons,
-                link_preview=False,
+                link_preview=link_preview,
             )
         except (InvalidSearchError, UnavailableSummaError, asyncio.CancelledError) as e:
-            await asyncio.gather(
-                event.delete(),
-                prefetch_message.delete(),
-            )
+            await asyncio.gather(prefetch_message.delete(), event.delete())
             raise e
 
 
@@ -252,12 +249,12 @@ class InlineSearchHandler(BaseSearchHandler):
                 await event.answer([])
                 raise events.StopPropagation()
 
-            query, is_upstream, omit_telegram_cache = self.application.query_processor.process_upstream_requesting(event.text)
+            preprocessed_query = self.application.query_processor.preprocess_query(event.text)
             inline_search_widget = await InlineSearchWidget.create(
                 application=self.application,
                 request_context=request_context,
                 chat=request_context.chat,
-                query=query,
+                preprocessed_query=preprocessed_query,
                 index_aliases=self.bot_index_aliases,
                 is_group_mode=request_context.is_group_mode(),
             )
@@ -299,10 +296,10 @@ class SearchEditHandler(BaseSearchHandler):
         for next_message in await self.get_last_messages_in_chat(event, request_context=request_context):
             if next_message.is_reply and event.id == next_message.reply_to_msg_id:
                 request_context.statbox(action='resolved')
-                text, buttons = await self.setup_widget(
+                text, buttons, link_preview = await self.setup_widget(
                     request_context=request_context,
-                    prefetch_message=next_message,
                     query=query,
+                    is_shortpath_enabled=True,
                 )
                 if self.extra_warning:
                     text = self.extra_warning + text
@@ -311,7 +308,7 @@ class SearchEditHandler(BaseSearchHandler):
                     next_message.id,
                     text,
                     buttons=buttons,
-                    link_preview=False,
+                    link_preview=link_preview,
                 )
         return await event.reply(
             t('REPLY_MESSAGE_HAS_BEEN_DELETED', request_context.chat['language']),
@@ -340,14 +337,14 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
             )
 
         query = reply_message.raw_text.replace(f'@{request_context.bot_name}', '').strip()
-        query, is_upstream, omit_telegram_cache = self.application.query_processor.process_upstream_requesting(query)
+        preprocessed_query = self.application.query_processor.preprocess_query(query)
 
         try:
             search_widget = await SearchWidget.create(
                 application=self.application,
                 request_context=request_context,
                 chat=request_context.chat,
-                query=query,
+                preprocessed_query=preprocessed_query,
                 index_aliases=self.bot_index_aliases,
                 page=page,
             )
@@ -358,12 +355,12 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
 
         request_context.statbox(
             action='documents_retrieved',
-            query=query,
+            query=preprocessed_query.query,
             page=page,
             scored_documents=len(search_widget.scored_documents),
         )
 
-        serp, buttons = await search_widget.render(message_id=event.message_id, request_context=request_context)
+        serp, buttons = await search_widget.render(request_context=request_context)
         await message.edit(serp, buttons=buttons, link_preview=False)
         async with safe_execution(is_logging_enabled=False):
             await event.answer()

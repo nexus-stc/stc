@@ -11,7 +11,8 @@ from library.regexes.utils import despace_full, escape_format
 from library.telegram.common import close_button
 from tgbot.translations import t
 
-from .common import TooLongQueryError, encode_query_to_deep_link
+from ...app.query_builder import get_type_icon
+from .common import TooLongQueryError, add_expand_dot, encode_query_to_deep_link, get_formatted_filesize
 
 
 def highlight_markdown(snippet):
@@ -33,6 +34,20 @@ def highlight_markdown(snippet):
     markdowned = markdowned + '...'
     markdowned = f'__{markdowned}__'
     return markdowned
+
+
+def plain_author(author, bot_name=None):
+    text = None
+    if 'family' in author and 'given' in author:
+        text = f"{author['given']} {author['family']}"
+    elif 'family' in author or 'given' in author:
+        text = author.get('family') or author.get('given')
+    elif 'name' in author:
+        text = author['name']
+    if text and 'orcid' in author and bot_name:
+        orcid_query = encode_query_to_deep_link(f"authors.orcid:\"{author['orcid']}\"", bot_name)
+        text = f'[{text}]({orcid_query})'
+    return text
 
 
 class TextPart:
@@ -100,8 +115,6 @@ class TextPart:
 
 
 class BaseViewBuilder:
-    icon = ''
-
     def __init__(self, document_holder, user_language):
         self.document_holder = document_holder
         self.user_language = user_language
@@ -132,6 +145,48 @@ class BaseViewBuilder:
             self.parts.append(el)
             if eol is not None:
                 self.parts.append(TextPart(eol))
+        return self
+
+    def add_snippet(self, on_newline=True):
+        snippet = self.document_holder.snippets.get('abstract')
+        if snippet and snippet.highlights:
+            if on_newline:
+                self.add_new_line()
+            self.add(highlight_markdown(snippet), escaped=True)
+        elif abstract := self.document_holder.abstract:
+            if on_newline:
+                self.add_new_line()
+            abstract = add_expand_dot(abstract, 140)
+            abstract = f'__{abstract}__'
+            self.add(abstract, escaped=True)
+        return self
+
+    def add_metadata(self, bot_name, on_newline=True):
+        self.add_isbns(on_newline=on_newline, label=True)
+        if self.document_holder.publisher:
+            try:
+                query = encode_query_to_deep_link(f'pub:"{self.document_holder.publisher}"', bot_name=bot_name)
+                self.add_new_line().add('Publisher:', bold=True).add(
+                    f'[{self.document_holder.publisher}]({query})',
+                    escaped=True,
+                )
+            except TooLongQueryError:
+                self.add_new_line().add('Publisher:', bold=True).add(
+                    self.document_holder.publisher,
+                    escaped=True,
+                )
+        if self.document_holder.series:
+            try:
+                query = encode_query_to_deep_link(f'ser:"{self.document_holder.series}"', bot_name=bot_name)
+                self.add_new_line().add('Series:', bold=True).add(
+                    f'[{self.document_holder.series}]({query})',
+                    escaped=True,
+                )
+            except TooLongQueryError:
+                self.add_new_line().add('Series:', bold=True).add(
+                    self.document_holder.series,
+                    escaped=True,
+                )
         return self
 
     def limits(self, limit=None, with_dots: bool = False):
@@ -169,8 +224,11 @@ class BaseViewBuilder:
             self.last_limit_part = None
         return self
 
-    def add_icon(self):
-        return self.add(self.icon)
+    def add_icon(self, with_cover=False):
+        icon = get_type_icon(self.document_holder.type)
+        if with_cover and self.document_holder.isbns:
+            icon = f'[{icon}](https://covers.openlibrary.org/b/isbn/{self.document_holder.isbns[0]}-L.jpg)'
+        return self.add(icon, escaped=True)
 
     def add_label(self, label_name, bold=True, lower=False):
         return self.add(t(label_name, self.user_language) + ':', bold=bold, lower=lower)
@@ -194,68 +252,6 @@ class BaseViewBuilder:
     def add_downloads_count(self):
         return self.add(f'{math.log1p(self.document_holder.downloads_count):.1f}')
 
-    def add_links(self):
-        self.add_label("LINKS")
-        self.add(" - ".join(self.document_holder.generate_links()), escaped=True)
-        return self
-
-    def add_tags(self, bot_name):
-        tag_links = self.document_holder.generate_tags_links(bot_name)
-        if not tag_links:
-            return self
-        self.add(tag_links[0], escaped=True, unbreakable=True)
-        for tag_link in tag_links[1:]:
-            self.add('- ' + tag_link, escaped=True, unbreakable=True)
-        return self
-
-    def add_authors(self, et_al=True, first_n_authors=1, on_newline=True):
-        et_al_suffix = (' et al' if et_al else '')
-        if self.document_holder.authors:
-            if on_newline:
-                self.add_new_line()
-            if len(self.document_holder.authors) > first_n_authors:
-                self.add('; '.join(self.document_holder.authors[:first_n_authors]) + et_al_suffix)
-            elif len(self.document_holder.authors) == 1:
-                if self.document_holder.authors[0].count(';') >= 1:
-                    comma_authors = list(map(str.strip, self.document_holder.authors[0].split(';')))
-                    if len(comma_authors) > first_n_authors:
-                        self.add('; '.join(comma_authors[:first_n_authors]) + et_al_suffix)
-                    else:
-                        self.add('; '.join(comma_authors))
-                elif self.document_holder.authors[0].count(',') >= 1:
-                    comma_authors = list(map(str.strip, self.document_holder.authors[0].split(',')))
-                    if len(comma_authors) > first_n_authors:
-                        self.add('; '.join(comma_authors[:first_n_authors]) + et_al_suffix)
-                    else:
-                        self.add('; '.join(comma_authors))
-                else:
-                    self.add(self.document_holder.authors[0])
-            else:
-                self.add('; '.join(self.document_holder.authors))
-        return self
-
-    def add_doi(self, clickable=True, with_brackets=False, with_leading_pipe=False):
-        if self.document_holder.doi:
-            if with_leading_pipe:
-                self.add('|')
-            return self.add(self.document_holder.doi, clickable=clickable, with_brackets=with_brackets)
-
-    def add_doi_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, end_newline=False):
-        if self.document_holder.doi:
-            if on_newline:
-                self.add_new_line()
-            if with_leading_pipe:
-                self.add('|')
-            if label:
-                self.add('DOI:', bold=True)
-            escaped_doi = escape_format(self.document_holder.doi)
-            if text is None:
-                text = escaped_doi
-            self.add(f'[{text}](https://doi.org/{quote(escaped_doi)})', escaped=True)
-            if end_newline:
-                self.add_new_line()
-        return self
-
     def add_references_counter(self, bot_name, with_leading_pipe=False):
         if self.has_field('referenced_by_count') and self.document_holder.referenced_by_count:
             if with_leading_pipe:
@@ -270,6 +266,65 @@ class BaseViewBuilder:
             self.add(text, escaped=True)
         return self
 
+    def add_external_provider_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, end_newline=False):
+        if self.document_holder.doi or (self.document_holder.iso_id and self.document_holder.internal_iso):
+            if on_newline:
+                self.add_new_line()
+            if with_leading_pipe:
+                self.add('|')
+
+        if self.document_holder.doi:
+            if label:
+                self.add('DOI:', bold=True)
+            escaped_doi = escape_format(self.document_holder.doi)
+            if text is None:
+                text = 'doi.org'
+            self.add(f'[{text}](https://doi.org/{quote(escaped_doi)})', escaped=True)
+
+            if end_newline:
+                self.add_new_line()
+        elif self.document_holder.iso_id and self.document_holder.internal_iso:
+            if label:
+                self.add('ISO:', bold=True)
+            if text is None:
+                text = 'iso.org'
+            self.add(f'[{text}](https://iso.org/standard/{self.document_holder.internal_iso.split(":")[0]}.html)', escaped=True)
+
+            if end_newline:
+                self.add_new_line()
+        return self
+
+    def add_links(self):
+        if remote_links := self.document_holder.generate_remote_links():
+            self.add_label("LINKS")
+            self.add(" - ".join(remote_links), escaped=True)
+        return self
+
+    def add_tags(self, bot_name):
+        tag_links = self.document_holder.generate_tags_links(bot_name)
+        if not tag_links:
+            return self
+        self.add(tag_links[0], escaped=True, unbreakable=True)
+        for tag_link in tag_links[1:]:
+            self.add('- ' + tag_link, escaped=True, unbreakable=True)
+        return self
+
+    def add_authors(self, et_al=True, first_n_authors=1, on_newline=True, bot_name=None):
+        if not self.document_holder.authors:
+            return self
+
+        authors = [plain_author(author, bot_name) for author in self.document_holder.authors]
+        authors = [author for author in authors if bool(author)]
+
+        if not authors:
+            return self
+
+        if on_newline:
+            self.add_new_line()
+
+        self.add('; '.join(authors[:first_n_authors]) + (' et al' if len(authors) > first_n_authors and et_al else ''), escaped=True)
+        return self
+
     def add_short_abstract(self):
         return (
             self.add_icon()
@@ -280,13 +335,14 @@ class BaseViewBuilder:
 
     def add_view(self, bot_name):
         return (
-            self.add_icon()
+            self.add_icon(with_cover=True)
                 .add_title()
                 .limits(400, with_dots=True)
-                .add_locator(first_n_authors=5)
+                .add_locator(first_n_authors=3, bot_name=bot_name)
                 .add_new_line(2)
                 .add_stats()
                 .add_links()
+                .add_metadata(bot_name=bot_name)
                 .add_new_line(2)
                 .add_abstract()
                 .limits(1500, with_dots=True)
@@ -301,7 +357,7 @@ class BaseViewBuilder:
     def add_abstract(self):
         raise NotImplementedError()
 
-    def add_locator(self, first_n_authors=1, markup=True):
+    def add_locator(self, first_n_authors=1, markup=True, bot_name=None):
         raise NotImplementedError()
 
     def add_filedata(self, show_filesize=False, with_leading_pipe=False):
@@ -345,13 +401,20 @@ class BaseButtonsBuilder:
 
     def add_download_button(self):
         # ⬇️ is a mark, Find+F over sources before replacing
-        if self.document_holder.has_field('cid'):
+        if not self.document_holder.links:
+            return self
+        for link in self.document_holder.links:
+            label = [link["extension"].upper()]
+            if link.get('filesize'):
+                label.append(get_formatted_filesize(link["filesize"]))
             self.buttons[-1].append(
                 Button.inline(
-                    text='⬇️ GET',
-                    data=self.document_holder.get_download_command(),
+                    text=f'⬇️ {" | ".join(label)}',
+                    data=self.document_holder.get_download_command(link['cid']),
                 )
             )
+            if len(self.buttons[-1]) > 5:
+                self.buttons.append([])
         return self
 
     def add_remote_download_button(self, bot_name):

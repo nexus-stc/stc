@@ -39,7 +39,7 @@ const translations = {
     help: `
     <h4 class="mt-4">Usage</h4>
     <p>Just type your request in plain words.</p>
-    <h5>Examples</h5>
+    <h5>Examples</h5>    
     <ul>
       <li class="font-monospace">Divine Comedy Dante</li>
       <li class="font-monospace">doi:10.1159/000477855</li>
@@ -54,7 +54,23 @@ const translations = {
       <li>All about JavaScript excluding things in Russian language:&nbsp;</li>
         <span class="font-monospace">+JavaScript language:-ru</span>
     </ul>
-    <p>Possible fields to use in queries may be found on <a href="/#/dbs">DBs page</a></p>
+    <h5>Item types</h5> 
+    <p>book, book-chapter, chapter, chapter, dataset, component, dissertation, edited-book, journal-article, monograph, peer-review, proceedings, proceedings-article, reference-book, report, standard</p>
+    <h5>List of fields</h5>
+    <p>abstract, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pub (publisher), ser (series), tags, title</p>
+    <h5>Extra field</h5>
+    <p>Contains out-of-scheme fields, for example - ISO/BS standard numbers that can be used in the following way:</p>
+    <p><span class="font-monospace">extra:"iso iec 10279 1991"</span></p>
+    <h5>Extended syntax</h5>
+    <p><span class="font-monospace">+</span> sign makes words or filtration by field mandatory</p>
+    <ul>
+      <li><span class="font-monospace">+JavaScript language:en</span> returns <b>all</b> JavaScript books but books in English will be ranked higher</li>
+      <li><span class="font-monospace">+JavaScript language:-en</span> returns JavaScript books <b>only</b> in English</li>
+    </ul>
+    <p><span class="font-monospace">-</span> sign removes documents with the word</p>
+    <ul>
+      <li><span class="font-monospace">+JavaScript language:+en</span> returns JavaScript books <b>only</b> in English</li>
+    </ul>
     `,
     is_ipfs_enabled: "Is local IPFS daemon enabled?",
     load_more: 'More',
@@ -137,12 +153,15 @@ export function get_label(label: string) {
   for (const language in navigator.languages) {
     const language = navigator.language.slice(0, 2);
     if (language in translations) {
+      // @ts-ignore
       if (label in translations[language]) {
+        // @ts-ignore
         return translations[language][label];
       } else {
         break;
       }
     }
   }
+  // @ts-ignore
   return translations['en'][label];
 }

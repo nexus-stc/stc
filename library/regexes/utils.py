@@ -1,6 +1,5 @@
 import re
 import struct
-import unicodedata
 
 from . import (EMAIL_REGEX, HASHTAG_REGEX, MULTIWHITESPACE_REGEX, NON_ALNUMWHITESPACE_REGEX, TELEGRAM_LINK_REGEX,
                URL_REGEX)
@@ -34,7 +33,7 @@ def despace_full(text):
 
 def despace_smart(text):
     text = re.sub(r'\n\s*[-•]+\s*', r'\n', text)
-    text = re.sub(r'\n{2,}', r'\n', text).strip()
+    text = re.sub(r'\n{2,}', '\n', text).strip()
     text = re.sub(r'\.?(\s+)?\n', r'. ', text)
     text = re.sub(r'\s+', ' ', text)
     return text
@@ -57,11 +56,6 @@ def remove_markdown(text):
     text = re.sub('`+', '', text)
     text = re.sub(r'\[\s*(.*?)(\s*)\]\(.*?\)', r'\g<1>\g<2>', text, flags=re.MULTILINE)
     return text
-
-
-def normalize_string(string):
-    string = re.sub(r'[^a-zA-Z\d_\-]+', '', string.lower().strip().replace(' ', '-'))
-    return unicodedata.normalize('NFKD', string).encode('ascii', 'ignore').decode('utf-8')
 
 
 def remove_emails(text):

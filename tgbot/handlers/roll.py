@@ -44,6 +44,6 @@ class RollHandler(BaseHandler):
                 buttons_builder.add_close_button()
 
             request_context.statbox(action='show', duration=time.time() - start_time)
-            await event.respond(view, buttons=buttons_builder.build())
+            await event.respond(view, buttons=buttons_builder.build(), link_preview=True)
         async with safe_execution(is_logging_enabled=False):
             await event.delete()

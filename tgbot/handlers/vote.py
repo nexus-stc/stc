@@ -1,6 +1,7 @@
 import hashlib
 import re
 
+import telethon
 from telethon import events
 
 from library.telegram.base import RequestContext
@@ -32,6 +33,8 @@ class VoteHandler(BaseCallbackQueryHandler):
         user_id = event.query.user_id
         if user_id not in self.application.config['librarian']['moderators']:
             return await event.answer('You cannot vote')
+        if self.application.is_read_only():
+            return await event.answer('Read-only mode, try to vote later')
 
         vote = self.parse_pattern(event)
 
@@ -74,14 +77,17 @@ class VoteHandler(BaseCallbackQueryHandler):
         ):
             await message.edit(text, buttons=None)
             pdf_file = await message.download_media(file=bytes)
-            doi = self.doi_regexp.search(text).group('doi').strip()
-            document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi.lower())
+            doi = self.doi_regexp.search(text).group('doi').strip().lower()
+            document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi)
             await self.application.file_flow.pin_add(document, pdf_file, with_commit=True)
 
             await self.application.database.add_approve(message.id, 1)
             reply_message = await message.get_reply_message()
             if reply_message:
-                await reply_message.delete()
+                try:
+                    await reply_message.delete()
+                except telethon.errors.rpcerrorlist.MessageDeleteForbiddenError:
+                    pass
             await event.delete()
         else:
             await message.edit(text)

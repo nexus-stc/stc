@@ -63,7 +63,7 @@ def decode_deep_query(query):
         raise DecodeDeepQueryError(nested_error=e)
 
 
-async def remove_button(event, mark, and_empty_too=False):
+async def remove_button(event, mark, and_empty_too=False, link_preview=None):
     original_message = await event.get_message()
     if original_message:
         original_buttons = original_message.buttons
@@ -76,4 +76,30 @@ async def remove_button(event, mark, and_empty_too=False):
                 line.append(original_button)
             if line:
                 buttons.append(line)
-        await event.edit(original_message.text, buttons=buttons, link_preview=False)
+        await event.edit(original_message.text, buttons=buttons, link_preview=link_preview)
+
+
+def get_formatted_filesize(filesize) -> str:
+    if filesize:
+        filesize = max(1024, filesize)
+        return '{:.1f}Mb'.format(float(filesize) / (1024 * 1024))
+    else:
+        return ''
+
+
+def encode_link(bot_name, text, query) -> str:
+    try:
+        encoded_query = encode_query_to_deep_link(query, bot_name)
+        if text:
+            return f'[{text}]({encoded_query})'
+        else:
+            return encoded_query
+    except TooLongQueryError:
+        return text
+
+
+def add_expand_dot(text, le: int):
+    if len(text) < le:
+        return text
+    crop_at = text[:le].rfind(' ')
+    return text[:crop_at] + '...'

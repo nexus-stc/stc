@@ -5,8 +5,6 @@ services:
       IPFS_PROFILE: server
   tgbot:
     build:
-      args:
-        MODE: light
       context: .
       dockerfile: tgbot/Dockerfile
     depends_on:
@@ -15,3 +13,6 @@ services:
     env_file:
       - .env.light
     restart: always
+    volumes:
+      - /usr/lib/stc-tgbot-light:/usr/lib/stc-tgbot
+      - /var/log/stc-tgbot-light:/var/log/stc-tgbot

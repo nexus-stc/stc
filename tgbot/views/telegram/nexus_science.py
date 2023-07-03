@@ -1,9 +1,7 @@
-import math
-
 from izihawa_types.safecast import safe_int
 from telethon import Button
 
-from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder, highlight_markdown
+from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder
 from .common import TooLongQueryError, encode_query_to_deep_link
 
 preprints = {'10.1101', '10.21203'}
@@ -26,15 +24,13 @@ class NexusScienceButtonsBuilder(BaseButtonsBuilder):
     def add_journal_search(self, bot_name):
         try:
             if self.document_holder.has_field('issns'):
-                issn_query = [f'issns:{issn}' for issn in self.document_holder.issns[:2]]
-                if issn_query:
-                    issn_query = ' '.join(issn_query)
-                    self.buttons[-1].append(
-                        Button.url(
-                            text='📰',
-                            url=encode_query_to_deep_link(issn_query, bot_name=bot_name),
-                        )
+                issn_query = f'issns:"{self.document_holder.issns[0]}" order_by:date'
+                self.buttons[-1].append(
+                    Button.url(
+                        text='📰',
+                        url=encode_query_to_deep_link(issn_query, bot_name=bot_name),
                     )
+                )
         except TooLongQueryError:
             pass
         return self
@@ -58,19 +54,8 @@ class NexusScienceButtonsBuilder(BaseButtonsBuilder):
 
 
 class NexusScienceViewBuilder(BaseViewBuilder):
-    icon = '🔬'
-    icons = {
-        'book': '📚',
-        'monograph': '📚',
-        'chapter': '🔖',
-        'book-chapter': '🔖',
-    }
-
     def is_preprint(self):
         return self.document_holder.doi.split('/')[0] in preprints
-
-    def add_icon(self):
-        return self.add(self.icons.get(self.document_holder.type, self.icon))
 
     def add_pages(self):
         if self.document_holder.first_page:
@@ -106,17 +91,9 @@ class NexusScienceViewBuilder(BaseViewBuilder):
         self.add(self.document_holder.title or self.document_holder.doi, bold=bold)
         return self
 
-    def add_snippet(self, on_newline=True):
-        snippet = self.document_holder.snippets.get('abstract')
-        if snippet and snippet.highlights:
-            if on_newline:
-                self.add_new_line()
-            self.add(highlight_markdown(snippet), escaped=True)
-        return self
-
-    def add_locator(self, first_n_authors=1, markup=True):
+    def add_locator(self, first_n_authors=1, markup=True, bot_name=None):
         return (
-            self.add_authors(first_n_authors=first_n_authors)
+            self.add_authors(first_n_authors=first_n_authors, bot_name=bot_name)
                 .add_container(italic=markup)
                 .add_formatted_datetime()
                 .add_pages()
@@ -145,3 +122,9 @@ class NexusScienceViewBuilder(BaseViewBuilder):
             if end_newline:
                 self.add_new_line()
         return self
+
+    def add_doi(self, clickable=True, with_brackets=False, with_leading_pipe=False):
+        if self.document_holder.doi:
+            if with_leading_pipe:
+                self.add('|')
+            return self.add(self.document_holder.doi, clickable=clickable, with_brackets=with_brackets)

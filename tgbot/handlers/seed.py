@@ -2,10 +2,9 @@ import asyncio
 import os
 import re
 import tempfile
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 import ipfs_hamt_directory_py
-import orjson
 from telethon import events
 from telethon.tl.types import DocumentAttributeFilename
 
@@ -26,12 +25,19 @@ def create_car(documents, name_template) -> (str, bytes):
         with open(input_data, 'wb') as f:
             for document in documents:
                 document_holder = BaseHolder.create(document)
+                link = document_holder.links[0]
+                if link['type'] != 'primary':
+                    continue
                 item_name = name_template.format(
                     doi=document_holder.doi,
                     md5=document_holder.md5,
-                    suggested_filename=document_holder.get_purified_name(),
-                ) + '.' + document_holder.get_extension()
-                f.write(quote_plus(item_name).encode())
+                    suggested_filename=document_holder.get_purified_name({
+                        'md5': link['md5'],
+                        'doi': document_holder.doi,
+                        'cid': link['cid'],
+                    }),
+                ) + '.' + link.get('extension', 'pdf')
+                f.write(quote(item_name, safe='').encode())
                 f.write(b' ')
                 f.write(document_holder.cid.encode())
                 f.write(b' ')
@@ -40,21 +46,6 @@ def create_car(documents, name_template) -> (str, bytes):
         cid = ipfs_hamt_directory_py.from_file(input_data, output_car, td)
         with open(output_car, 'rb') as f:
             return cid, f.read()
-
-
-def create_dag_json(documents, name_template) -> bytes:
-    car = {
-        'Data': {'/': {'bytes': 'CAE'}},
-        'Links': []
-    }
-    for document in documents:
-        document_holder = BaseHolder.create(document)
-        item_name = name_template.format(
-            doi=document_holder.doi,
-            suggested_filename=document_holder.get_filename(),
-        )
-        car['Links'].append({'Hash': {'/': document_holder.cid}, 'Name': f'{quote_plus(item_name)}', 'Tsize': 0})
-    return orjson.dumps(car)
 
 
 class SeedHandler(BaseHandler):

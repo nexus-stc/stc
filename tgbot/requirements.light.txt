@@ -1,3 +1,0 @@
-protobuf
-stc_geck==1.0.0
-summa_embed>=0.15.19

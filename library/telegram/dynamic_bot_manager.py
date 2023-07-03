@@ -70,7 +70,7 @@ class DynamicBotManager(AioThing):
                 bot_token=self.default_bot['bot_token'],
                 user_id=0,
                 index_aliases=(
-                    self.default_bot['index_aliases'].split(',')
+                    self.default_bot['index_aliases']
                     if isinstance(self.default_bot['index_aliases'], str)
                     else self.default_bot['index_aliases']
                 ),
@@ -85,6 +85,10 @@ class DynamicBotManager(AioThing):
     async def stop(self):
         if self.reloading_task:
             self.reloading_task.cancel()
+            logging.getLogger('debug').debug({
+                'action': 'waiting_reloading_task',
+                'mode': 'dynamic_bot',
+            })
             await self.reloading_task
         for bot_name in list(self.telegram_clients.keys()):
             await self.stop_bot(bot_name=bot_name)
@@ -105,7 +109,7 @@ class DynamicBotManager(AioThing):
     async def start_bot(self, target_bots_configs, bot_name):
         bot_config = target_bots_configs[bot_name]
         try:
-            logging.getLogger('statbox').info({
+            logging.getLogger('debug').debug({
                 'action': 'start',
                 'mode': 'dynamic_bot',
                 'bot_name': bot_name,
@@ -120,26 +124,26 @@ class DynamicBotManager(AioThing):
             await self.telegram_clients[bot_name].start()
             if self.post_start_hook:
                 self.post_start_hook(bot_config, self.telegram_clients[bot_name])
-            logging.getLogger('statbox').info({
+            logging.getLogger('debug').debug({
                 'action': 'started',
                 'mode': 'dynamic_bot',
                 'bot_name': bot_name,
             })
         except Exception as e:
-            logging.getLogger('statbox').info({
+            logging.getLogger('error').error({
                 'action': 'error',
                 'mode': 'dynamic_bot',
                 'bot_name': bot_name,
                 'error': str(e),
             })
             if 'Bot token expired' in str(e) or 'Your API ID or Hash cannot be empty or None' in str(e):
-                await self.database.bots_db.execute('update user_bots set is_deleted = true where bot_name = ?', (bot_name,))
+                await self.database.bots_db_wrapper.db.execute('update user_bots set is_deleted = true where bot_name = ?', (bot_name,))
 
             del target_bots_configs[bot_name]
             self.clean_bot_session(bot_name=bot_name)
 
     async def stop_bot(self, bot_name):
-        logging.getLogger('statbox').info({
+        logging.getLogger('debug').debug({
             'action': 'stop',
             'mode': 'dynamic_bot',
             'bot_name': bot_name,
@@ -156,70 +160,76 @@ class DynamicBotManager(AioThing):
         del self.telegram_clients[bot_name]
 
     async def reload_bots(self):
-        try:
-            while True:
-                logging.getLogger('statbox').info({
+        while True:
+            logging.getLogger('debug').info({
+                'action': 'reload',
+                'mode': 'dynamic_bot',
+            })
+            try:
+                target_bots = {}
+                async with self.database.bots_db_wrapper.db.execute("""
+                select bot_name, bot_token, index_aliases,
+                is_reload_required, app_id, app_hash, mtproxy, owner_id
+                from user_bots
+                where is_deleted = false
+                """) as cursor:
+                    async for row in cursor:
+                        target_bots[row['bot_name']] = row
+                logging.getLogger('debug').debug({
                     'action': 'reload',
                     'mode': 'dynamic_bot',
+                    'bots': len(target_bots)
                 })
-                try:
-                    target_bots = {}
-                    async with self.database.bots_db.execute("""
-                    select bot_name, bot_token, index_aliases,
-                    is_reload_required, app_id, app_hash, mtproxy, owner_id
-                    from user_bots
-                    where is_deleted = false
-                    """) as cursor:
-                        async for row in cursor:
-                            target_bots[row['bot_name']] = row
-                    logging.getLogger('statbox').info({
+                ready_bots = []
+                for ready_session_file in os.listdir(self.data_directory):
+                    if ready_session_file.endswith('.sdb.session'):
+                        ready_bot = ready_session_file
+                        if ready_session_file.endswith('.sdb.session'):
+                            ready_bot = ready_session_file[:-len('.sdb.session')]
+                        if ready_bot in self.telegram_clients:
+                            continue
+                        if ready_bot in target_bots:
+                            ready_bots.append(ready_bot)
+                        else:
+                            self.clean_bot_session(bot_name=ready_bot)
+                for target_bot_name in target_bots:
+                    if target_bots[target_bot_name]['is_reload_required']:
+                        await self.stop_bot(target_bot_name)
+                        await self.database.bots_db_wrapper.db.execute(
+                            'update user_bots set is_reload_required = false where bot_name = ?', (target_bot_name,)
+                        )
+
+                launch_list = ready_bots + list(set(target_bots.keys()).difference(self.telegram_clients.keys()).difference(ready_bots))
+                launch_list = list(sorted(launch_list, key=lambda x: 0 if x in self.priority_bots else 1))
+
+                executor = MultipleAsyncExecution(self.total_shards)
+                for new_bot_name in launch_list:
+                    logging.getLogger('debug').debug({
                         'action': 'reload',
                         'mode': 'dynamic_bot',
-                        'bots': len(target_bots)
+                        'bots': new_bot_name
                     })
-                    ready_bots = []
-                    for ready_session_file in os.listdir(self.data_directory):
-                        if ready_session_file.endswith('.sdb.session'):
-                            ready_bot = ready_session_file
-                            if ready_session_file.endswith('.sdb.session'):
-                                ready_bot = ready_session_file[:-len('.sdb.session')]
-                            if ready_bot in self.telegram_clients:
-                                continue
-                            if ready_bot in target_bots:
-                                ready_bots.append(ready_bot)
-                            else:
-                                self.clean_bot_session(bot_name=ready_bot)
-                    for target_bot_name in target_bots:
-                        if target_bots[target_bot_name]['is_reload_required']:
-                            await self.stop_bot(target_bot_name)
-                            await self.database.bots_db.execute(
-                                'update user_bots set is_reload_required = false where bot_name = ?', (target_bot_name,)
-                            )
+                    await executor.execute(self.start_bot(target_bots_configs=target_bots, bot_name=new_bot_name))
+                await executor.join()
 
-                    launch_list = ready_bots + list(set(target_bots.keys()).difference(self.telegram_clients.keys()).difference(ready_bots))
-                    launch_list = list(sorted(launch_list, key=lambda x: 0 if x in self.priority_bots else 1))
-
-                    executor = MultipleAsyncExecution(self.total_shards)
-                    for new_bot_name in launch_list:
-                        logging.getLogger('statbox').info({
-                            'action': 'reload',
-                            'mode': 'start',
-                            'bots': new_bot_name
-                        })
-                        await executor.execute(self.start_bot(target_bots_configs=target_bots, bot_name=new_bot_name))
-                    await executor.join()
-
-                    for removed_bot in set(self.telegram_clients.keys()).difference(target_bots.keys()):
-                        await self.stop_bot(removed_bot)
-                        self.clean_bot_session(bot_name=removed_bot)
-
-                except Exception as e:
-                    logging.getLogger('statbox').info({
-                        'action': 'error',
-                        'mode': 'dynamic_bot',
-                        'error': str(e),
-                    })
-                    traceback.print_exc()
+                for removed_bot in set(self.telegram_clients.keys()).difference(target_bots.keys()):
+                    await self.stop_bot(removed_bot)
+                    self.clean_bot_session(bot_name=removed_bot)
+                logging.getLogger('debug').debug({
+                    'action': 'polling',
+                    'mode': 'dynamic_bot',
+                })
                 await asyncio.sleep(self.polling_interval)
-        except asyncio.CancelledError:
-            pass
+            except asyncio.CancelledError:
+                logging.getLogger('debug').debug({
+                    'action': 'reload_task_cancelled',
+                    'mode': 'dynamic_bot',
+                })
+                break
+            except Exception as e:
+                logging.getLogger('error').error({
+                    'action': 'error',
+                    'mode': 'dynamic_bot',
+                    'error': str(e),
+                })
+                traceback.print_exc()

@@ -3,6 +3,7 @@ from telethon import Button
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from tgbot.app.application import TelegramApplication
+from tgbot.app.query_builder import PreprocessedQuery
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import BaseHolder
 from tgbot.views.telegram.common import TooLongQueryError, encode_query_to_deep_link
@@ -20,7 +21,7 @@ class BaseSearchWidget:
         application: TelegramApplication,
         request_context: RequestContext,
         chat: dict,
-        query: str,
+        preprocessed_query: PreprocessedQuery,
         index_aliases,
         page: int = 0,
         is_group_mode: bool = False,
@@ -28,7 +29,7 @@ class BaseSearchWidget:
         self.application = application
         self.request_context = request_context
         self.chat = chat
-        self.query = query
+        self.preprocessed_query = preprocessed_query
         self.index_aliases = index_aliases
         self.page = page
         self.is_group_mode = is_group_mode
@@ -39,7 +40,7 @@ class BaseSearchWidget:
         application: TelegramApplication,
         request_context: RequestContext,
         chat: dict,
-        query: str,
+        preprocessed_query: PreprocessedQuery,
         index_aliases,
         page: int = 0,
         is_group_mode: bool = False,
@@ -48,7 +49,7 @@ class BaseSearchWidget:
             application=application,
             request_context=request_context,
             chat=chat,
-            query=query,
+            preprocessed_query=preprocessed_query,
             index_aliases=index_aliases,
             page=page,
             is_group_mode=is_group_mode,
@@ -58,10 +59,11 @@ class BaseSearchWidget:
 
     async def _acquire_documents(self):
         queries = self.application.query_processor.process(
-            self.query,
+            query=self.preprocessed_query.query,
             page=self.page,
             page_size=self.application.config['application']['page_size'],
-            index_aliases=self.index_aliases
+            index_aliases=self.index_aliases,
+            skip_doi_isbn_term_field_mapper=self.preprocessed_query.skip_doi_isbn_term_field_mapper,
         )
         self._search_response = await self.application.summa_client.search(queries)
 
@@ -79,7 +81,7 @@ class BaseSearchWidget:
 
 
 class SearchWidget(BaseSearchWidget):
-    async def render(self, message_id, request_context: RequestContext) -> tuple:
+    async def render(self, request_context: RequestContext) -> tuple:
         if len(self.scored_documents) == 0:
             return t('COULD_NOT_FIND_ANYTHING', self.chat['language']), [close_button()]
 
@@ -96,7 +98,7 @@ class SearchWidget(BaseSearchWidget):
                 .add_new_line()
             )
             need_pipe = False
-            if holder.has_field('cid'):
+            if holder.has_field('links'):
                 if self.is_group_mode:
                     el = el.add(holder.get_ipfs_gateway_link(), escaped=True)
                 else:
@@ -104,15 +106,15 @@ class SearchWidget(BaseSearchWidget):
                 need_pipe = True
             elif holder.has_field('doi') and not self.is_group_mode:
                 try:
-                    deep_link = encode_query_to_deep_link('🔬 ' + holder.doi, request_context.bot_name)
-                    if not self.application.is_read_only() and self.application.librarian_service:
+                    deep_link = encode_query_to_deep_link('#r ' + holder.doi, request_context.bot_name)
+                    if self.application.librarian_service and not self.application.is_read_only():
                         el = el.add(f'[request]({deep_link})', escaped=True)
                         need_pipe = True
                 except TooLongQueryError:
                     pass
             el = (
                 el
-                .add_doi_link(with_leading_pipe=need_pipe, text='doi.org')
+                .add_external_provider_link(with_leading_pipe=need_pipe)
                 .add_references_counter(bot_name=request_context.bot_name, with_leading_pipe=True)
                 .add_filedata(show_filesize=True, with_leading_pipe=True)
                 .build()
@@ -126,7 +128,7 @@ class SearchWidget(BaseSearchWidget):
         if self.is_group_mode:
             try:
                 encoded_query = encode_query_to_deep_link(
-                    self.query,
+                    self.preprocessed_query.query,
                     request_context.bot_name,
                 )
                 serp = (
