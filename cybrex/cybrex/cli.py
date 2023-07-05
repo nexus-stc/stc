@@ -23,7 +23,7 @@ class CybrexCli:
 
     async def sum_doc(self, doi: str,):
         """
-        Give a summarization of the document
+        Summarization of the document
 
         :param doi: DOI of the document
         """

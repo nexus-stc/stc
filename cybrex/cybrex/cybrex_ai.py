@@ -7,6 +7,7 @@ import pypdf
 import yaml
 from aiokit import AioThing
 from izihawa_configurator import Configurator
+from izihawa_utils.exceptions import BaseError
 from izihawa_utils.file import mkdir_p
 from langchain.chains import RetrievalQA
 from langchain.chains.summarize import load_summarize_chain
@@ -18,6 +19,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from stc_geck.advices import get_documents_on_topic
 from stc_geck.client import StcGeck
+
+
+class DocumentNotFoundError(BaseError):
+    pass
 
 
 def print_color(text, color):
@@ -115,7 +120,7 @@ class CybrexAI(AioThing):
         await self.add_document_by_doi(doi)
         qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type='stuff', retriever=self.as_retriever(
             search_type='similarity',
-            search_kwargs={'k': 3, 'where': {'doi': doi}},
+            search_kwargs={'k': 3, 'filter': {'doi': doi}},
         ))
         result = qa({"query": question})
         return result["result"].strip()
@@ -133,6 +138,8 @@ class CybrexAI(AioThing):
                 'collectors': [{'top_docs': {'limit': 1}}],
                 'query': {'term': {'field': 'doi', 'value': doi}}
             }])
+            if not documents:
+                raise DocumentNotFoundError(doi=doi)
             await self.add_documents(documents)
         return [Document(page_content=text) for text in self.collection.get(where={'doi': doi})['documents']]
 
