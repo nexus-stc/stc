@@ -64,16 +64,16 @@ async def detect_host_header(url):
 class StcGeck(AioThing):
     def __init__(
         self,
-        ipfs_http_base_url: str,
-        ipfs_data_directory: str,
-        index_aliases: Tuple[str],
-        grpc_api_endpoint: str,
+        ipfs_http_base_url: str = 'http://localhost:8080',
+        ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
+        index_names: Tuple[str, ...] = ('nexus_science',),
+        grpc_api_endpoint: str = '127.0.0.1:10082',
         embed: bool = True,
     ):
         super().__init__()
         self.ipfs_http_base_url = canonoize_base_url(ipfs_http_base_url)
         self.ipfs_data_directory = '/' + ipfs_data_directory.strip('/') + '/'
-        self.index_aliases = index_aliases
+        self.index_names = index_names
         self.grpc_api_endpoint = grpc_api_endpoint
         self.embed = embed
         self.summa_embed_server = None
@@ -83,13 +83,6 @@ class StcGeck(AioThing):
         )
         self.temp_dir = None
 
-    async def __aenter__(self):
-        await self.start()
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        await self.stop()
-
     async def start(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         if self.embed:
@@ -97,11 +90,11 @@ class StcGeck(AioThing):
             server_config['api']['grpc_endpoint'] = self.grpc_api_endpoint
             server_config['data_path'] = self.temp_dir.name
             server_config['log_path'] = self.temp_dir.name
-            for index in self.index_aliases:
+            for index_name in self.index_names:
                 query_parser_config = {
                     'default_fields': ['abstract', 'title']
                 }
-                full_path = self.ipfs_http_base_url + self.ipfs_data_directory + index + '/'
+                full_path = self.ipfs_http_base_url + self.ipfs_data_directory + index_name + '/'
                 headers_template = {'range': 'bytes={start}-{end}'}
                 remote_index_config = {'remote': {
                     'method': 'GET',
@@ -111,7 +104,7 @@ class StcGeck(AioThing):
                 }}
                 if host_header := await detect_host_header(full_path):
                     headers_template['host'] = host_header
-                server_config['core']['indices'][index] = {
+                server_config['core']['indices'][index_name] = {
                     'query_parser_config': query_parser_config,
                     'config': remote_index_config,
                     'field_triggers': {},

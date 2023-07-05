@@ -47,7 +47,7 @@ class TelegramApplication(AioRootThing):
         self.geck = StcGeck(
             ipfs_http_base_url=self.config['ipfs']['http']['base_url'],
             ipfs_data_directory=self.config['summa']['embed']['ipfs_data_directory'],
-            index_aliases=self.config['summa']['embed']['index_aliases'],
+            index_names=self.config['summa']['embed']['index_names'],
             grpc_api_endpoint=self.config['summa']['endpoint'],
             embed=self.config['summa']['embed'].get('enabled', True),
         )
@@ -106,7 +106,7 @@ class TelegramApplication(AioRootThing):
             and not self.is_read_only()
         ):
             from library.integral.file_flow import FileFlow
-            self.file_flow = FileFlow(self.summa_client, self.config['file_flow'], index_alias='nexus_science', ipfs_config=config['ipfs'])
+            self.file_flow = FileFlow(self.summa_client, self.config['file_flow'], index_alias='nexus_science')
             self.starts.append(self.file_flow)
 
         self.promotioner = Promotioner(

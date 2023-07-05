@@ -104,7 +104,7 @@ summa:
   endpoint: 127.0.0.1:10082
   embed:
     enabled: true
-    index_aliases:
+    index_names:
       - nexus_free
     ipfs_data_directory: /ipns/standard-template-construct.org/data/
   query_processor:

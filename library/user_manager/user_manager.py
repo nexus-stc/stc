@@ -53,4 +53,4 @@ class UserManager:
         return (user_id, id) in self.tasks
 
     def hit_limits(self, user_id):
-        return self.limits.get(user_id, 0) >= 7
+        return self.limits.get(user_id, 0) >= 3

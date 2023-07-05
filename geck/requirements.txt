@@ -1,6 +1,7 @@
 aiohttp
-aiosumma>=2.44.0
+aiokit>=1.2.3
+aiosumma>=2.44.1
 ipfs-hamt-directory-py
-summa-embed>=0.17.6
+summa-embed>=0.17.7
 termcolor
 fire

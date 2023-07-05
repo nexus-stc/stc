@@ -3,10 +3,10 @@ requires = ["setuptools<65.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "stc-geck"
-version = "1.2.5"
+name = "cybrex"
+version = "1.0.2"
 authors = [{ name = "Interdimensional Walker" }]
-description = "GECK (Garden Of Eden Creation Kit) is a toolkit for setting up and maintaning STC"
+description = "Researching AI"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -15,7 +15,7 @@ classifiers = [
 dynamic = ["dependencies"]
 
 [project.scripts]
-geck = "stc_geck.cli:main"
+cybrex = "cybrex.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/nexus-stc/stc"

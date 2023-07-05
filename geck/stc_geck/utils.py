@@ -6,7 +6,6 @@ from urllib.parse import quote
 
 import ipfs_hamt_directory_py
 
-
 NON_ALNUMWHITESPACE_REGEX = re.compile(r'([^\s\w])+')
 MULTIWHITESPACE_REGEX = re.compile(r"\s+")
 

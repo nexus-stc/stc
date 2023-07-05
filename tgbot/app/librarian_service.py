@@ -141,6 +141,12 @@ class LibrarianService(AioThing):
             if doi_regex:
                 return doi_regex.group(1) + '/' + doi_regex.group(2)
 
+    def is_file(self, message):
+        if message.raw_text:
+            doi_regex = re.search(DOI_REGEX, message.raw_text)
+            if doi_regex:
+                return doi_regex.group(1) + '/' + doi_regex.group(2)
+
     def try_download_media(self, message):
         return message.download_media(file=bytes)
 
@@ -153,7 +159,7 @@ class LibrarianService(AioThing):
         async for message in self.admin_telegram_client.iter_messages(self.group_name):
             if doi := self.is_request(message):
                 self.requests[doi] = message.id
-            if False and self.application.grobid_client:
+            if self.application.grobid_client:
                 if data := await self.try_download_media(message):
                     logging.getLogger('debug').debug({
                         'action': 'found_media',
@@ -164,25 +170,15 @@ class LibrarianService(AioThing):
                     if not processed_document or 'doi' not in processed_document:
                         continue
                     doi = processed_document['doi'].lower().strip()
-                    reply_message = await message.get_reply_message()
-                    if reply_message:
-                        if doi_hint := self.is_request(reply_message):
-                            if doi_hint != doi:
-                                logging.getLogger('debug').debug({
-                                    'action': 'doi_hint_mismatch',
-                                    'mode': 'librarian_service',
-                                    'doi': doi,
-                                    'doi_hint': doi_hint,
-                                })
-                                continue
-                    if doi not in self.requests:
-                        logging.getLogger('debug').debug({
-                            'action': 'missing_request',
-                            'mode': 'librarian_service',
-                            'doi': doi,
-                        })
-                        await self.admin_telegram_client.delete_messages(self.group_name, [message.id])
-                        continue
+                    if doi_hint := self.is_file(message):
+                        if doi_hint != doi:
+                            logging.getLogger('debug').debug({
+                                'action': 'doi_hint_mismatch',
+                                'mode': 'librarian_service',
+                                'doi': doi,
+                                'doi_hint': doi_hint,
+                            })
+                            continue
                     document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi)
                     try:
                         data = await asyncio.wait_for(

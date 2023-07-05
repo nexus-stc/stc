@@ -29,21 +29,21 @@ class CidNotFound(Exception):
 class StcGeckCli:
     def __init__(
         self,
-        ipfs_http_endpoint: str,
+        ipfs_http_base_url: str,
         ipfs_data_directory: str,
-        index_alias: str,
+        index_name: str,
         grpc_api_endpoint: str,
         embed: bool,
         timeout: int,
     ):
         self.geck = StcGeck(
-            ipfs_http_base_url=ipfs_http_endpoint,
+            ipfs_http_base_url=ipfs_http_base_url,
             ipfs_data_directory=ipfs_data_directory,
-            index_aliases=(index_alias,),
+            index_names=(index_name,),
             grpc_api_endpoint=grpc_api_endpoint,
             embed=embed,
         )
-        self.index_alias = index_alias
+        self.index_name = index_name
         self.timeout = timeout
 
     async def search(self, query: str, limit: int = 1):
@@ -56,11 +56,11 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_alias}...")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
         async with self.geck as geck:
             print(f"{colored('INFO', 'green')}: Searching {query}...")
             response = await geck.get_summa_client().search([{
-                "index_alias": self.index_alias,
+                "index_alias": self.index_name,
                 "query": {
                     "match": {"value": query}
                 },
@@ -76,9 +76,9 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_alias}...")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
         async with self.geck as geck:
-            async for document in geck.get_summa_client().documents(self.index_alias):
+            async for document in geck.get_summa_client().documents(self.index_name):
                 print(document)
 
     async def download(self, query: str, output_path: str):
@@ -126,24 +126,24 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_alias}...")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
         async with self.geck as geck:
-            return await geck.create_ipfs_directory(self.index_alias, output_car, query, limit, name_template)
+            return await geck.create_ipfs_directory(self.index_name, output_car, query, limit, name_template)
 
 
 async def stc_geck_cli(
-    ipfs_http_endpoint: str = 'http://127.0.0.1:8080',
+    ipfs_http_base_url: str = 'http://127.0.0.1:8080',
     ipfs_data_directory: str = '/ipns/standard-template-construct.org/data/',
-    index_alias: str = 'nexus_science',
-    grpc_api_endpoint: str = '127.0.0.1:37082',
+    index_name: str = 'nexus_science',
+    grpc_api_endpoint: str = '127.0.0.1:10082',
     embed: bool = True,
     timeout: int = 600,
     debug: bool = False,
 ):
     """
-    :param ipfs_http_endpoint: IPFS HTTP API Endpoint
+    :param ipfs_http_base_url: IPFS HTTP API Endpoint
     :param ipfs_data_directory: path to the directory with index
-    :param index_alias: `nexus_free` (non-classified content) or `nexus_science` (similar to Crossref)
+    :param index_name: `nexus_free` (non-classified content) or `nexus_science` (similar to Crossref)
     :param grpc_api_endpoint: port used for Summa
     :param embed: setup embedded Summa server
     :param timeout: timeout for requests to IPFS
@@ -152,9 +152,9 @@ async def stc_geck_cli(
     """
     logging.basicConfig(stream=sys.stdout, level=logging.INFO if debug else logging.ERROR)
     stc_geck_client = StcGeckCli(
-        ipfs_http_endpoint=ipfs_http_endpoint,
+        ipfs_http_base_url=ipfs_http_base_url,
         ipfs_data_directory=ipfs_data_directory,
-        index_alias=index_alias,
+        index_name=index_name,
         grpc_api_endpoint=grpc_api_endpoint,
         embed=embed,
         timeout=timeout,
