@@ -1,3 +1,5 @@
+import io
+import logging
 import os.path
 import uuid
 from typing import List, Optional
@@ -93,7 +95,7 @@ class CybrexAI(AioThing):
             return document['content']
         elif 'links' in document:
             pdf_file = await self.geck.download(document['links'][0]['cid'])
-            pdf_reader = pypdf.PdfReader(pdf_file)
+            pdf_reader = pypdf.PdfReader(io.BytesIO(pdf_file))
             return '\n'.join(page.extract_text() for page in pdf_reader.pages)
 
     async def add_documents(self, documents: List[dict]):
@@ -103,27 +105,50 @@ class CybrexAI(AioThing):
         texts = []
 
         for document in documents:
+            if self.collection.get(where={'doi': document['doi']})['documents']:
+                logging.getLogger('statbox').info({
+                    'action': 'already_stored',
+                    'doi': document['doi'],
+                })
+                continue
+            logging.getLogger('statbox').info({
+                'action': 'retrieve_content',
+                'doi': document['doi'],
+            })
             content = await self.resolve_document_content(document)
             if not content:
                 continue
+            logging.getLogger('statbox').info({
+                'action': 'chunking',
+                'doi': document['doi'],
+            })
             for chunk_id, chunk in enumerate(text_splitter.split_text(content)):
                 metadatas.append({'doi': document['doi'], 'chunk_id': chunk_id})
                 texts.append(chunk)
+        if texts:
+            return self.collection.upsert(
+                documents=texts,
+                metadatas=metadatas,
+                ids=[str(uuid.uuid1()) for _ in range(len(texts))]
+            )
 
-        return self.collection.upsert(
-            documents=texts,
-            metadatas=metadatas,
-            ids=[str(uuid.uuid1()) for _ in range(len(texts))]
-        )
-
-    async def chat_document(self, doi, question):
+    async def chat_document(self, doi, question, k):
         await self.add_document_by_doi(doi)
-        qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type='stuff', retriever=self.as_retriever(
+        qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type='map_reduce', retriever=self.as_retriever(
             search_type='similarity',
-            search_kwargs={'k': 3, 'filter': {'doi': doi}},
+            search_kwargs={'k': k, 'filter': {'doi': doi}},
         ))
         result = qa({"query": question})
         return result["result"].strip()
+
+    async def chat_science(self, topic, question, llm_documents, summa_documents):
+        await self.add_document_by_topic(topic, summa_documents)
+        qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type='map_reduce', retriever=self.as_retriever(
+            search_type='similarity',
+            search_kwargs={'k': llm_documents},
+        ), return_source_documents=True)
+        result = qa({"query": question})
+        return result
 
     async def summarize_document(self, doi):
         documents = await self.add_document_by_doi(doi)
@@ -132,19 +157,19 @@ class CybrexAI(AioThing):
         return result.strip()
 
     async def add_document_by_doi(self, doi) -> List[Document]:
-        if not self.collection.get(where={'doi': doi}):
-            documents = await self.geck.get_summa_client().search_documents([{
-                'index_alias': 'nexus_science',
-                'collectors': [{'top_docs': {'limit': 1}}],
-                'query': {'term': {'field': 'doi', 'value': doi}}
-            }])
-            if not documents:
-                raise DocumentNotFoundError(doi=doi)
-            await self.add_documents(documents)
-        return [Document(page_content=text) for text in self.collection.get(where={'doi': doi})['documents']]
+        documents = await self.geck.get_summa_client().search_documents([{
+            'index_alias': 'nexus_science',
+            'collectors': [{'top_docs': {'limit': 1}}],
+            'query': {'term': {'field': 'doi', 'value': doi}}
+        }])
+        if not documents:
+            raise DocumentNotFoundError(doi=doi)
+        await self.add_documents(documents)
+        documents = [Document(page_content=text) for text in self.collection.get(where={'doi': doi})['documents']]
+        return documents
 
-    async def add_document_by_topic(self, topic):
-        documents = await get_documents_on_topic(summa_client=self.geck.get_summa_client(), topic=topic, documents=20)
+    async def add_document_by_topic(self, topic: str, documents: int):
+        documents = await get_documents_on_topic(summa_client=self.geck.get_summa_client(), topic=topic, documents=documents)
         return await self.add_documents(documents)
 
     def as_retriever(self, **kwargs):
