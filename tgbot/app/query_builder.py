@@ -155,9 +155,9 @@ class QueryProcessor:
     def process_filters(self, query):
         for term in query.split():
             if term in inversed_type_icons:
-                query = query.replace(term, f'type:+{inversed_type_icons[term]}')
+                query = query.replace(term, f' type:+{inversed_type_icons[term]} ')
             if term in languages:
-                query = query.replace(term, f'language:+{languages[term]}')
+                query = query.replace(term, f' language:+{languages[term]} ')
         return query
 
     def preprocess_query(self, query):
