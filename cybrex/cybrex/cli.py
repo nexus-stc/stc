@@ -16,26 +16,27 @@ class CybrexCli:
     def __init__(self):
         self.cybrex = CybrexAI()
 
-    async def chat_doc(self, doi: str, question: str, k: int = 7):
+    async def chat_doc(self, field: str, value: str, question: str, k: int = 7):
         """
         Ask a question about content of document identified by DOI.
 
-        :param doi: DOI of the document
+        :param field: name of the field in document used for selection
+        :param value: value of the field in document used for selection
         :param question: Text question to the document
         :param k: the number of documents to extract from Chroma for sending to OpenAI
             more means more tokens to use and more precision in answer
         """
         async with self.cybrex as cybrex:
-            print(f"{colored('Document', 'green')}: {doi}")
+            print(f"{colored('Document', 'green')}: {field}:{value}")
             print(f"{colored('Q', 'green')}: {question}")
-            response = await cybrex.chat_document(doi, question, k)
+            response = await cybrex.chat_document(field, value, question, k)
             print(f"{colored('A', 'green')}: {response}")
 
     async def chat_sci(self, topic: str, question: str, llm_documents: int = 11, summa_documents: int = 40):
         """
         Ask a question about content of document identified by DOI.
 
-        :param topic
+        :param topic:
         :param question: Text question to the document
         :param llm_documents: the number of documents to extract from Chroma for sending to OpenAI
             more means more tokens to use and more precision in answer
@@ -56,15 +57,16 @@ class CybrexCli:
             sources = textwrap.indent('\n'.join(snippets), ' - ')
             print(f"{colored('Sources', 'green')}:\n{sources}")
 
-    async def sum_doc(self, doi: str,):
+    async def sum_doc(self, field: str, value: str):
         """
         Summarization of the document
 
-        :param doi: DOI of the document
+        :param field: name of the field in document used for selection
+        :param value: value of the field in document used for selection
         """
         async with self.cybrex as cybrex:
-            print(f"{colored('Document', 'green')}: {doi}")
-            response = await cybrex.summarize_document(doi)
+            print(f"{colored('Document', 'green')}: {field}:{value}")
+            response = await cybrex.summarize_document(field, value)
             print(f"{colored('Summarization', 'green')}: {response}")
 
 

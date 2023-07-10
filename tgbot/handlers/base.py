@@ -174,7 +174,11 @@ class BaseHandler(ABC):
 
     async def _check_banned(self, event: events.ChatAction):
         if event.chat_id in self.banned_chat_ids:
-            logging.getLogger('statbox').info({'action': 'hit_banned', 'chat_id': event.chat_id})
+            logging.getLogger('statbox').info({
+                'action': 'hit_banned',
+                'chat_id': event.chat_id,
+                'text': event.raw_text if hasattr(event, 'raw_text') else None
+            })
             raise events.StopPropagation()
 
     async def _process_chat(self, event: events.ChatAction, request_id: str):

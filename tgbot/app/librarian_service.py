@@ -283,7 +283,7 @@ class LibrarianService(AioThing):
             )
         except PyPdfError:
             caption += '\n\n**File is possibly corrupted, check manually**'
-        except PdfProcessingError as e:
+        except (PdfProcessingError, RecursionError) as e:
             logging.error({
                 'action': 'cleanup failed',
                 'error': str(e),

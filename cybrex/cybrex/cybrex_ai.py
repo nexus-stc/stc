@@ -46,11 +46,11 @@ def default_config():
 
 class CybrexAI(AioThing):
     def __init__(
-        self,
-        home_path: str = '~/.cybrex',
-        collection_name: str = 'main',
-        embedding_function: Optional[Embeddings] = None,
-        geck: Optional[StcGeck] = None,
+            self,
+            home_path: str = '~/.cybrex',
+            collection_name: str = 'main',
+            embedding_function: Optional[Embeddings] = None,
+            geck: Optional[StcGeck] = None,
     ):
         super().__init__()
         self.home_path = os.path.expanduser(home_path)
@@ -94,9 +94,14 @@ class CybrexAI(AioThing):
         if 'content' in document:
             return document['content']
         elif 'links' in document:
-            pdf_file = await self.geck.download(document['links'][0]['cid'])
-            pdf_reader = pypdf.PdfReader(io.BytesIO(pdf_file))
-            return '\n'.join(page.extract_text() for page in pdf_reader.pages)
+            primary_link = document['links'][0]
+            file_content = await self.geck.download(document['links'][0]['cid'])
+            match primary_link['type']:
+                case 'pdf':
+                    pdf_reader = pypdf.PdfReader(io.BytesIO(file_content))
+                    return '\n'.join(page.extract_text() for page in pdf_reader.pages)
+                case _:
+                    raise RuntimeError("Unsupported extension")
 
     async def add_documents(self, documents: List[dict]):
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=300)
@@ -105,25 +110,30 @@ class CybrexAI(AioThing):
         texts = []
 
         for document in documents:
-            if self.collection.get(where={'doi': document['doi']})['documents']:
+            doi = document['doi']
+            cid = document['links'][0]['cid']
+            if self.collection.get(where={"$or": [{'doi': doi}, {'cid': cid}]})['documents']:
                 logging.getLogger('statbox').info({
                     'action': 'already_stored',
-                    'doi': document['doi'],
+                    'doi': doi,
+                    'cid': cid,
                 })
                 continue
             logging.getLogger('statbox').info({
                 'action': 'retrieve_content',
-                'doi': document['doi'],
+                'doi': doi,
+                'cid': cid,
             })
             content = await self.resolve_document_content(document)
             if not content:
                 continue
             logging.getLogger('statbox').info({
                 'action': 'chunking',
-                'doi': document['doi'],
+                'doi': doi,
+                'cid': cid,
             })
             for chunk_id, chunk in enumerate(text_splitter.split_text(content)):
-                metadatas.append({'doi': document['doi'], 'chunk_id': chunk_id})
+                metadatas.append({'doi': doi, 'cid': cid, 'chunk_id': chunk_id})
                 texts.append(chunk)
         if texts:
             return self.collection.upsert(
@@ -132,11 +142,15 @@ class CybrexAI(AioThing):
                 ids=[str(uuid.uuid1()) for _ in range(len(texts))]
             )
 
-    async def chat_document(self, doi, question, k):
-        await self.add_document_by_doi(doi)
-        qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type='map_reduce', retriever=self.as_retriever(
+    async def chat_document(self, field, value, question, k):
+        await self.add_document_by_field_value(field, value)
+        if k > 3:
+            chain_type = 'map_reduce'
+        else:
+            chain_type = 'stuff'
+        qa = RetrievalQA.from_chain_type(llm=OpenAI(), chain_type=chain_type, retriever=self.as_retriever(
             search_type='similarity',
-            search_kwargs={'k': k, 'filter': {'doi': doi}},
+            search_kwargs={'k': k, 'filter': {field: value}},
         ))
         result = qa({"query": question})
         return result["result"].strip()
@@ -150,26 +164,27 @@ class CybrexAI(AioThing):
         result = qa({"query": question})
         return result
 
-    async def summarize_document(self, doi):
-        documents = await self.add_document_by_doi(doi)
+    async def summarize_document(self, field, value):
+        documents = await self.add_document_by_field_value(field, value)
         chain = load_summarize_chain(llm=OpenAI(), chain_type="map_reduce")
         result = chain.run(documents)
         return result.strip()
 
-    async def add_document_by_doi(self, doi) -> List[Document]:
+    async def add_document_by_field_value(self, field, value) -> List[Document]:
         documents = await self.geck.get_summa_client().search_documents([{
             'index_alias': 'nexus_science',
             'collectors': [{'top_docs': {'limit': 1}}],
-            'query': {'term': {'field': 'doi', 'value': doi}}
+            'query': {'term': {'field': field, 'value': value}}
         }])
         if not documents:
-            raise DocumentNotFoundError(doi=doi)
+            raise DocumentNotFoundError(**{field: value})
         await self.add_documents(documents)
-        documents = [Document(page_content=text) for text in self.collection.get(where={'doi': doi})['documents']]
+        documents = [Document(page_content=text) for text in self.collection.get(where={field: value})['documents']]
         return documents
 
     async def add_document_by_topic(self, topic: str, documents: int):
-        documents = await get_documents_on_topic(summa_client=self.geck.get_summa_client(), topic=topic, documents=documents)
+        documents = await get_documents_on_topic(summa_client=self.geck.get_summa_client(), topic=topic,
+                                                 documents=documents)
         return await self.add_documents(documents)
 
     def as_retriever(self, **kwargs):

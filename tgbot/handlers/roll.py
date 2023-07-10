@@ -1,10 +1,10 @@
+import random
 import re
 import time
 
 from telethon import events
 
 from library.telegram.base import RequestContext
-from library.telegram.utils import safe_execution
 from tgbot.views.telegram.base_holder import BaseHolder
 
 from .base import BaseHandler
@@ -25,8 +25,9 @@ class RollHandler(BaseHandler):
         response = await self.application.summa_client.search(
             self.application.query_processor.process(
                 query,
+                collector='reservoir_sampling',
                 page_size=1,
-                index_aliases=self.bot_index_aliases
+                index_aliases=[random.choice(self.bot_index_aliases)]
             )
         )
         documents = response.collector_outputs[0].documents.scored_documents
@@ -45,5 +46,3 @@ class RollHandler(BaseHandler):
 
             request_context.statbox(action='show', duration=time.time() - start_time)
             await event.respond(view, buttons=buttons_builder.build(), link_preview=True)
-        async with safe_execution(is_logging_enabled=False):
-            await event.delete()

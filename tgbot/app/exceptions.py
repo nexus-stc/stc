@@ -37,7 +37,3 @@ class DownloadError(BaseError):
 class InvalidSearchError(BaseError):
     def __init__(self, search):
         self.search = search
-
-
-class UnavailableSummaError(BaseError):
-    pass

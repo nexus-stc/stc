@@ -324,12 +324,12 @@ class IndexQueryBuilder:
         if collector == 'top_docs':
             if scorer := self.scorer_function(query):
                 collector_struct['scorer'] = scorer
-        if offset := page_size * page:
-            collector_struct['offset'] = offset
+            if self.snippet_configs:
+                collector_struct['snippet_configs'] = self.snippet_configs
+            if offset := page_size * page:
+                collector_struct['offset'] = offset
         if fields:
             collector_struct['fields'] = fields
-        if self.snippet_configs:
-            collector_struct['snippet_configs'] = self.snippet_configs
         return {
             'index_alias': self.index_alias,
             'query': query_struct,

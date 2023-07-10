@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from concurrent.futures import ProcessPoolExecutor
 
 from aiogrobid import GrobidClient
 from aiokit import AioRootThing
@@ -26,6 +27,8 @@ class TelegramApplication(AioRootThing):
         self.database = Database(data_directory=config['application']['data_directory'])
         self.starts.append(self.database)
 
+        is_embed = self.config['summa']['embed'].get('enabled', True)
+
         self.dynamic_bot_manager = DynamicBotManager(
             data_directory=config['application']['data_directory'],
             database=self.database,
@@ -37,7 +40,7 @@ class TelegramApplication(AioRootThing):
                     'tgbot.handlers.trends.TrendsHelpHandler',
                     'tgbot.handlers.trends.TrendsHandler',
                     'tgbot.handlers.trends.TrendsEditHandler'
-                ] if 'aiosumma' in self.config['summa'] else [],
+                ] if not is_embed else [],
             ),
             pre_stop_hook=lambda bot_name, telegram_client: telegram_client.remove_event_handlers(),
             total_shards=config['application']['workers'],
@@ -49,7 +52,7 @@ class TelegramApplication(AioRootThing):
             ipfs_data_directory=self.config['summa']['embed']['ipfs_data_directory'],
             index_names=self.config['summa']['embed']['index_names'],
             grpc_api_endpoint=self.config['summa']['endpoint'],
-            embed=self.config['summa']['embed'].get('enabled', True),
+            embed=is_embed,
         )
         self.starts.append(self.geck)
         self.summa_client = self.geck.get_summa_client()
@@ -106,7 +109,12 @@ class TelegramApplication(AioRootThing):
             and not self.is_read_only()
         ):
             from library.integral.file_flow import FileFlow
-            self.file_flow = FileFlow(self.summa_client, self.config['file_flow'], index_alias='nexus_science')
+            self.file_flow = FileFlow(
+                self.summa_client,
+                self.config['file_flow'],
+                index_alias='nexus_science',
+                pool=ProcessPoolExecutor()
+            )
             self.starts.append(self.file_flow)
 
         self.promotioner = Promotioner(

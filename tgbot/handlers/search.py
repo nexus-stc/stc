@@ -4,6 +4,7 @@ import time
 from abc import ABC
 from typing import List, Tuple
 
+import grpc.aio
 from izihawa_utils.exceptions import NeedRetryError
 from telethon import events
 from telethon.tl.types import InlineQueryPeerTypeSameBotPM
@@ -13,7 +14,7 @@ from library.regexes import DOI_REGEX
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
-from tgbot.app.exceptions import BannedUserError, InvalidSearchError, UnavailableSummaError
+from tgbot.app.exceptions import BannedUserError, InvalidSearchError
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import BaseHolder, NexusScienceHolder
 from tgbot.views.telegram.common import encode_deep_query
@@ -81,10 +82,13 @@ class BaseSearchHandler(BaseHandler, ABC):
             return t('INVALID_SYNTAX_ERROR', language).format(
                 too_difficult_picture_url=self.application.config['application'].get('too_difficult_picture_url', ''),
             ), [close_button()], True
-        except UnavailableSummaError:
-            return t('MAINTENANCE', language).format(
-                error_picture_url=self.application.config['application'].get('error_picture_url', ''),
-            ), [close_button()], True
+        except grpc.aio.AioRpcError as e:
+            if e.code() == grpc.StatusCode.ABORTED or e.code() == grpc.StatusCode.UNAVAILABLE:
+                return t('MAINTENANCE', language).format(
+                    error_picture_url=self.application.config['application'].get('error_picture_url', ''),
+                ), [close_button()], True
+            else:
+                raise
 
         request_context.statbox(
             action='documents_retrieved',
@@ -228,8 +232,12 @@ class SearchHandler(BaseSearchHandler):
                 buttons=buttons,
                 link_preview=link_preview,
             )
-        except (InvalidSearchError, UnavailableSummaError, asyncio.CancelledError) as e:
+        except asyncio.CancelledError as e:
             await asyncio.gather(prefetch_message.delete(), event.delete())
+            raise e
+        except grpc.aio.AioRpcError as e:
+            if e.code() == grpc.StatusCode.ABORTED or e.code() == grpc.StatusCode.UNAVAILABLE:
+                await asyncio.gather(prefetch_message.delete(), event.delete())
             raise e
 
 
@@ -269,8 +277,13 @@ class InlineSearchHandler(BaseSearchHandler):
                 )
             else:
                 await event.answer(items)
-        except (InvalidSearchError, UnavailableSummaError):
+        except InvalidSearchError:
             await event.answer([])
+        except grpc.aio.AioRpcError as e:
+            if e.code() == grpc.StatusCode.ABORTED or e.code() == grpc.StatusCode.UNAVAILABLE:
+                await event.answer([])
+            else:
+                raise
         raise events.StopPropagation()
 
 
@@ -348,10 +361,15 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
                 index_aliases=self.bot_index_aliases,
                 page=page,
             )
-        except (InvalidSearchError, UnavailableSummaError):
+        except InvalidSearchError:
             return await event.answer(
                 t('MAINTENANCE_WO_PIC', request_context.chat['language']),
             )
+        except grpc.aio.AioRpcError as e:
+            if e.code() == grpc.StatusCode.ABORTED or e.code() == grpc.StatusCode.UNAVAILABLE:
+                await event.answer([])
+            else:
+                raise
 
         request_context.statbox(
             action='documents_retrieved',
