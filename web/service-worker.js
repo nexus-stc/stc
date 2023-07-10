@@ -1,0 +1,1 @@
+node_modules/summa-wasm/dist/service-worker.js

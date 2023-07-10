@@ -1,0 +1,21 @@
+$enable-negative-margins: true;
+
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+.inversion-filter {}
+@media (prefers-color-scheme: dark) {
+  .inversion-filter {
+     filter: invert(100%);
+  }
+}
+
+.favicon-inversion-filter {
+  filter: invert(21%) sepia(30%) saturate(4764%) hue-rotate(214deg) brightness(85%) contrast(89%)
+}
+@media (prefers-color-scheme: dark) {
+  .favicon-inversion-filter {
+     filter: invert(93%) sepia(19%) saturate(5095%) hue-rotate(353deg) brightness(116%) contrast(99%);
+  }
+}
+
