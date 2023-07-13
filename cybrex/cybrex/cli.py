@@ -3,9 +3,8 @@ import sys
 import textwrap
 
 import fire
+from cybrex_ai import CybrexAI
 from termcolor import colored
-
-from .cybrex_ai import CybrexAI
 
 
 def create_snippet(document):
@@ -32,11 +31,10 @@ class CybrexCli:
             response = await cybrex.chat_document(field, value, question, k)
             print(f"{colored('A', 'green')}: {response}")
 
-    async def chat_sci(self, topic: str, question: str, llm_documents: int = 11, summa_documents: int = 40):
+    async def chat_sci(self, question: str, llm_documents: int = 3, summa_documents: int = 9):
         """
         Ask a question about content of document identified by DOI.
 
-        :param topic:
         :param question: Text question to the document
         :param llm_documents: the number of documents to extract from Chroma for sending to OpenAI
             more means more tokens to use and more precision in answer
@@ -44,10 +42,8 @@ class CybrexCli:
             more means more tokens to use and more precision in answer
         """
         async with self.cybrex as cybrex:
-            print(f"{colored('Topic', 'green')}: {topic}")
             print(f"{colored('Q', 'green')}: {question}")
             response = await cybrex.chat_science(
-                topic=topic,
                 question=question,
                 llm_documents=llm_documents,
                 summa_documents=summa_documents,

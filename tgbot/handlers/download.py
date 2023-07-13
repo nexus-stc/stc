@@ -196,7 +196,7 @@ class DownloadTask(LongTask):
         async for chunk in self.application.ipfs_http_client.get_iter(cid):
             collected.extend(chunk)
             if progress_bar:
-                await progress_bar.callback(len(chunk), filesize)
+                await progress_bar.callback(len(collected), filesize)
         return bytes(collected)
 
     @retry(

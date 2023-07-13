@@ -138,9 +138,6 @@ class StcGeck(AioThing):
     ):
         if query and self.embed:
             logging.getLogger('warning').warning('Too high limit for embedded Summa')
-        '''
-        All following conditions are introduced to mitigate performance issues.
-        '''
         if query:
             return await create_car(
                 output_car,

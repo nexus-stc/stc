@@ -8,7 +8,7 @@ seaborn
 
 aiobaseclient
 aiocrossref
-aiogrobid==0.1.11
+aiogrobid==0.1.12
 aiokit
 aiosqlite
 base36

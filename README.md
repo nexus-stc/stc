@@ -8,7 +8,8 @@ You've arrived at the repository for [STC](http://standard-template-construct.or
 [Repository IPFS mirror](http://repo.standard-template-construct.org) | 
 [Telegram](https://t.me/+3UReK0DgPeBhOWQy) | 
 [Twitter](https://twitter.com/the_superpirate) | 
-[Mastodon](https://kolektiva.social/@the_superpirate)
+[Mastodon](https://kolektiva.social/@the_superpirate) |
+[E-mail](mailto:ultranymous@proton.me)
 
 ### Web STC 
 
