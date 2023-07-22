@@ -1,6 +1,6 @@
 const translations = {
-  'en': {
-    about: "About",
+  en: {
+    about: 'About',
     about_alert: `
     <p>Standard Template Construct (STC) continues to evolve.</p> 
     <p>We have already transferred to STC:</p>
@@ -10,7 +10,7 @@ const translations = {
     </ul>
     <p>However, there remains a multitude of knowledge that requires preservation and unchaining. We want <b>individuals capable of hosting and seeding</b> terabytes of data to join us in our mission.</p>
     <p>If you are interested in seeding, please reach us using the contacts below.</p>
-    <p>If you wish to aid the development of STC, kindly consider <a href="/#/donate">making a donation</a></p>
+    <p>If you wish to aid the development of STC, kindly consider <a href="#/donate">making a donation</a></p>
     `,
     about_end: `
     <p>The world has changed, and the humankind has evolved into a truly interconnected, digital specie. Traditional methods of knowledge management no longer suffice, and new approaches are necessary to accommodate this shift. The act of restricting knowledge is now more harmful than releasing it free or under copyleft licenses.</p>
@@ -21,7 +21,7 @@ const translations = {
     <p>Founded in 2021 year (Earth Time, Gregorian Calendar), STC relies upon <a href="https://github.com/izihawa/summa">Summa</a>, <a href="https://webassembly.org/">WASM</a> and <a href="https://ipfs.tech/">IPFS</a> for its operation.</p>
     <p>STC is also a pure peer-to-peer system and does not have a centralized server. Queries made through the platform remain within the user's browser, and bookmarks are also stored locally. Therefore, users are solely responsible for backing up their bookmarks by using the export button on the Bookmark page.</p>
     `,
-    about_why: "Why?",
+    about_why: 'Why?',
     about_why_points: `
     <li>Unrestricted access to all knowledge is necessary for emerging new (semi-)digital lifeforms, such as AI and cyborgs</li>
     <li class="mt-3">The free flow of information promotes growth, while restriction leads to stagnation and starvation</li>
@@ -31,14 +31,14 @@ const translations = {
     `,
     all_languages: 'All languages',
     bookmarks: 'bookmarks',
-    contacts: "Contacts",
+    contacts: 'Contacts',
     donate: `<p>STC creators devote the most of their time to make knowledge available to every human. By supporting this project, you will be contributing to the democratization of knowledge and ensuring that everyone has access to the latest scholarly publications, regardless of their financial or institutional constraints. Even the smallest gift to charity can make a huge impact.</p>
     <p>We will appreciate any donations that will allow us to continue development of STC.</p>`,
     everywhere: 'Everywhere',
     found: 'found',
     help: `
     <h4 class="mt-4">Usage</h4>
-    <p>Just type your request in plain words.</p>
+    <p>Just type your request in plain words in the search box.</p>
     <h5>Examples</h5>    
     <ul>
       <li class="font-monospace">Divine Comedy Dante</li>
@@ -65,18 +65,24 @@ const translations = {
     <p><span class="font-monospace">+</span> sign makes words or filtration by field mandatory</p>
     <ul>
       <li><span class="font-monospace">+JavaScript language:en</span> returns <b>all</b> JavaScript books but books in English will be ranked higher</li>
-      <li><span class="font-monospace">+JavaScript language:-en</span> returns JavaScript books <b>only</b> in English</li>
-    </ul>
-    <p><span class="font-monospace">-</span> sign removes documents with the word</p>
-    <ul>
       <li><span class="font-monospace">+JavaScript language:+en</span> returns JavaScript books <b>only</b> in English</li>
     </ul>
+    <p><span class="font-monospace">-</span> sign removes documents</p>
+    <ul>
+      <li><span class="font-monospace">+JavaScript language:-en</span> returns JavaScript books <b>only</b> non-English books</li>
+    </ul>
     `,
-    is_ipfs_enabled: "Is local IPFS daemon enabled?",
+    help_popper: `
+      <p>mandatory words: +JavaScript</p>
+      <p>excluded words: -JavaScript</p>
+      <p>item types: book, book-chapter, chapter, chapter, dataset, component, dissertation, edited-book, journal-article, monograph, peer-review, proceedings, proceedings-article, reference-book, report, standard</p>
+      <p>fields: abstract, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pub (publisher), ser (series), tags, title</p
+    `,
+    is_ipfs_enabled: 'Is local IPFS daemon enabled?',
     load_more: 'More',
     loading: 'loading',
     loading_document: 'loading document',
-    network_error: "Network error, try to reload page",
+    network_error: 'Network error, try to reload page',
     replicate_intro: `
     <h4>Replicate search metadata</h4>
     <p><b>Search metadata does not include books or scholar publications</b>. Follow the last section of this guide to learn about how to replicate them separately.</p>
@@ -104,10 +110,10 @@ const translations = {
     `,
     search: 'Search',
     search_placeholder: 'by title, authors, content, doi...',
-    unsupported_browser: "Unfortunately, you have unsupported browser. Try to update it or use another browser.",
+    unsupported_browser: 'Unfortunately, you have unsupported browser. Try to update it or use another browser.',
     what_to_read: 'What To Read'
   },
-  'pb': {
+  pb: {
     all_languages: 'Todas as línguas',
     bookmarks: 'favoritas',
     donate: `<p>Os criadores do STC dedicam a maior parte de seu tempo para tornar o conhecimento disponível para todos os humanos. Ao apoiar este projeto, você estará contribuindo para a democratização do conhecimento e garantindo que todos tenham acesso às mais recentes publicações científicas, independentemente de suas restrições financeiras ou institucionais. Mesmo o menor presente para a caridade pode causar um grande impacto.</p>
@@ -121,7 +127,7 @@ const translations = {
     search_placeholder: 'título, autor, conteúdo, doi...',
     what_to_read: 'O que ler'
   },
-  'ru': {
+  ru: {
     about_alert: `
     <p>Стандартные шаблонные конструкции (STC) находятся в активной разработке.</p> 
     <p>Мы уже перенесли в STC:</p>
@@ -131,11 +137,11 @@ const translations = {
     </ul>
     <p>Тем не менее, еще многое предстоит сделать. Мы призываем <b>людей, способных сидировать данные и имеющих хороший интернет-канал</b> присоединиться к нам.</p>
     <p>Если вы заинтересованы, то свяжитесь с нами по контактам ниже.</p>
-    <p>Если вы хотите поддержать разработку STC, вы можете <a href="/#/donate">сделать пожертвование в криптовалютах</a></p>
+    <p>Если вы хотите поддержать разработку STC, вы можете <a href="#/donate">сделать пожертвование в криптовалютах</a></p>
     `,
     all_languages: 'Все языки',
     bookmarks: 'закладок',
-    contacts: "Как связаться с нами",
+    contacts: 'Как связаться с нами',
     donate: `<p>Создатели STC посвящают большую часть своего времени тому, чтобы сделать знания доступными для каждого человека. Поддерживая этот проект, вы внесете свой вклад в демократизацию знаний и обеспечите каждому доступ к последним научным публикациям, независимо от его финансовых или институциональных ограничений. Даже самый маленький взнос может оказать огромное влияние.</p>
     <p>Мы будем признательны за любые пожертвования, которые позволят нам продолжить развитие STC.</p>`,
     everywhere: 'Везде',
@@ -149,19 +155,18 @@ const translations = {
   }
 }
 
-export function get_label(label: string) {
-  for (const language in navigator.languages) {
-    const language = navigator.language.slice(0, 2);
-    if (language in translations) {
-      // @ts-ignore
-      if (label in translations[language]) {
-        // @ts-ignore
-        return translations[language][label];
+export function get_label (label: string) {
+  for (const language of navigator.languages) {
+    const short_language = language.slice(0, 2)
+    if (short_language in translations) {
+      // @ts-expect-error
+      if (label in translations[short_language]) {
+        // @ts-expect-error
+        return translations[short_language][label]
       } else {
-        break;
+        break
       }
     }
   }
-  // @ts-ignore
-  return translations['en'][label];
+  return translations.en[label]
 }

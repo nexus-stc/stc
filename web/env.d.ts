@@ -1,22 +1,20 @@
-/// <reference types="vite/client" />
+import 'vite/client'
 
-import { IPFSHTTPClient } from "ipfs-http-client";
-import { SearchService } from "@/services/summa";
+import { type SearchService } from '@/services/summa'
 
-declare module "@vue/runtime-core" {
+declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
-    ipfs: IPFSHTTPClient;
-    search_service: SearchService;
+    search_service: SearchService
   }
 }
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      GITHUB_AUTH_TOKEN: string;
-      NODE_ENV: "development" | "production";
-      PORT?: string;
-      PWD: string;
+      GITHUB_AUTH_TOKEN: string
+      NODE_ENV: 'development' | 'production'
+      PORT?: string
+      PWD: string
     }
   }
 }

@@ -1,4 +1,13 @@
+$base-light: #644494;
+$base-dark: #FE9609;
 $enable-negative-margins: true;
+
+$headings-color: $base-light;
+$headings-color-dark: $base-dark;
+$link-color: $base-light;
+$link-color-dark: $base-dark;
+$code-color: $base-light;
+$code-color-dark: $base-dark;
 
 @import "bootstrap/scss/bootstrap";
 @import "bootstrap-icons/font/bootstrap-icons.css";
@@ -11,11 +20,11 @@ $enable-negative-margins: true;
 }
 
 .favicon-inversion-filter {
-  filter: invert(21%) sepia(30%) saturate(4764%) hue-rotate(214deg) brightness(85%) contrast(89%)
+  filter: invert(29%) sepia(15%) saturate(2317%) hue-rotate(222deg) brightness(100%) contrast(90%)
 }
 @media (prefers-color-scheme: dark) {
   .favicon-inversion-filter {
-     filter: invert(93%) sepia(19%) saturate(5095%) hue-rotate(353deg) brightness(116%) contrast(99%);
+     filter: invert(78%) sepia(78%) saturate(4236%) hue-rotate(356deg) brightness(103%) contrast(99%);
   }
 }
 

@@ -15,6 +15,7 @@ base36
 dateparser
 emoji
 izihawa_configurator>=1.0.4
+izihawa_ipfs_api==1.0.0
 izihawa_loglib>=1.0.2
 izihawa_utils
 lru-dict

@@ -13,13 +13,14 @@ h5(v-html="document.title")
 
 <script lang="ts">
 // @ts-nocheck
-import { defineComponent } from "vue";
-import BaseNexusMedia from "../base/NexusMedia.vue";
-import DocumentButtons from "../DocumentButtons.vue";
+import { defineComponent } from 'vue'
+
+import BaseNexusMedia from '../base/NexusMedia.vue'
+import DocumentButtons from '../DocumentButtons.vue'
 
 export default defineComponent({
-  name: "NexusMediaDocument",
-  extends: BaseNexusMedia,
+  name: 'NexusMediaDocument',
   components: { DocumentButtons },
-});
+  extends: BaseNexusMedia
+})
 </script>

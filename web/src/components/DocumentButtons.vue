@@ -1,5 +1,5 @@
 <template lang="pug">
-.btn-group(v-if="cid")
+.btn-group(v-if="external_links")
   button.btn.btn-secondary(data-bs-toggle="modal" data-bs-target="#qr-modal")
     i.bi.bi-qr-code-scan
 .btn-group.ms-2
@@ -15,60 +15,60 @@
   ul.dropdown-menu(v-if="external_links.length > 1")
     li(v-for="external_link of external_links")
       a.dropdown-item(:href="external_link.url" target="_blank") {{ external_link.name }}
-.modal.fade(v-if="primary_link" id="qr-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true")
+.modal.fade(v-if="external_links" id="qr-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true")
   .modal-dialog
     .modal-content
       .modal-header
         h5.modal-title IPFS Link
         button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
       div.modal-body
-        qr-code(:url="'https://ipfs.io/ipfs/' + primary_link.cid")
+        qr-code(:url="'https://ipfs.io/ipfs/' + external_links[0].cid")
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
-import { Bookmark, user_db } from "@/database";
-import { useObservable } from "@vueuse/rxjs";
-import { liveQuery } from "dexie";
-import QrCode from "./QrCode.vue";
+import { useObservable } from '@vueuse/rxjs'
+import { liveQuery } from 'dexie'
+import { defineComponent, type PropType } from 'vue'
+
+import { Bookmark, user_db } from '@/database'
+
+import QrCode from './QrCode.vue'
 
 export default defineComponent({
-  name: "DocumentButtons",
+  name: 'DocumentButtons',
   components: { QrCode },
   props: {
     index_name: {
       type: String,
-    },
-    primary_link: {
-      type: Object,
+      required: true
     },
     query: {
       type: String,
+      required: true
     },
     external_links: {
-      type: Array as PropType<Array<{ url: String; name: String }>>,
-    },
+      type: Array as PropType<Array<{ url: string, name: string }>>
+    }
   },
-  data() {
+  data () {
     return {
       bookmark: useObservable(
-        // @ts-ignore
         liveQuery(async () => {
-          return user_db.bookmarks.get({
+          return await user_db.bookmarks.get({
             index_name: this.index_name,
-            query: this.query,
-          });
+            query: this.query
+          })
         })
-      ),
-    };
+      )
+    }
   },
   methods: {
-    async add_bookmark() {
-      await user_db.add_bookmark(new Bookmark(this.index_name!, this.query!));
+    async add_bookmark () {
+      await user_db.add_bookmark(new Bookmark(this.index_name, this.query))
     },
-    async remove_bookmark() {
-      await user_db.delete_bookmark(this.index_name!, this.query!);
-    },
-  },
-});
+    async remove_bookmark () {
+      await user_db.delete_bookmark(this.index_name, this.query)
+    }
+  }
+})
 </script>

@@ -368,6 +368,7 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
         except grpc.aio.AioRpcError as e:
             if e.code() == grpc.StatusCode.ABORTED or e.code() == grpc.StatusCode.UNAVAILABLE:
                 await event.answer([])
+                return
             else:
                 raise
 

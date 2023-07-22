@@ -3,28 +3,29 @@ div.favicon-inversion-filter.text-center(id="qr-code")
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import QrCreator from "qr-creator";
+import QrCreator from 'qr-creator'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: "QrCode",
+  name: 'QrCode',
   props: {
     url: {
-      type: String,
-    },
+      default: '',
+      type: String
+    }
   },
-  async mounted() {
+  async mounted () {
     QrCreator.render(
       {
-        text: this.url!,
+        text: this.url,
         radius: 0.5, // 0.0 to 0.5
-        ecLevel: "H", // L, M, Q, H
-        fill: "#000000", // foreground color
+        ecLevel: 'H', // L, M, Q, H
+        fill: '#000000', // foreground color
         background: null, // color or null for transparent
-        size: 280, // in pixels
+        size: 280 // in pixels
       },
-      document.querySelector("#qr-code")!
-    );
-  },
-});
+      document.querySelector('#qr-code')!
+    )
+  }
+})
 </script>

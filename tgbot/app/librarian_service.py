@@ -86,20 +86,20 @@ class LibrarianService(AioThing):
                         'doi',
                         doi.lower()
                     ):
-                        if 'links' in document and document['links']['type'] == 'primary':
+                        if 'links' in document and document['links'][0]['type'] == 'primary':
                             await self.delete_request(doi)
                 await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            logging.getLogger('debug').debug({
+                'action': 'cleanup_cancelled',
+                'mode': 'librarian_service',
+            })
         except Exception as e:
             logging.getLogger('error').error({
                 'action': 'cleanup_failed',
                 'mode': 'librarian_service',
                 'error': str(e),
-                'tb': traceback.format_tb()
-            })
-        except asyncio.CancelledError:
-            logging.getLogger('debug').debug({
-                'action': 'cleanup_cancelled',
-                'mode': 'librarian_service',
+                'tb': traceback.format_exc()
             })
 
     async def start(self):
@@ -166,8 +166,18 @@ class LibrarianService(AioThing):
                         'mode': 'librarian_service',
                         'filesize': len(data),
                     })
-                    processed_document = await self.application.grobid_client.process_fulltext_document(pdf_file=data)
-                    if not processed_document or 'doi' not in processed_document:
+                    try:
+                        processed_document = await self.application.grobid_client.process_fulltext_document(pdf_file=data)
+                        if not processed_document or 'doi' not in processed_document:
+                            continue
+                    except Exception as e:
+                        logging.getLogger('warning').warning({
+                            'action': 'failed_to_recognize',
+                            'mode': 'librarian_service',
+                            'doi': doi,
+                            'filesize': len(data),
+                            'error': str(e)
+                        })
                         continue
                     doi = processed_document['doi'].lower().strip()
                     if doi_hint := self.is_file(message):

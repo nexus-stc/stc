@@ -11,28 +11,28 @@ div
 </template>
 
 <script lang="ts">
-// @ts-nocheck
-import { defineComponent } from "vue";
-import BaseNexusMedia from "@/components/base/NexusMedia.vue";
+import { defineComponent } from 'vue'
+
+import BaseNexusMedia from '@/components/base/NexusMedia.vue'
 
 export default defineComponent({
-  name: "NexusMediaSnippet",
+  name: 'NexusMediaSnippet',
   extends: BaseNexusMedia,
   props: {
     with_abstract: {
       type: Boolean,
-      default: true,
+      default: true
     },
     with_extras: {
       type: Boolean,
       required: false,
-      default: true,
-    },
+      default: true
+    }
   },
-  data() {
+  data () {
     return {
-      snippet_length: 340,
-    };
-  },
-});
+      snippet_length: 340
+    }
+  }
+})
 </script>

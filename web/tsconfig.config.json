@@ -1,6 +1,12 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.node.json",
-  "include": ["vite.config.*", "vitest.config.*", "cypress.config.*"],
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "include": [
+    "summa-config.ts",
+    "vite.config.ts",
+    "vite-sw.config.ts",
+    "vitest.config.ts",
+    "cypress.config.*"
+  ],
   "compilerOptions": {
     "composite": true,
     "moduleResolution": "Node",

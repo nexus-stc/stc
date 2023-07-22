@@ -6,26 +6,27 @@ div(v-for="scored_document in scored_documents" v-bind:key="scored_document.posi
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
-import DocumentSnippet from "@/components/DocumentSnippet.vue";
+import { defineComponent, type PropType } from 'vue'
+
+import DocumentSnippet from '@/components/DocumentSnippet.vue'
 
 export default defineComponent({
-  name: "SearchList",
+  name: 'SearchList',
   components: { DocumentSnippet },
   props: {
     scored_documents: {
       type: Array as PropType<
-        {
-          document: {
-            title: string;
-            cid: string;
-          };
-        }[]
+      Array<{
+        document: {
+          title: string
+          cid: string
+        }
+      }>
       >,
-      required: true,
-    },
-  },
-});
+      required: true
+    }
+  }
+})
 </script>
 
 <style scoped lang="scss">

@@ -5,10 +5,10 @@ from concurrent.futures import ProcessPoolExecutor
 
 from aiogrobid import GrobidClient
 from aiokit import AioRootThing
+from izihawa_ipfs_api import IpfsHttpClient
 from izihawa_utils.importlib import import_object
 from stc_geck.client import StcGeck
 
-from library.ipfs import IpfsHttpClient
 from library.telegram.dynamic_bot_manager import DynamicBotManager
 from library.telegram.promotioner import Promotioner
 from library.user_manager import UserManager

@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import socket
 import tempfile
 from urllib.parse import quote
 
@@ -41,3 +42,11 @@ async def create_car(output_car, documents, limit, name_template) -> (str, bytes
         return await asyncio.get_event_loop().run_in_executor(
             None, lambda: ipfs_hamt_directory_py.from_file(input_data, output_car, td),
         )
+
+
+def is_endpoint_listening(endpoint):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    ip, port = endpoint.split(':')
+    is_open = sock.connect_ex((ip, int(port))) == 0
+    sock.close()
+    return is_open

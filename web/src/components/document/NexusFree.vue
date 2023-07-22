@@ -12,21 +12,21 @@ img.mt-3.img-thumbnail(v-if="cover" width="160" :src="cover")
   .mt-2.text-secondary.float-start
     tags-list(:tags="document.tags")
 .text-end.mt-4
-  document-buttons(:external_links="external_links" :index_name="index_name" :query="id_query()" :cid="document.primary_link")
+  document-buttons(:external_links="external_links" :index_name="index_name" :query="id_query()")
 </template>
 
 <script lang="ts">
-// @ts-nocheck
-import { defineComponent } from "vue";
-import BaseNexusFree from "../base/NexusFree.vue";
-import DocumentButtons from "../DocumentButtons.vue";
+import { defineComponent } from 'vue'
+
+import BaseNexusFree from '../base/NexusFree.vue'
+import DocumentButtons from '../DocumentButtons.vue'
 
 export default defineComponent({
-  name: "NexusFreeDocument",
-  extends: BaseNexusFree,
+  name: 'NexusFreeDocument',
   components: { DocumentButtons },
-  async created() {
-    document.title = `${this.document.title} - STC`;
-  },
-});
+  extends: BaseNexusFree,
+  async created () {
+    document.title = `${this.document.title} - STC`
+  }
+})
 </script>

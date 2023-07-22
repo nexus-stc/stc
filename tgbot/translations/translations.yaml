@@ -82,6 +82,7 @@ en:
     - Filter by item type: `📚 JavaScript`
     - Exact match: `"Fetal Hemoglobin"`
     - Filter languages: `+JavaScript 🇪🇸`
+    - Filter format: `+JavaScript format:+epub`
     - For ordering by date, add `order_by:date` to your query
     - Search by specific field in the database: `authors:London`, `pub:"Elsevier BV"`, `ser:"Medieval Media Cultures"`
     
@@ -147,6 +148,7 @@ en:
     - Filter by item type: `/search 📚 JavaScript`
     - Exact match: `/search "Fetal Hemoglobin"`
     - Filter languages: `/search +JavaScript 🇪🇸`
+    - Filter format: `/search +JavaScript format:+epub`
     - For ordering by date, add `order_by:date` to your query
     - Search by specific field in the database: `authors:London`, `pub:"Elsevier BV"`, `ser:"Medieval Media Cultures"`
 

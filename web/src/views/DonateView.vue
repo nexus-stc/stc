@@ -2,7 +2,6 @@
 .container
   h4 Donate
   p(v-html='get_label("donate")')
-
   .col-lg-6.small
     ul.nav.nav-tabs(id="currencies-tab" role="tablist")
       li.nav-item(role="presentation")
@@ -30,13 +29,14 @@
           img.favicon-inversion-filter.img-fluid(src="@/assets/xmr.svg")
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import {get_label} from "../translations";
+import { defineComponent } from 'vue'
+
+import { get_label } from '../translations'
 export default defineComponent({
-  name: "AboutView",
-  methods: {get_label},
-  created() {
-    document.title = `Donate - STC`;
+  name: 'DonateView',
+  created () {
+    document.title = 'Donate - Help - STC'
   },
-});
+  methods: { get_label }
+})
 </script>

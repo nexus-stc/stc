@@ -1,8 +1,9 @@
 aiokit>=1.2.3
 chromadb==0.3.26
 izihawa-configurator==1.0.4
-izihawa-utils==1.1.1
+izihawa-utils==1.1.3
 langchain==0.0.222
+lazy==1.5
 openai==0.27.8
 pypdf==3.12.0
 pyyaml==6.0

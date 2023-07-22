@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import tempfile
@@ -9,8 +10,10 @@ import orjson
 import summa_embed
 from aiokit import AioThing
 from aiosumma import SummaClient
+from izihawa_ipfs_api import IpfsApiClient, IpfsHttpClient
+from izihawa_utils.random import reservoir_sampling_async
 
-from .utils import create_car
+from .utils import create_car, is_endpoint_listening
 
 
 def get_config():
@@ -32,11 +35,11 @@ def get_config():
     }
 
 
-def canonoize_base_url(endpoint):
-    endpoint = endpoint.rstrip('/')
-    if not endpoint.startswith('http'):
-        endpoint = 'http://' + endpoint
-    return endpoint
+def canonoize_base_url(base_url):
+    base_url = base_url.rstrip('/')
+    if not base_url.startswith('http'):
+        base_url = 'http://' + base_url
+    return base_url
 
 
 async def query_wrapper(response):
@@ -49,6 +52,18 @@ async def load_document(documents):
         document = orjson.loads(document)
         if 'cid' in document:
             yield document
+
+
+async def trace_iteration(iter, every_n, **kwargs):
+    i = 1
+    async for el in iter:
+        if i % every_n == 0:
+            logging.getLogger('statbox').info({
+                'c': i,
+                **kwargs
+            })
+        i += 1
+        yield el
 
 
 async def detect_host_header(url):
@@ -64,18 +79,23 @@ async def detect_host_header(url):
 class StcGeck(AioThing):
     def __init__(
         self,
-        ipfs_http_base_url: str = 'http://localhost:8080',
+        ipfs_http_base_url: str = 'http://127.0.0.1:8080',
+        ipfs_api_base_url: str = 'http://127.0.0.1:5001',
         ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
         index_names: Tuple[str, ...] = ('nexus_science',),
         grpc_api_endpoint: str = '127.0.0.1:10082',
-        embed: bool = True,
+        timeout: int = 120,
     ):
         super().__init__()
         self.ipfs_http_base_url = canonoize_base_url(ipfs_http_base_url)
+        self.ipfs_http_client = IpfsHttpClient(self.ipfs_http_base_url, timeout=timeout)
+        self.starts.append(self.ipfs_http_client)
+        self.ipfs_api_client = IpfsApiClient(canonoize_base_url(ipfs_api_base_url), timeout=timeout)
+        self.starts.append(self.ipfs_api_client)
         self.ipfs_data_directory = '/' + ipfs_data_directory.strip('/') + '/'
         self.index_names = index_names
         self.grpc_api_endpoint = grpc_api_endpoint
-        self.embed = embed
+        self.is_embed = False
         self.summa_embed_server = None
         self.summa_client = SummaClient(
             endpoint=self.grpc_api_endpoint,
@@ -85,14 +105,17 @@ class StcGeck(AioThing):
 
     async def start(self):
         self.temp_dir = tempfile.TemporaryDirectory()
-        if self.embed:
+        if not is_endpoint_listening(self.grpc_api_endpoint):
+            logging.getLogger('info').info({'action': 'launching_embedded'})
+            self.is_embed = True
+
             server_config = get_config()
             server_config['api']['grpc_endpoint'] = self.grpc_api_endpoint
             server_config['data_path'] = self.temp_dir.name
             server_config['log_path'] = self.temp_dir.name
             for index_name in self.index_names:
                 query_parser_config = {
-                    'default_fields': ['abstract', 'title']
+                    'default_fields': ['abstract', 'content', 'title']
                 }
                 full_path = self.ipfs_http_base_url + self.ipfs_data_directory + index_name + '/'
                 headers_template = {'range': 'bytes={start}-{end}'}
@@ -123,10 +146,28 @@ class StcGeck(AioThing):
     def get_summa_client(self):
         return self.summa_client
 
-    async def download(self, cid: str, timeout: int = 120):
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
-            async with session.get(f'{self.ipfs_http_base_url}/ipfs/{cid}') as resp:
-                return await resp.read()
+    async def download(self, cid: str):
+        return await self.ipfs_http_client.get_item(cid)
+
+    async def random_cids(self, n: int = 1000):
+        items = await reservoir_sampling_async(
+            async_iterator=trace_iteration(
+                self.ipfs_api_client.ls_stream(
+                    '/ipns/hub.standard-template-construct.org',
+                    size=False,
+                    resolve_type=False,
+                ),
+                10000,
+                action='trace_listing_items',
+            ),
+            n=n
+        )
+        cids = []
+        for item in items:
+            item = json.loads(item)
+            link = item['Objects'][0]['Links'][0]
+            cids.append(link['Hash'])
+        return cids
 
     async def create_ipfs_directory(
         self,
@@ -136,7 +177,7 @@ class StcGeck(AioThing):
         limit: int = 100,
         name_template: str = '{id}.{extension}',
     ):
-        if query and self.embed:
+        if query and self.is_embed:
             logging.getLogger('warning').warning('Too high limit for embedded Summa')
         if query:
             return await create_car(

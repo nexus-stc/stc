@@ -7,24 +7,25 @@ div(v-if="is_launched")
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: "LoadingSpinner",
+  name: 'LoadingSpinner',
   props: {
     label: {
-      type: String,
-    },
+      default: '',
+      type: String
+    }
   },
-  data() {
+  data () {
     return {
-      is_launched: false,
-    };
+      is_launched: false
+    }
   },
-  created() {
+  created () {
     setInterval(() => {
-      this.is_launched = true;
-    }, 300);
-  },
-});
+      this.is_launched = true
+    }, 300)
+  }
+})
 </script>

@@ -14,40 +14,40 @@ div
 </template>
 
 <script lang="ts">
-// @ts-nocheck
-import { defineComponent } from "vue";
-import BaseNexusScience from "@/components/base/NexusScience.vue";
-import { user_db } from "@/database";
+import { defineComponent } from 'vue'
+
+import BaseNexusScience from '@/components/base/NexusScience.vue'
+import { user_db } from '@/database'
 
 export default defineComponent({
-  name: "NexusScienceSnippet",
+  name: 'NexusScienceSnippet',
   extends: BaseNexusScience,
   props: {
     with_abstract: {
       type: Boolean,
-      default: true,
+      default: true
     },
     with_extras: {
       type: Boolean,
       required: false,
-      default: true,
+      default: true
     },
     with_tags: {
       type: Boolean,
-      default: true,
-    },
+      default: true
+    }
   },
-  data() {
+  data () {
     return {
       has_bookmark: false,
-      snippet_length: 180,
-    };
+      snippet_length: 180
+    }
   },
-  async created() {
+  async created () {
     this.has_bookmark = await user_db.has_bookmark(
       this.index_name,
       this.id_query()
-    );
-  },
-});
+    )
+  }
+})
 </script>

@@ -6,37 +6,37 @@ div
 </template>
 
 <script lang="ts">
-// @ts-nocheck
-import { defineComponent } from "vue";
-import NexusFreeSnippet from "./snippet/NexusFree.vue";
-import NexusMediaSnippet from "./snippet/NexusMedia.vue";
-import NexusScienceSnippet from "./snippet/NexusScience.vue";
+import { defineComponent } from 'vue'
+
+import NexusFreeSnippet from './snippet/NexusFree.vue'
+import NexusMediaSnippet from './snippet/NexusMedia.vue'
+import NexusScienceSnippet from './snippet/NexusScience.vue'
 
 export default defineComponent({
-  name: "DocumentSnippet",
+  name: 'DocumentSnippet',
   components: { NexusFreeSnippet, NexusMediaSnippet, NexusScienceSnippet },
   props: {
     with_abstract: {
       type: Boolean,
       required: false,
-      default: true,
+      default: true
     },
     with_extras: {
       type: Boolean,
       required: false,
-      default: true,
+      default: true
     },
     with_tags: {
       type: Boolean,
       required: false,
-      default: true,
+      default: true
     },
     scored_document: {
       type: Object,
-      required: true,
-    },
-  },
-});
+      required: true
+    }
+  }
+})
 </script>
 
 <style scoped lang="scss">

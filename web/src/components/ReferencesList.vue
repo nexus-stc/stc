@@ -14,17 +14,18 @@ div
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
-import LoadingSpinner from "./LoadingSpinner.vue";
-import NexusScienceSnippet from "./snippet/NexusScience.vue";
+import { defineComponent, type PropType } from 'vue'
+
+import LoadingSpinner from './LoadingSpinner.vue'
+import NexusScienceSnippet from './snippet/NexusScience.vue'
 
 export default defineComponent({
-  name: "ReferencesList",
+  name: 'ReferencesList',
   components: { NexusScienceSnippet, LoadingSpinner },
   props: {
     references: {
-      type: null as PropType<Array<{ document: any, position: number }>> | null,
-    },
-  },
-});
+      type: null as PropType<Array<{ document: any, position: number }>> | null
+    }
+  }
+})
 </script>

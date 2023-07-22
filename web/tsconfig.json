@@ -1,12 +1,21 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.web.json",
-  "include": ["env.d.ts", "src/**/*.vue"],
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": [
+    "env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "summa-config.ts",
+    "vite.config.ts",
+    "vite-sw.config.ts"
+  ],
   "compilerOptions": {
     "baseUrl": ".",
+    "esModuleInterop": true,
     "moduleResolution": "Node",
     "paths": {
       "@/*": ["./src/*"]
     },
+    "resolveJsonModule": true,
     "types": ["node"]
   },
 

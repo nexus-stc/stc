@@ -71,53 +71,51 @@ div(v-else)
 </template>
 
 <script lang="ts">
-import { liveQuery } from "dexie";
-import { defineComponent } from "vue";
-import { format_bytes, format_date } from "@/utils";
-import { meta_db } from "@/database";
-import { useObservable } from "@vueuse/rxjs";
-import LoadingSpinner from "@/components/LoadingSpinner.vue";
-import { toRaw } from "vue";
-import type { IndexConfig } from "summa-wasm";
+import { useObservable } from '@vueuse/rxjs'
+import { liveQuery } from 'dexie'
+import type { IndexConfig } from 'summa-wasm'
+import { defineComponent, toRaw } from 'vue'
+
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import { meta_db } from '@/database'
+import { format_bytes, format_date } from '@/utils'
 
 export default defineComponent({
-  name: "DatabasesView",
+  name: 'DatabasesView',
   components: { LoadingSpinner },
-  data() {
+  data () {
     return {
       index_configs: [],
       index_fields: new Map<string, string[]>(),
       is_loading: false,
-      new_index_ipns_path: "",
-    };
+      new_index_ipns_path: ''
+    }
   },
-  async created() {
-    document.title = `DBs - STC`;
-    this.is_loading = true;
-    // @ts-ignore
+  async created () {
+    document.title = 'DBs - STC'
+    this.is_loading = true
     this.index_configs = useObservable(
-      // @ts-ignore
       liveQuery(async () => {
-        const index_configs = await meta_db.index_configs.toArray();
-        for (let index_config of index_configs) {
+        const index_configs = await meta_db.index_configs.toArray()
+        for (const index_config of index_configs) {
           this.index_fields.set(
             index_config.index_name,
             await this.search_service.remote_index_registry.get_index_field_names(
               index_config.index_name
             )
-          );
+          )
         }
-        return index_configs;
+        return index_configs
       })
-    );
-    this.is_loading = false;
+    )
+    this.is_loading = false
   },
   methods: {
-    format_bytes: format_bytes,
-    format_date: format_date,
-    save(index_config: IndexConfig) {
-      meta_db.save(toRaw(index_config));
-    },
-  },
-});
+    format_bytes,
+    format_date,
+    save (index_config: IndexConfig) {
+      void meta_db.save(toRaw(index_config))
+    }
+  }
+})
 </script>

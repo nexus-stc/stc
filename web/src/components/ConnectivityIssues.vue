@@ -4,36 +4,38 @@ div.font-monospace
 </template>
 
 <script lang="ts">
-import { defineComponent, toRaw } from "vue";
-import { utils } from "summa-wasm";
-import {get_label} from "@/translations";
+import { utils } from 'summa-wasm'
+import { defineComponent } from 'vue'
+
+import { get_label } from '@/translations'
 
 export default defineComponent({
-  name: "ConnectivityIssues",
+  name: 'ConnectivityIssues',
   props: {
-    reason: Error,
+    reason: {
+      type: Error
+    }
   },
   computed: {
-    text() {
-      if (this.reason && `${this.reason}`.startsWith("CompileError")) {
-        return get_label("unsupported_browser");
+    text () {
+      if (this.reason?.toString().startsWith('CompileError')) {
+        return get_label('unsupported_browser')
       } else if (
-        this.reason &&
-        (this.reason.name === "AxiosError" ||
-          `${this.reason}`.includes('\\"status\\":0') ||
-          `${this.reason}`.includes("EOF while parsing a value"))
+        (this.reason?.name === 'AxiosError' ||
+          this.reason?.toString().includes('\\"status\\":0') ||
+          this.reason?.toString().includes('EOF while parsing a value'))
       ) {
         if (this.is_localhost) {
-          return get_label('is_ipfs_enabled');
+          return get_label('is_ipfs_enabled')
         } else {
-          return get_label('network_error');
+          return get_label('network_error')
         }
       }
-      return this.reason;
+      return this.reason
     },
-    is_localhost() {
-      return utils.get_ipfs_url().includes("localhost");
-    },
-  },
-});
+    is_localhost () {
+      return utils.get_ipfs_url().includes('localhost')
+    }
+  }
+})
 </script>

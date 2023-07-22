@@ -1,9 +1,11 @@
-import copy
 import io
 import logging
 import os.path
 import uuid
-from typing import List, Optional
+from typing import (
+    List,
+    Optional,
+)
 
 import chromadb
 import pypdf
@@ -12,17 +14,17 @@ from aiokit import AioThing
 from izihawa_configurator import Configurator
 from izihawa_utils.exceptions import BaseError
 from izihawa_utils.file import mkdir_p
-from keybert import KeyBERT
 from langchain.chains import RetrievalQA
 from langchain.chains.summarize import load_summarize_chain
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.embeddings.base import Embeddings
-from langchain.llms import CTransformers
 from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from stc_geck.advices import get_documents_on_topic
 from stc_geck.client import StcGeck
+
+from .models import (
+    OpenAIModel,
+    models_dict,
+)
 
 
 class DocumentNotFoundError(BaseError):
@@ -35,31 +37,23 @@ def print_color(text, color):
 
 def default_config():
     return {
-        'summa': {
-            'endpoint': '127.0.0.1:10083'
-        },
         'ipfs': {
             'http': {
                 'base_url': 'http://127.0.0.1:8080'
             }
-        }
+        },
+        'model': OpenAIModel.name,
+        'summa': {
+            'endpoint': '127.0.0.1:10083'
+        },
     }
-
-
-class EditableHuggingFaceInstructEmbeddings(HuggingFaceInstructEmbeddings):
-    def with_instruction(self, query_instruction):
-        c = copy.copy(self)
-        c.query_instruction = query_instruction
 
 
 class CybrexAI(AioThing):
     def __init__(
         self,
         home_path: str = '~/.cybrex',
-        collection_name: str = 'main',
-        embedding_function: Optional[Embeddings] = None,
         geck: Optional[StcGeck] = None,
-        llm: Optional[str] = None,
     ):
         super().__init__()
         self.home_path = os.path.expanduser(home_path)
@@ -80,24 +74,11 @@ class CybrexAI(AioThing):
             persist_directory=os.path.join(self.home_path, 'chroma'),
         )
         self.db = chromadb.Client(self.client_settings)
-        self.collection_name = collection_name
+        self.collection_name = config['model']
 
-        self.keyword_extractor = KeyBERT()
-        self.llm = llm
-        if self.llm is None:
-            self.llm = CTransformers(
-                model='TheBloke/WizardLM-13B-uncensored-GGML',
-                model_file='wizardLM-13B-Uncensored.ggmlv3.q5_1.bin',
-                model_type='llama',
-            )
-        self.embedding_function = embedding_function
-        if self.embedding_function is None:
-            self.embedding_function = EditableHuggingFaceInstructEmbeddings(
-                model_name='hkunlp/instructor-xl',
-                query_instruction="Represent science document for retrieval",
-            )
+        self.model = models_dict[config['model']]()
 
-        real_embedding_function = self.embedding_function.embed_documents if self.embedding_function is not None else None
+        real_embedding_function = self.model.embedding_function.embed_documents
         self.collection = self.db.get_or_create_collection(
             name=self.collection_name,
             embedding_function=real_embedding_function,
@@ -123,9 +104,7 @@ class CybrexAI(AioThing):
                 case _:
                     raise RuntimeError("Unsupported extension")
 
-    async def add_documents(self, documents: List[dict]):
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=256)
-
+    async def add_documents(self, documents: List[dict], use_only_stored_content: bool = True):
         metadatas = []
         texts = []
 
@@ -134,6 +113,12 @@ class CybrexAI(AioThing):
             if self.collection.get(where={'doi': doi})['documents']:
                 logging.getLogger('statbox').info({
                     'action': 'already_stored',
+                    'doi': doi,
+                })
+                continue
+            if use_only_stored_content and 'content' not in document:
+                logging.getLogger('statbox').info({
+                    'action': 'no_content',
                     'doi': doi,
                 })
                 continue
@@ -148,43 +133,69 @@ class CybrexAI(AioThing):
                 'action': 'chunking',
                 'doi': doi,
             })
-            for chunk_id, chunk in enumerate(text_splitter.split_text(content)):
-                metadatas.append({'doi': doi, 'chunk_id': chunk_id})
+            index = -1
+            for chunk_id, chunk in enumerate(self.model.text_splitter.split_text(content)):
+                index = content.find(chunk, index + 1)
+                metadata = {
+                    'doi': doi,
+                    'chunk_id': chunk_id,
+                    'start_index': index,
+                    'length': len(chunk),
+                }
+                metadatas.append(metadata)
                 texts.append(chunk)
         if texts:
-            return self.collection.upsert(
+            self.collection.upsert(
                 documents=texts,
                 metadatas=metadatas,
                 ids=[str(uuid.uuid1()) for _ in range(len(texts))]
             )
 
-    async def chat_document(self, field, value, question, k):
+    async def semantic_search(self, question: str, top_n: int = 10, summa_documents: int = 10):
+        await self.add_documents_for_question(question, summa_documents)
+        query_embedding = self.model.embedding_function.embed_query(question)
+        return self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=top_n,
+            include=['documents', 'metadatas'],
+        )
+
+    async def chat_document(self, field, value, question, top_n: int):
         await self.add_document_by_field_value(field, value)
-        if k > 3:
+        if top_n > 3:
             chain_type = 'map_reduce'
         else:
             chain_type = 'stuff'
-        qa = RetrievalQA.from_chain_type(llm=self.llm, chain_type=chain_type, retriever=self.as_retriever(
-            query_instruction="Represent science statement for retrieval",
-            search_type='similarity',
-            search_kwargs={'k': k, 'filter': {field: value}},
-        ))
-        result = qa({"query": f'{question}'})
+        qa = RetrievalQA.from_chain_type(
+            llm=self.model.llm,
+            chain_type=chain_type,
+            retriever=self.as_retriever(
+                search_type='similarity',
+                search_kwargs={
+                    'k': top_n,
+                    'filter': {
+                        field: value,
+                    }
+                },
+            ),
+        )
+        result = qa({"query": question})
         return result["result"].strip()
 
-    async def chat_science(self, question, llm_documents, summa_documents):
-        await self.add_document_for_question(question, summa_documents)
-        qa = RetrievalQA.from_chain_type(llm=self.llm, chain_type='map_reduce', retriever=self.as_retriever(
-            query_instruction="Represent science statement for retrieval",
+    async def chat_science(self, question, top_n: int, summa_documents: int):
+        await self.add_documents_for_question(question, summa_documents)
+        qa = self.model.get_retrieval_qa(retriever=self.as_retriever(
             search_type='similarity',
-            search_kwargs={'k': llm_documents},
-        ), return_source_documents=True)
+            search_kwargs={
+                'k': top_n,
+            },
+        ))
         result = qa({"query": question})
         return result
 
     async def summarize_document(self, field, value):
         documents = await self.add_document_by_field_value(field, value)
-        chain = load_summarize_chain(llm=self.llm, chain_type="map_reduce")
+        chain = load_summarize_chain(llm=self.model.llm, chain_type="map_reduce")
         result = chain.run(documents)
         return result.strip()
 
@@ -200,12 +211,13 @@ class CybrexAI(AioThing):
         documents = [Document(page_content=text) for text in self.collection.get(where={field: value})['documents']]
         return documents
 
-    async def add_document_for_question(self, question: str, documents: int):
-        keywords = self.keyword_extractor.extract_keywords(
+    async def add_documents_for_question(self, question: str, documents: int):
+        if documents == 0:
+            return
+        keywords = self.model.keyword_extractor.extract_keywords(
             question,
             top_n=3,
             keyphrase_ngram_range=(1, 1),
-            stop_words=['a', 'the', 'in', 'is', 'was', 'are', 'were', 'am', 'at', 'of', 'out', 'what', 'should', 'will', 'why', 'for', 'from', 'and', 'or']
         )
         topic = ' '.join(map(lambda x: x[0], keywords))
         documents = await get_documents_on_topic(
@@ -220,6 +232,6 @@ class CybrexAI(AioThing):
             client=self.db,
             collection_name=self.collection_name,
             persist_directory=self.home_path,
-            embedding_function=embedding_function or self.embedding_function,
+            embedding_function=embedding_function or self.model.embedding_function,
         )
         return chroma.as_retriever(**kwargs)
