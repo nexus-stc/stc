@@ -1,7 +1,8 @@
 # Cybrex AI
 
-Cybrex AI integrates several strategies to use AI for facilitating navigation through science:
+Cybrex AI integrates several strategies to use AI for facilitating navigation through science. Shortly, Cybrex accept your query, retrieve scholarly publications and books from STC and answer your query using AI and collected documents.
 
+More technical description:
 - IPFS is utilized to access the Standard Template Construct (STC).
 - STC provides the raw documents for Cybrex.
 - Embedding Model (OpenAI or free Instructor-XL) constructs embeddings for these documents and Cybrex stores these embeddings locally in the Chroma database.
@@ -19,6 +20,9 @@ Upon its initial launch, `cybrex` will create a `~/.cybrex` directory containing
 You can edit the config file to point to different IPFS addresses.
 
 ## Usage
+
+**Attention!** STC does not contain every book or publication in the world. We are constantly increasing coverage but there is still a lot to do.
+STC contains metadata for the most of the items, but `links` or `content` fields may be absent.
 
 ```console
 # Set your OpenAI key

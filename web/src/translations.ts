@@ -38,7 +38,7 @@ const translations = {
     found: 'found',
     help: `
     <h4 class="mt-4">Usage</h4>
-    <p>Just type your request in plain words in the search box.</p>
+    <p>Just type your request in plain words in the <a href="#/">search box</a>.</p>
     <h5>Examples</h5>    
     <ul>
       <li class="font-monospace">Divine Comedy Dante</li>
@@ -54,10 +54,10 @@ const translations = {
       <li>All about JavaScript excluding things in Russian language:&nbsp;</li>
         <span class="font-monospace">+JavaScript language:-ru</span>
     </ul>
+    <h5>List of fields</h5>
+    <p>abstract, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pub (publisher), ser (series), tags, title, type</p>
     <h5>Item types</h5> 
     <p>book, book-chapter, chapter, chapter, dataset, component, dissertation, edited-book, journal-article, monograph, peer-review, proceedings, proceedings-article, reference-book, report, standard</p>
-    <h5>List of fields</h5>
-    <p>abstract, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pub (publisher), ser (series), tags, title</p>
     <h5>Extra field</h5>
     <p>Contains out-of-scheme fields, for example - ISO/BS standard numbers that can be used in the following way:</p>
     <p><span class="font-monospace">extra:"iso iec 10279 1991"</span></p>

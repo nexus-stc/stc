@@ -55,7 +55,7 @@
               li.nav-item
                 a.nav-link.text-secondary(href="#/help/stc-box")
                   i.bi.bi-book
-                  span.ms-2 Create a Compact STC Box for Home or Library Use
+                  span.ms-2 Replicate STC for Home or Library Use
               li.nav-item
                 a.nav-link.text-secondary(href="#/help/replicate")
                   i.bi.bi-cloud-download

@@ -1,7 +1,7 @@
 # GECK (Garden of Eden Creation Kit)
 
 GECK is a Python library and Bash tool for interacting with STC programmatically.
-It allows to startup embedded Summa instance, do search queries and iterate over database.
+It allows to startup embedded Summa instance, do search queries to find scholarly publications and to iterate over all database if you need.
 
 ## Install
 
@@ -11,11 +11,19 @@ You should have [installed IPFS](http://standard-template-construct.org/#/help/i
 pip install stc-geck
 ```
 
-## Examples
+## Usage
+
+**Attention!** STC does not contain every book or publication in the world. We are constantly increasing coverage but there is still a lot to do.
+STC contains metadata for the most of the items, but `links` or `content` fields may be absent.
 
 ### CLI
 
 ```console
+# (Optional) Launch Summa search engine, then you will not have to wait bootstrapping every time.
+# It will take a time!
+# If you decided to launch it, switch to another Terminal window
+geck --ipfs-http-base-url 127.0.0.1:8080 - serve
+
 # Iterate over all stored documents
 geck --ipfs-http-base-url 127.0.0.1:8080 - documents
 
