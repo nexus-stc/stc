@@ -9,7 +9,8 @@
   h5 Usage
   h6 Retrieving Files Through IPFS
   p All DOIs are urlencoded to accommodate special characters in the name. Below is an example of how to retrieve a paper using the Kubo CLI:
-  code ipfs get /ipns/hub.standard-template-construct.org/10.1145%2F15922.15895.pdf
+  pre
+    code ipfs get /ipns/hub.standard-template-construct.org/10.1145%2F15922.15895.pdf
   h6 Retrieving Files Through HTTP API
   p The names are urlencoded twice due to the HTTP server decoding urlencoded URLs independently before passing them to the IPFS network:
   pre
