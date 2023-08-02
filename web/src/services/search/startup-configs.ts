@@ -40,7 +40,7 @@ export async function get_startup_configs () {
           boost: 1.5,
           fields: ['title']
         },
-        removed_fields: ['doi', 'rd', 'ev']
+        removed_fields: ['concepts', 'doi', 'ev', 'rd']
       },
       is_exact_matches_promoted: true,
       is_fieldnorms_scoring_enabled: false,

@@ -2,7 +2,7 @@ from urllib.parse import quote
 
 import orjson
 
-from library.regexes.utils import cast_string_to_single_string
+from library.textutils.utils import cast_string_to_single_string
 
 from .common import encode_link, get_formatted_filesize, recode_base36_to_base64
 from .nexus_free import NexusFreeButtonsBuilder, NexusFreeViewBuilder

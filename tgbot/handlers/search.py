@@ -10,10 +10,10 @@ from telethon import events
 from telethon.tl.types import InlineQueryPeerTypeSameBotPM
 from tenacity import retry, retry_if_exception_type, stop_after_attempt
 
-from library.regexes import DOI_REGEX
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
+from library.textutils import DOI_REGEX
 from tgbot.app.exceptions import BannedUserError, InvalidSearchError
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import BaseHolder, NexusScienceHolder

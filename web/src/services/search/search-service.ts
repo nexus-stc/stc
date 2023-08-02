@@ -9,7 +9,7 @@ import { ref, toRaw } from 'vue'
 
 import { meta_db, SearchMetric, user_db } from '@/database'
 
-import { tracked_download } from '../../components/download-progress'
+import { tracked_download } from '@/components/download-progress'
 import { default_collectors, default_queries } from './default'
 import { get_startup_configs } from './startup-configs'
 

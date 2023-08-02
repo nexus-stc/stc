@@ -1,4 +1,5 @@
 import dataclasses
+from html import escape
 from typing import Dict, List, Optional
 
 from izihawa_nlptools.language_detect import detect_language
@@ -199,7 +200,7 @@ class QueryProcessor:
             skip_doi_isbn_term_field_mapper: bool = False,
     ):
         queries = []
-        query = self.process_filters(query)
+        query = self.process_filters(escape(query, quote=False))
 
         for index_alias in index_aliases:
             queries.append(self.query_builders[index_alias].build(

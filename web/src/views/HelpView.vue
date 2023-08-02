@@ -23,13 +23,17 @@
           .collapse.ms-3(id="projects-collapse")
             ul.btn-toggle-nav.list-unstyled.fw-normal.pb-1
               li.nav-item
-                a.nav-link.text-secondary(href="https://github.com/nexus-stc/stc/tree/master/cybrex" target="_blank")
-                  i.bi.bi-cpu
-                  span.ms-2 Cybrex AI
+                a.nav-link.text-secondary(href="https://github.com/nexus-stc/stc/tree/master/web" target="_blank")
+                  i.bi.bi-globe
+                  span.ms-2 Web STC
               li.nav-item
                 a.nav-link.text-secondary(href="https://github.com/nexus-stc/stc/tree/master/geck" target="_blank")
                   i.bi.bi-tools
                   span.ms-2 GECK
+              li.nav-item
+                a.nav-link.text-secondary(href="https://github.com/nexus-stc/stc/tree/master/cybrex" target="_blank")
+                  i.bi.bi-cpu
+                  span.ms-2 Cybrex AI
               li.nav-item
                 a.nav-link.text-secondary(href="#/help/stc-hub-api")
                   i.bi.bi-app
@@ -38,10 +42,6 @@
                 a.nav-link.text-secondary(href="https://github.com/nexus-stc/stc/tree/master/tgbot" target="_blank")
                   i.bi.bi-telegram
                   span.ms-2 Telegram Bots
-              li.nav-item
-                a.nav-link.text-secondary(href="https://github.com/nexus-stc/stc/tree/master/web" target="_blank")
-                  i.bi.bi-globe
-                  span.ms-2 Web STC
         li.nav-item
           button.btn.btn-sm.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#guides-collapse")
             i.bi.bi-caret-down

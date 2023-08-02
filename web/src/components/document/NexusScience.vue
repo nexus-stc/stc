@@ -61,7 +61,7 @@ export default defineComponent({
             query: {
               query: {
                 term: {
-                  field: 'references.doi',
+                  field: 'rd',
                   value: this.document.doi
                 }
               }

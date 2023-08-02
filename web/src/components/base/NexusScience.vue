@@ -31,7 +31,7 @@ export default defineComponent({
       }
       if (this.document.referenced_by_count) {
         parts.push(
-          `<a class="text-decoration-none" href="#/?q=references.doi:${this.document.doi}&ds=true">🔗 ${this.document.referenced_by_count}</a>`
+          `<a class="text-decoration-none" href="#/?q=rd:${this.document.doi}&ds=true">🔗 ${this.document.referenced_by_count}</a>`
         )
       }
       if (this.filesize && this.filesize > 0) {

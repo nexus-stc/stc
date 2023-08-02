@@ -1,30 +1,33 @@
 import datetime
 import math
 import re
+from html import unescape
 from typing import Optional
 from urllib.parse import quote
 
+from bs4 import BeautifulSoup
 from izihawa_types.datetime import CustomDatetime
 from telethon import Button
 
-from library.regexes.utils import despace_full, escape_format
 from library.telegram.common import close_button
+from library.textutils.utils import despace_full, escape_format
 from tgbot.translations import t
 
 from ...app.query_builder import get_type_icon
+from ...markdownifytg import md_converter
 from .common import TooLongQueryError, add_expand_dot, encode_query_to_deep_link, get_formatted_filesize
 
 
-def highlight_markdown(snippet):
+def highlight_markdown_snippet(snippet, wrapper_bold_open=b'**', wrapper_bold_close=b'**', wrapper_italic_open='__', wrapper_italic_close='__'):
     markdowned = b''
     start_from = 0
     for highlight in snippet.highlights:
         from_ = getattr(highlight, 'from')
         to = highlight.to
         markdowned += escape_format(snippet.fragment[start_from:from_])
-        markdowned += b'**'
+        markdowned += wrapper_bold_open
         markdowned += escape_format(snippet.fragment[from_:to])
-        markdowned += b'**'
+        markdowned += wrapper_bold_close
         start_from = to
     markdowned += escape_format(snippet.fragment[start_from:])
     markdowned = markdowned.decode()
@@ -32,8 +35,12 @@ def highlight_markdown(snippet):
     if markdowned[0].islower() or (markdowned[:2] == '**' and markdowned[2].islower()):
         markdowned = '...' + markdowned
     markdowned = markdowned + '...'
-    markdowned = f'__{markdowned}__'
+    markdowned = wrapper_italic_open + markdowned + wrapper_italic_close
     return markdowned
+
+
+def highlight_html_snippet(snippet):
+    return highlight_markdown_snippet(snippet, b'<b>', b'</b>', '<i>', '</i>')
 
 
 def plain_author(author, bot_name=None):
@@ -152,11 +159,14 @@ class BaseViewBuilder:
         if snippet and snippet.highlights:
             if on_newline:
                 self.add_new_line()
-            self.add(highlight_markdown(snippet), escaped=True)
+            highlighted_snippet = highlight_html_snippet(snippet)
+            highlighted_snippet = md_converter.convert(highlighted_snippet)
+            self.add(highlighted_snippet, escaped=True)
         elif abstract := self.document_holder.abstract:
+            abstract = unescape(BeautifulSoup(abstract or '', 'lxml').text)
             if on_newline:
                 self.add_new_line()
-            abstract = add_expand_dot(abstract, 140)
+            abstract = add_expand_dot(md_converter.convert(abstract), 140)
             abstract = f'__{abstract}__'
             self.add(abstract, escaped=True)
         return self

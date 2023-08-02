@@ -79,6 +79,7 @@ telegram:
   command_handlers:
     - tgbot.handlers.aboutus.AboutusHandler
     - tgbot.handlers.close.CloseHandler
+    - tgbot.handlers.cybrex.CybrexHandler
     - tgbot.handlers.download.DownloadHandler
     - tgbot.handlers.howtohelp.HowToHelpHandler
     - tgbot.handlers.help.HelpHandler
@@ -101,7 +102,7 @@ telegram:
     - tgbot.handlers.search.SearchPagingHandler
     - tgbot.handlers.search.InlineSearchHandler
 summa:
-  endpoint: 127.0.0.1:10082
+  endpoint: summa:10082
   embed:
     enabled: true
     index_names:

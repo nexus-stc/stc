@@ -63,7 +63,7 @@ syncytial virus (RSV) and to stimulate the secretion of higher levels of TNF-α,
 and RSV clearance.
 
 # Question enitre science
-cybrex - chat-sci --question "What is the antivirus effect of resveratrol?" --top-n 15 --summa-documents 40
+cybrex - chat-sci --question "What is the antivirus effect of resveratrol?" --n-results 15 --n-summa-documents 40
 
 Q: What is the antivirus effect of resveratrol?
 A: Resveratrol has been found to possess antiviral activity against a variety of viruses, including herpes simplex virus, human immunodeficiency virus, and hepatitis C virus. It has been shown to inhibit the replication of several viruses, including HIV, herpes simplex virus, and influenza virus, and to regulate TLR3 expression, thus affecting the recruitment of downstream related factors and finally affecting the regulation process of related signal pathways. It has also been studied for its antiviral activity against Reoviridae, and for its potential to inhibit Zika virus cytopathy effect. It has been active against Epstein virus, rotavirus, and vesicular stomatitis virus, and has been reported to alleviate virus-induced reproductive failure and to promote RSV clearance in the body more quickly.

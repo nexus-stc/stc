@@ -9,6 +9,7 @@ from izihawa_ipfs_api import IpfsHttpClient
 from izihawa_utils.importlib import import_object
 from stc_geck.client import StcGeck
 
+from cybrex import cybrex_ai
 from library.telegram.dynamic_bot_manager import DynamicBotManager
 from library.telegram.promotioner import Promotioner
 from library.user_manager import UserManager
@@ -52,10 +53,15 @@ class TelegramApplication(AioRootThing):
             ipfs_data_directory=self.config['summa']['embed']['ipfs_data_directory'],
             index_names=self.config['summa']['embed']['index_names'],
             grpc_api_endpoint=self.config['summa']['endpoint'],
-            embed=is_embed,
         )
         self.starts.append(self.geck)
         self.summa_client = self.geck.get_summa_client()
+
+        self.cybrex_ai = cybrex_ai.CybrexAI(
+            home_path='/usr/lib/stc-tgbot/cybrex',
+            geck=self.geck,
+        )
+        self.starts.append(self.cybrex_ai)
 
         self.starts.append(self.summa_client)
         self.query_processor = QueryProcessor(self.config['summa']['query_processor']['profile'])
@@ -136,7 +142,7 @@ class TelegramApplication(AioRootThing):
         })
 
     def is_read_only(self):
-        return self.config['application'].get('is_read_only', False) or self.geck.embed
+        return self.config['application'].get('is_read_only', False) or self.geck.is_embed
 
     def set_handlers(self, telegram_client, bot_config: dict, extra_handlers=None, extra_warning=None):
         for handler in (

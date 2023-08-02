@@ -1,4 +1,7 @@
+from html import unescape
 from typing import Optional
+
+from bs4 import BeautifulSoup
 
 from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder
 
@@ -38,7 +41,7 @@ class NexusFreeViewBuilder(BaseViewBuilder):
         return self
 
     def add_title(self, bold=True):
-        title = self.document_holder.title or ''
+        title = BeautifulSoup(self.document_holder.title or '', 'lxml').text
         if self.document_holder.iso_id:
             title = f'{self.document_holder.iso_id.upper()} - {title}'
         elif self.document_holder.bs_id:
@@ -74,5 +77,6 @@ class NexusFreeViewBuilder(BaseViewBuilder):
 
     def add_abstract(self, limit: Optional[int] = None):
         if self.document_holder.abstract:
-            self.add(self.document_holder.abstract)
+            abstract = unescape(BeautifulSoup(self.document_holder.abstract or '', 'lxml').text)
+            self.add(abstract)
         return self

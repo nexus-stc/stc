@@ -3,9 +3,9 @@ import re
 
 from telethon import events
 
-from library.regexes import DOI_REGEX
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
+from library.textutils import DOI_REGEX
 from tgbot.app.exceptions import UnknownFileFormatError
 from tgbot.translations import t
 

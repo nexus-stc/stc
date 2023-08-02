@@ -1,6 +1,12 @@
+from html import unescape
+
+from bs4 import BeautifulSoup
 from izihawa_types.safecast import safe_int
 from telethon import Button
 
+from library.textutils.utils import escape_format
+
+from ...markdownifytg import md_converter
 from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder
 from .common import TooLongQueryError, encode_query_to_deep_link
 
@@ -88,7 +94,8 @@ class NexusScienceViewBuilder(BaseViewBuilder):
         return self
 
     def add_title(self, bold=True):
-        self.add(self.document_holder.title or self.document_holder.doi, bold=bold)
+        title = BeautifulSoup(self.document_holder.title or '', 'lxml').text
+        self.add(title or self.document_holder.doi, bold=bold)
         return self
 
     def add_locator(self, first_n_authors=1, markup=True, bot_name=None):
@@ -109,7 +116,9 @@ class NexusScienceViewBuilder(BaseViewBuilder):
 
     def add_abstract(self):
         if self.document_holder.abstract:
-            self.add(self.document_holder.abstract)
+            soup = BeautifulSoup(self.document_holder.abstract.replace('</header>\n', '</header>') or '', 'html.parser')
+            abstract = escape_format(unescape(md_converter.convert_soup(soup)), escape_font=False)
+            self.add(abstract.strip(), escaped=True)
         return self
 
     def add_stats(self, end_newline=True):

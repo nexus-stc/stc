@@ -8,10 +8,10 @@ import ipfs_hamt_directory_py
 from telethon import events
 from telethon.tl.types import DocumentAttributeFilename
 
-from library.regexes.utils import cast_string_to_single_string
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
+from library.textutils.utils import cast_string_to_single_string
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import BaseHolder
 

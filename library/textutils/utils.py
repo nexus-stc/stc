@@ -39,15 +39,21 @@ def despace_smart(text):
     return text
 
 
-def escape_format(text):
+def escape_format(text, escape_font=True, escape_quote=True, escape_brackets=True):
     if isinstance(text, str):
-        text = re.sub(r'([_*]){2,}', r'\g<1>', text)
-        text = text.replace("`", "'")
-        text = text.replace('[', r'`[`').replace(']', r'`]`')
+        if escape_font:
+            text = re.sub(r'([_*]){2,}', r'\g<1>', text)
+        if escape_quote:
+            text = text.replace("`", "'")
+        if escape_brackets:
+            text = text.replace('[', r'`[`').replace(']', r'`]`')
     elif isinstance(text, bytes):
-        text = re.sub(br'([_*]){2,}', br'\g<1>', text)
-        text = text.replace(b"`", b"'")
-        text = text.replace(b'[', br'`[`').replace(b']', br'`]`')
+        if escape_font:
+            text = re.sub(br'([_*]){2,}', br'\g<1>', text)
+        if escape_quote:
+            text = text.replace(b"`", b"'")
+        if escape_brackets:
+            text = text.replace(b'[', br'`[`').replace(b']', br'`]`')
     return text
 
 
