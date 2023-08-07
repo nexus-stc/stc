@@ -32,16 +32,15 @@ def create_car(documents, name_template) -> (str, bytes):
                     doi=document_holder.doi,
                     md5=document_holder.md5,
                     suggested_filename=document_holder.get_purified_name({
-                        'md5': link['md5'],
                         'doi': document_holder.doi,
                         'cid': link['cid'],
                     }),
                 ) + '.' + link.get('extension', 'pdf')
                 f.write(quote(item_name, safe='').encode())
                 f.write(b' ')
-                f.write(document_holder.cid.encode())
+                f.write(link['cid'].encode())
                 f.write(b' ')
-                f.write(str(document_holder.filesize or 0).encode())
+                f.write(str(link.get('filesize') or 0).encode())
                 f.write(b'\n')
         cid = ipfs_hamt_directory_py.from_file(input_data, output_car, td)
         with open(output_car, 'rb') as f:
@@ -104,8 +103,11 @@ class SeedHandler(BaseHandler):
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
                 index_aliases=self.bot_index_aliases,
-                extra_filter={'exists': {'field': 'cid'}},
-                fields=['cid', 'doi', 'md5', 'title', 'authors', 'issued_at', 'metadata', 'filesize'],
+                extra_filter={'term': {'field': 'links.type', 'value': 'primary'}},
+                fields={
+                    'nexus_free': ['links', 'title', 'authors', 'issued_at', 'metadata'],
+                    'nexus_science': ['links', 'doi', 'title', 'authors', 'issued_at', 'metadata'],
+                },
                 collector='reservoir_sampling',
                 page_size=page_size,
             )
@@ -118,8 +120,11 @@ class SeedHandler(BaseHandler):
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
                 index_aliases=self.bot_index_aliases,
-                extra_filter={'exists': {'field': 'cid'}},
-                fields=['cid', 'doi', 'md5', 'title', 'authors', 'issued_at', 'metadata', 'filesize'],
+                extra_filter={'term': {'field': 'links.type', 'value': 'primary'}},
+                fields={
+                    'nexus_free': ['links', 'title', 'authors', 'issued_at', 'metadata'],
+                    'nexus_science': ['links', 'doi', 'title', 'authors', 'issued_at', 'metadata'],
+                },
                 page=page,
                 page_size=page_size,
             )

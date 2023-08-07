@@ -7,8 +7,14 @@ from telethon import Button
 from library.textutils.utils import escape_format
 
 from ...markdownifytg import md_converter
-from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder
-from .common import TooLongQueryError, encode_query_to_deep_link
+from .base_view_builder import (
+    BaseButtonsBuilder,
+    BaseViewBuilder,
+)
+from .common import (
+    TooLongQueryError,
+    encode_query_to_deep_link,
+)
 
 preprints = {'10.1101', '10.21203'}
 

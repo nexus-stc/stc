@@ -1,4 +1,7 @@
-from typing import List, Optional
+from typing import (
+    List,
+    Optional,
+)
 
 from telethon import Button
 
@@ -45,7 +48,7 @@ class DocumentListWidget:
             serp_elements.append(
                 document_holder
                 .view_builder(self.chat['language'])
-                .add_short_abstract()
+                .add_short_description()
                 .add_new_line()
                 .add_links()
                 .build()

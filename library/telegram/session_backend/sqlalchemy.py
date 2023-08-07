@@ -1,7 +1,22 @@
-from typing import Any, Optional, Tuple, Union
+from typing import (
+    Any,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import sqlalchemy as sql
-from sqlalchemy import BigInteger, Column, Integer, LargeBinary, String, and_, func, orm, select
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    Integer,
+    LargeBinary,
+    String,
+    and_,
+    func,
+    orm,
+    select,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.scoping import scoped_session
 

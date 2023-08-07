@@ -52,7 +52,7 @@ class StcGeckCli:
 
     async def documents(self):
         """
-        Stream all STC documents.
+        Stream all STC chunks.
 
         :return: metadata records
         """
@@ -151,7 +151,7 @@ class StcGeckCli:
         name_template: str = '{id}.{extension}',
     ):
         """
-        Stream all STC documents.
+        Stream all STC chunks.
 
         :return: metadata records
         """
@@ -190,7 +190,7 @@ async def stc_geck_cli(
     return {
         'create-ipfs-directory': stc_geck_client.create_ipfs_directory,
         'download': stc_geck_client.download,
-        'documents': stc_geck_client.documents,
+        'chunks': stc_geck_client.documents,
         'random-cids': stc_geck_client.random_cids,
         'search': stc_geck_client.search,
         'serve': stc_geck_client.serve,

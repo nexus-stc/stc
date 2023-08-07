@@ -2,25 +2,45 @@ import asyncio
 import re
 import time
 from abc import ABC
-from typing import List, Tuple
+from typing import (
+    List,
+    Tuple,
+)
 
 import grpc.aio
 from izihawa_utils.exceptions import NeedRetryError
 from telethon import events
 from telethon.tl.types import InlineQueryPeerTypeSameBotPM
-from tenacity import retry, retry_if_exception_type, stop_after_attempt
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+)
 
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
 from library.textutils import DOI_REGEX
-from tgbot.app.exceptions import BannedUserError, InvalidSearchError
+from tgbot.app.exceptions import (
+    BannedUserError,
+    InvalidSearchError,
+)
 from tgbot.translations import t
-from tgbot.views.telegram.base_holder import BaseHolder, NexusScienceHolder
+from tgbot.views.telegram.base_holder import (
+    BaseHolder,
+    NexusScienceHolder,
+)
 from tgbot.views.telegram.common import encode_deep_query
-from tgbot.widgets.search_widget import InlineSearchWidget, SearchWidget
+from tgbot.widgets.search_widget import (
+    InlineSearchWidget,
+    SearchWidget,
+)
 
-from .base import BaseCallbackQueryHandler, BaseHandler, LongTask
+from .base import (
+    BaseCallbackQueryHandler,
+    BaseHandler,
+    LongTask,
+)
 
 
 def is_doi_query(query: str):
@@ -169,7 +189,8 @@ class BaseSearchHandler(BaseHandler, ABC):
                 view = holder.view_builder(language).add_new_line(2).add_view(bot_name=request_context.bot_name).build()
                 remote_request_link = None
                 if librarian_service_id:
-                    remote_request_link = f'https://t.me/{self.application.librarian_service.group_name}/{librarian_service_id}'
+                    # remote_request_link = f'https://t.me/{self.application.librarian_service.group_name}/{librarian_service_id}'
+                    remote_request_link = f'https://www.wosonhj.com/'
                 buttons = holder.buttons_builder(language, remote_request_link).add_default_layout(
                     bot_name=request_context.bot_name,
                     position=0,

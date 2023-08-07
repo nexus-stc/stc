@@ -4,13 +4,19 @@ import os
 import re
 import time
 import traceback
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+)
 
 from aiokit import AioThing
 from izihawa_utils.importlib import import_object
 
 from library.pdftools.cleaner import clean_metadata
-from library.pdftools.exceptions import PdfProcessingError, PyPdfError
+from library.pdftools.exceptions import (
+    PdfProcessingError,
+    PyPdfError,
+)
 from library.telegram.base import BaseTelegramClient
 from library.telegram.utils import safe_execution
 from library.textutils import DOI_REGEX
@@ -278,7 +284,7 @@ class LibrarianService(AioThing):
         holder = BaseHolder.create(document)
         short_abstract = (
             holder.view_builder(request_context.chat['language'])
-            .add_short_abstract()
+            .add_short_description()
             .add_external_provider_link(label=True, on_newline=True, text=holder.doi)
             .build()
         )

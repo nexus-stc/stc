@@ -10,12 +10,23 @@ from izihawa_types.datetime import CustomDatetime
 from telethon import Button
 
 from library.telegram.common import close_button
-from library.textutils.utils import despace_full, escape_format
+from library.textutils.utils import (
+    despace_full,
+    escape_format,
+)
 from tgbot.translations import t
 
 from ...app.query_builder import get_type_icon
-from ...markdownifytg import md_converter
-from .common import TooLongQueryError, add_expand_dot, encode_query_to_deep_link, get_formatted_filesize
+from ...markdownifytg import (
+    highlight_md_converter,
+    md_converter,
+)
+from .common import (
+    TooLongQueryError,
+    add_expand_dot,
+    encode_query_to_deep_link,
+    get_formatted_filesize,
+)
 
 
 def highlight_markdown_snippet(snippet, wrapper_bold_open=b'**', wrapper_bold_close=b'**', wrapper_italic_open='__', wrapper_italic_close='__'):
@@ -40,7 +51,7 @@ def highlight_markdown_snippet(snippet, wrapper_bold_open=b'**', wrapper_bold_cl
 
 
 def highlight_html_snippet(snippet):
-    return highlight_markdown_snippet(snippet, b'<b>', b'</b>', '<i>', '</i>')
+    return highlight_markdown_snippet(snippet, b'<highlight>', b'</highlight>', '<i>', '</i>')
 
 
 def plain_author(author, bot_name=None):
@@ -157,17 +168,22 @@ class BaseViewBuilder:
     def add_snippet(self, on_newline=True):
         snippet = self.document_holder.snippets.get('abstract')
         if snippet and snippet.highlights:
+            highlighted_snippet = highlight_html_snippet(snippet)
+            highlighted_snippet = highlight_md_converter.convert(highlighted_snippet).replace('\n', ' ').strip()
+            if not highlighted_snippet:
+                return self
             if on_newline:
                 self.add_new_line()
-            highlighted_snippet = highlight_html_snippet(snippet)
-            highlighted_snippet = md_converter.convert(highlighted_snippet)
             self.add(highlighted_snippet, escaped=True)
         elif abstract := self.document_holder.abstract:
             abstract = unescape(BeautifulSoup(abstract or '', 'lxml').text)
+            abstract = md_converter.convert(abstract).replace('\n', ' ').strip()
+            if not abstract:
+                return self
+            abstract = add_expand_dot(abstract, 140)
+            abstract = f'__{abstract}__'
             if on_newline:
                 self.add_new_line()
-            abstract = add_expand_dot(md_converter.convert(abstract), 140)
-            abstract = f'__{abstract}__'
             self.add(abstract, escaped=True)
         return self
 
@@ -335,7 +351,7 @@ class BaseViewBuilder:
         self.add('; '.join(authors[:first_n_authors]) + (' et al' if len(authors) > first_n_authors and et_al else ''), escaped=True)
         return self
 
-    def add_short_abstract(self):
+    def add_short_description(self):
         return (
             self.add_icon()
                 .add_title()
@@ -442,7 +458,7 @@ class BaseButtonsBuilder:
     def add_remote_request_button(self):
         if self.remote_request_link:
             self.buttons[-1].append(
-                Button.url('🙏', self.remote_request_link)
+                Button.url('🇨🇳', self.remote_request_link)
             )
         return self
 

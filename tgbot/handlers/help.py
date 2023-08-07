@@ -1,4 +1,7 @@
-from telethon import Button, events
+from telethon import (
+    Button,
+    events,
+)
 
 from library.telegram.base import RequestContext
 from tgbot.translations import t

@@ -1,7 +1,10 @@
 import asyncio
 import time
 
-from telethon import events, functions
+from telethon import (
+    events,
+    functions,
+)
 from telethon.errors import MessageIdInvalidError
 
 from library.telegram.base import RequestContext

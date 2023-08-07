@@ -2,22 +2,42 @@ import asyncio
 import time
 
 import aiohttp
-from aiobaseclient.exceptions import ServiceUnavailableError, TemporaryError
+from aiobaseclient.exceptions import (
+    ServiceUnavailableError,
+    TemporaryError,
+)
 from izihawa_utils.common import filter_none
-from telethon import Button, events
+from telethon import (
+    Button,
+    events,
+)
 from telethon.errors import rpcerrorlist
 from telethon.tl.types import DocumentAttributeFilename
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from library.telegram.base import RequestContext
 from library.telegram.utils import safe_execution
 from tgbot.app.exceptions import DownloadError
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import BaseHolder
-from tgbot.views.telegram.common import recode_base64_to_base36, remove_button
-from tgbot.views.telegram.progress_bar import ProgressBar, ProgressBarLostMessageError
+from tgbot.views.telegram.common import (
+    recode_base64_to_base36,
+    remove_button,
+)
+from tgbot.views.telegram.progress_bar import (
+    ProgressBar,
+    ProgressBarLostMessageError,
+)
 
-from .base import BaseCallbackQueryHandler, LongTask
+from .base import (
+    BaseCallbackQueryHandler,
+    LongTask,
+)
 
 
 async def download_thumb(isbns, timeout=5.0):
@@ -226,7 +246,7 @@ class DownloadTask(LongTask):
             buttons = None
         short_abstract = (
             document_holder.view_builder(request_context.chat["language"])
-            .add_short_abstract()
+            .add_short_description()
             .add_external_provider_link(label=True, on_newline=True, text=document_holder.doi)
             .build()
         )

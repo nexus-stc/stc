@@ -6,7 +6,10 @@ from tgbot.app.application import TelegramApplication
 from tgbot.app.query_builder import PreprocessedQuery
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import BaseHolder
-from tgbot.views.telegram.common import TooLongQueryError, encode_query_to_deep_link
+from tgbot.views.telegram.common import (
+    TooLongQueryError,
+    encode_query_to_deep_link,
+)
 
 
 class BaseSearchWidget:
@@ -93,7 +96,7 @@ class SearchWidget(BaseSearchWidget):
             el = (
                 holder
                 .view_builder(self.chat['language'])
-                .add_short_abstract()
+                .add_short_description()
                 .add_snippet()
                 .add_new_line()
             )
@@ -183,7 +186,7 @@ class InlineSearchWidget(BaseSearchWidget):
                 holder.view_builder(self.chat['language'])
                 .add_filedata(show_filesize=False).add_new_line().add_locator(markup=False).limits(160).build()
             )
-            response_text = holder.view_builder(self.chat['language']).add_short_abstract().build()
+            response_text = holder.view_builder(self.chat['language']).add_short_description().build()
             buttons = holder.buttons_builder(self.chat['language']).add_remote_download_button(bot_name=request_context.bot_name).build()
             items.append(builder.article(
                 title,

@@ -1,11 +1,27 @@
 import datetime
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from sqlalchemy import orm
 from telethon import utils
 from telethon.crypto import AuthKey
-from telethon.sessions.memory import MemorySession, _SentFileType
-from telethon.tl.types import InputDocument, InputPhoto, PeerChannel, PeerChat, PeerUser, updates
+from telethon.sessions.memory import (
+    MemorySession,
+    _SentFileType,
+)
+from telethon.tl.types import (
+    InputDocument,
+    InputPhoto,
+    PeerChannel,
+    PeerChat,
+    PeerUser,
+    updates,
+)
 
 if TYPE_CHECKING:
     from .sqlalchemy import AlchemySessionContainer

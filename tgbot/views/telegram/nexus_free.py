@@ -3,7 +3,10 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from .base_view_builder import BaseButtonsBuilder, BaseViewBuilder
+from .base_view_builder import (
+    BaseButtonsBuilder,
+    BaseViewBuilder,
+)
 
 
 class NexusFreeButtonsBuilder(BaseButtonsBuilder):

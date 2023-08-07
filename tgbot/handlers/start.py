@@ -4,7 +4,10 @@ from telethon import events
 
 from library.telegram.base import RequestContext
 from tgbot.translations import t
-from tgbot.views.telegram.common import DecodeDeepQueryError, decode_deep_query
+from tgbot.views.telegram.common import (
+    DecodeDeepQueryError,
+    decode_deep_query,
+)
 
 from .search import BaseSearchHandler
 

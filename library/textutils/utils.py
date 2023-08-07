@@ -1,8 +1,14 @@
 import re
 import struct
 
-from . import (EMAIL_REGEX, HASHTAG_REGEX, MULTIWHITESPACE_REGEX, NON_ALNUMWHITESPACE_REGEX, TELEGRAM_LINK_REGEX,
-               URL_REGEX)
+from . import (
+    EMAIL_REGEX,
+    HASHTAG_REGEX,
+    MULTIWHITESPACE_REGEX,
+    NON_ALNUMWHITESPACE_REGEX,
+    TELEGRAM_LINK_REGEX,
+    URL_REGEX,
+)
 
 
 def add_surrogate(text):

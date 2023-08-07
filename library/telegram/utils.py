@@ -4,7 +4,10 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from izihawa_loglib import error_log
-from telethon import errors, events
+from telethon import (
+    errors,
+    events,
+)
 
 
 @asynccontextmanager

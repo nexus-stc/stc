@@ -10,10 +10,16 @@ import orjson
 import summa_embed
 from aiokit import AioThing
 from aiosumma import SummaClient
-from izihawa_ipfs_api import IpfsApiClient, IpfsHttpClient
+from izihawa_ipfs_api import (
+    IpfsApiClient,
+    IpfsHttpClient,
+)
 from izihawa_utils.random import reservoir_sampling_async
 
-from .utils import create_car, is_endpoint_listening
+from .utils import (
+    create_car,
+    is_endpoint_listening,
+)
 
 
 def get_config():

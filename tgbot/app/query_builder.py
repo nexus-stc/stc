@@ -1,6 +1,11 @@
 import dataclasses
 from html import escape
-from typing import Dict, List, Optional
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Union,
+)
 
 from izihawa_nlptools.language_detect import detect_language
 from multidict import MultiDict
@@ -196,12 +201,16 @@ class QueryProcessor:
             index_aliases: Optional[List[str]] = None,
             collector: str = 'top_docs',
             extra_filter: Optional[Dict] = None,
-            fields: Optional[List[str]] = None,
+            fields: Optional[Union[List[str], Dict[str, List[str]]]] = None,
             skip_doi_isbn_term_field_mapper: bool = False,
     ):
         queries = []
         query = self.process_filters(escape(query, quote=False))
-
+        if isinstance(fields, List):
+            new_fields = {}
+            for index_alias in index_aliases:
+                new_fields[index_alias] = fields
+            fields = new_fields
         for index_alias in index_aliases:
             queries.append(self.query_builders[index_alias].build(
                 query,
@@ -210,7 +219,7 @@ class QueryProcessor:
                 is_fieldnorms_scoring_enabled=is_fieldnorms_scoring_enabled,
                 collector=collector,
                 extra_filter=extra_filter,
-                fields=fields,
+                fields=fields[index_alias] if fields else None,
                 skip_doi_isbn_term_field_mapper=skip_doi_isbn_term_field_mapper,
             ))
         return queries

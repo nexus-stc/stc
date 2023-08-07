@@ -4,7 +4,11 @@ from abc import ABC
 from functools import partial
 
 from izihawa_utils.random import random_string
-from telethon import TelegramClient, events, functions
+from telethon import (
+    TelegramClient,
+    events,
+    functions,
+)
 from telethon.errors import QueryIdInvalidError
 
 from library.telegram.base import RequestContext

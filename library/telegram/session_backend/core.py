@@ -1,12 +1,27 @@
 import datetime
-from typing import Any, Optional, Tuple, Union
+from typing import (
+    Any,
+    Optional,
+    Tuple,
+    Union,
+)
 
-from sqlalchemy import and_, select
+from sqlalchemy import (
+    and_,
+    select,
+)
 from sqlalchemy.dialects.postgresql import insert
 from telethon import utils
 from telethon.crypto import AuthKey
 from telethon.sessions.memory import _SentFileType
-from telethon.tl.types import InputDocument, InputPhoto, PeerChannel, PeerChat, PeerUser, updates
+from telethon.tl.types import (
+    InputDocument,
+    InputPhoto,
+    PeerChannel,
+    PeerChat,
+    PeerUser,
+    updates,
+)
 
 from .orm import AlchemySession
 

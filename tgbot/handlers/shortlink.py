@@ -2,7 +2,10 @@ from telethon import events
 
 from library.telegram.base import RequestContext
 from tgbot.translations import t
-from tgbot.views.telegram.common import TooLongQueryError, encode_query_to_deep_link
+from tgbot.views.telegram.common import (
+    TooLongQueryError,
+    encode_query_to_deep_link,
+)
 
 from .base import BaseHandler
 
