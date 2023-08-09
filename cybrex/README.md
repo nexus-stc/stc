@@ -6,7 +6,7 @@ More technical description:
 - IPFS is utilized to access the Standard Template Construct (STC).
 - STC provides the raw documents for Cybrex.
 - Embedding Model (OpenAI or free Instructor-XL) constructs embeddings for these documents and Cybrex stores these embeddings locally in the Chroma database.
-- These embeddings are then used to filter relevant documents before they are sent to LLM (Open AI, WizardLM or any other one) for Q&A and summarization.
+- These embeddings are then used to filter relevant documents before they are sent to LLM (Open AI or any other one) for Q&A and summarization.
 
 ## Install
 
@@ -32,6 +32,11 @@ export OPENAI_API_KEY=...
 # It will take a time!
 # If you decided to launch it, switch to another Terminal window
 geck --ipfs-http-base-url 127.0.0.1:8080 - serve
+```
+Now we should initialize Cybrex and choose which models will be used:
+
+``` console
+cybrex - write-config
 
 # Summarize a document
 cybrex - sum-doc doi:10.1155/2022/7138756

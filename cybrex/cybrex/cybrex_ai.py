@@ -7,6 +7,7 @@ import os.path
 from gzip import GzipFile
 from typing import (
     List,
+    Literal,
     Optional,
 )
 
@@ -38,20 +39,6 @@ def print_color(text, color):
     print("\033[38;5;{}m{}\033[0m".format(color, text))
 
 
-def default_config():
-    return {
-        'ipfs': {
-            'http': {
-                'base_url': 'http://127.0.0.1:8080'
-            }
-        },
-        'model': CybrexModel.default_config(),
-        'summa': {
-            'endpoint': '127.0.0.1:10082'
-        },
-    }
-
-
 class CybrexAI(AioThing):
     def __init__(
         self,
@@ -59,17 +46,9 @@ class CybrexAI(AioThing):
         geck: Optional[StcGeck] = None,
     ):
         super().__init__()
+        self.home_path = self.get_home_path(home_path)
 
-        if home_path is None:
-            home_path = os.environ.get("CYBREX_HOME", "~/.cybrex")
-        self.home_path = os.path.expanduser(home_path)
-        if not os.path.exists(self.home_path):
-            mkdir_p(self.home_path)
-
-        config_path = os.path.join(self.home_path, 'config.yaml')
-        if not os.path.exists(config_path):
-            with open(config_path, 'w') as f:
-                f.write(yaml.dump(default_config(), default_flow_style=False))
+        config_path = self.write_config()
         config = Configurator(configs=[
             config_path,
         ])
@@ -92,6 +71,48 @@ class CybrexAI(AioThing):
             collection_name=self.model.get_embeddings_id(),
             embedding_function=self.model.embed_documents,
         )
+
+    def get_home_path(self, home_path: str) -> str:
+        if home_path is None:
+            home_path = os.environ.get("CYBREX_HOME", "~/.cybrex")
+        home_path = os.path.expanduser(home_path)
+        if not os.path.exists(home_path):
+            mkdir_p(home_path)
+        return home_path
+
+    def write_config(
+        self,
+        ipfs_http_base_url: str = 'http://127.0.0.1:8080',
+        summa_endpoint: str = '127.0.0.1:10082',
+        llm_name: Literal['llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai'] = 'llama-2-7b-uncensored',
+        embedder_name: Literal['instructor-xl', 'openai'] = 'instructor-xl',
+        force: bool = False,
+    ):
+        """
+        Write config to $CYBREX_HOME/config.yaml
+        :param ipfs_http_base_url: IPFS HTTP base url, i.e. `http://127.0.0.1:8080`
+        :param summa_endpoint: Summa endpoint, i.e. `127.0.0.1:10082`
+        :param llm_name: 'llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai'
+        :param embedder_name: 'instructor-xl', 'openai'
+        :param force: overwrite even if config already exists
+        :return:
+        """
+        config_path = os.path.join(self.home_path, 'config.yaml')
+        if not os.path.exists(config_path) or force:
+            config = {
+                'ipfs': {
+                    'http': {
+                        'base_url': ipfs_http_base_url,
+                    }
+                },
+                'model': CybrexModel.default_config(llm_name=llm_name, embedder_name=embedder_name),
+                'summa': {
+                    'endpoint': summa_endpoint,
+                },
+            }
+            with open(config_path, 'w') as f:
+                f.write(yaml.dump(config, default_flow_style=False))
+        return config_path
 
     async def resolve_document_content(self, document: SourceDocument) -> Optional[str]:
         document = document.document
@@ -181,6 +202,12 @@ class CybrexAI(AioThing):
             ])
 
     async def import_chunks(self, input_path: str):
+        """
+        Import binary file with embeddings
+
+        :param input_path:
+        """
+
         chunks = []
         with GzipFile(input_path, mode='rb') as zipper:
             for line in zipper.readlines():

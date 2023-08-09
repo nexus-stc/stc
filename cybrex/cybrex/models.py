@@ -47,6 +47,19 @@ class CybrexModel:
         )
 
     @classmethod
+    def standard_embedders(cls, name):
+        return {
+            'instructor-xl': {
+                'model_name': 'hkunlp/instructor-xl',
+                'model_type': 'instructor',
+            },
+            'openai': {
+                'model_name': 'text-embedding-ada-002',
+                'model_type': 'openai'
+            }
+        }[name]
+
+    @classmethod
     def standard_llms(cls, name):
         return {
             'llama-2-7b': {
@@ -91,18 +104,15 @@ class CybrexModel:
         }[name]
 
     @classmethod
-    def default_config(cls):
+    def default_config(cls, llm_name: str = 'llama-2-7b-uncensored', embedder_name: str = 'instructor-xl'):
         return {
             'text_splitter': {
                 'chunk_size': 1024,
                 'chunk_overlap': 128,
                 'type': 'rcts',
             },
-            'embedder': {
-                'model_name': 'hkunlp/instructor-xl',
-                'model_type': 'instructor',
-            },
-            'llm': cls.standard_llms("llama-2-7b-uncensored")
+            'embedder': cls.standard_embedders(embedder_name),
+            'llm': cls.standard_llms(llm_name)
         }
 
     @lazy

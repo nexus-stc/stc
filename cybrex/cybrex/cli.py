@@ -40,14 +40,6 @@ class CybrexCli:
                 n_documents=n_documents
             )
 
-    async def import_chunks(self, input_path: str):
-        """
-        Import binary file with embeddings
-
-        :param input_path:
-        """
-        await self.cybrex.import_chunks(input_path=input_path)
-
     async def chat_doc(self, document_query: str, query: str, n_chunks: int = 5):
         """
         Ask a question about content of document identified by DOI.
@@ -70,7 +62,7 @@ class CybrexCli:
         n_documents: int = 10,
     ):
         """
-        Ask a question about content of document identified by DOI.
+        Ask a general questions
 
         :param query: text query to the document
         :param n_chunks: the number of chunks to extract from Chroma
@@ -106,12 +98,11 @@ class CybrexCli:
 
     async def semantic_search(self, query: str, n_chunks: int = 5, n_documents: int = 10):
         """
-        Ask a question about content of document identified by DOI.
+        Search related to query text chunks among `n` documents
 
         :param query: query to STC
-        :param n_chunks: number of pieces to return
-        :param n_documents: the number of chunks to extract from Chroma
-            more means more tokens to use and more precision in answer
+        :param n_chunks: number of chunks to return
+        :param n_documents: the number of documents to extract from STC
         """
         async with self.cybrex as cybrex:
             print(f"{colored('Q', 'green')}: {query}")
@@ -140,9 +131,10 @@ async def cybrex_cli(debug: bool = False):
         'chat-doc': cybrex_ai.chat_doc,
         'chat-sci': cybrex_ai.chat_sci,
         'export-chunks': cybrex_ai.export_chunks,
-        'import-chunks': cybrex_ai.import_chunks,
+        'import-chunks': cybrex_ai.cybrex.import_chunks,
         'semantic-search': cybrex_ai.semantic_search,
         'sum-doc': cybrex_ai.sum_doc,
+        'write-config': cybrex_ai.cybrex.write_config,
     }
 
 
