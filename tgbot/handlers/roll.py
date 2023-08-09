@@ -2,6 +2,7 @@ import random
 import re
 import time
 
+from izihawa_nlptools.language_detect import detect_language
 from telethon import events
 
 from library.telegram.base import RequestContext
@@ -20,13 +21,14 @@ class RollHandler(BaseHandler):
         session_id = self.generate_session_id()
         request_context.add_default_fields(mode='roll', session_id=session_id)
         query = event.pattern_match.group(1).strip()
-        language = request_context.chat['language']
+        query_language = detect_language(query)
+        language = query_language or request_context.chat['language']
 
         response = await self.application.summa_client.search(
-            self.application.query_processor.process(
+            self.application.geck.get_query_processor().process(
                 query,
                 collector='reservoir_sampling',
-                page_size=1,
+                limit=1,
                 index_aliases=[random.choice(self.bot_index_aliases)]
             )
         )

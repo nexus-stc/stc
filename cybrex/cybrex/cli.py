@@ -11,7 +11,7 @@ from .cybrex_ai import CybrexAI
 
 
 def create_snippet(document):
-    return document['metadata']['doi'] + ': ' + document['text']
+    return document['metadata']['id'] + ': ' + document['text']
 
 
 class CybrexCli:
@@ -22,9 +22,9 @@ class CybrexCli:
         async with self.cybrex as cybrex:
             async for document in cybrex.geck.get_summa_client().documents('nexus_science'):
                 document = json.loads(document)
-                await self.cybrex.add_full_documents([document])
+                await self.cybrex.upsert_documents([document])
 
-    async def export_chunks(self, query: str, output_path: str, n_documents: int = 100):
+    async def export_chunks(self, query: str, output_path: str, n_documents: int = 10):
         """
         Store STC text chunks in ZIP archive
 
@@ -48,32 +48,31 @@ class CybrexCli:
         """
         await self.cybrex.import_chunks(input_path=input_path)
 
-    async def chat_doc(self, field: str, value: str, question: str, n_chunks: int = 4):
+    async def chat_doc(self, document_query: str, query: str, n_chunks: int = 5):
         """
         Ask a question about content of document identified by DOI.
 
-        :param field: name of the field in document used for selection
-        :param value: value of the field in document used for selection
-        :param question: Text question to the document
+        :param document_query: query that returns unique document
+        :param query: Text query to the document
         :param n_chunks: the number of chunks to extract from Chroma
             more means more tokens to use and more precision in answer
         """
         async with self.cybrex as cybrex:
-            print(f"{colored('Document', 'green')}: {field}:{value}")
-            print(f"{colored('Q', 'green')}: {question}")
-            response = await cybrex.chat_document(field, value, question, n_chunks)
+            print(f"{colored('Document', 'green')}: {document_query}")
+            print(f"{colored('Q', 'green')}: {query}")
+            response = await cybrex.chat_document(document_query, query, n_chunks)
             print(f"{colored('A', 'green')}: {response}")
 
     async def chat_sci(
         self,
         query: str,
-        n_chunks: int = 4,
+        n_chunks: int = 5,
         n_documents: int = 10,
     ):
         """
         Ask a question about content of document identified by DOI.
 
-        :param query: Text question to the document
+        :param query: text query to the document
         :param n_chunks: the number of chunks to extract from Chroma
             more means more tokens to use and more precision in answer
         :param n_documents: the number of chunks to extract from Chroma
@@ -87,24 +86,25 @@ class CybrexCli:
                 n_documents=n_documents,
             )
             answer = re.sub(r'\(DOI: ([^)]+)\)', r'(https://doi.org/\g<1>)', answer)
-            summa_documents = [f'{summa_document["doi"]}: {summa_document["title"]}' for summa_document in summa_documents]
+            summa_documents = [
+                f'{summa_document.get("doi") or summa_document.get("metadata", {}).get("isbns")}: {summa_document["title"]}'
+                for summa_document in summa_documents]
             sources = '\n'.join(summa_documents)
             print(f"{colored('A', 'green')}: {answer}")
             print(f"{colored('References', 'green')}:\n{textwrap.indent(sources, ' - ')}")
 
-    async def sum_doc(self, field: str, value: str):
+    async def sum_doc(self, document_query: str):
         """
         Summarization of the document
 
-        :param field: name of the field in document used for selection
-        :param value: value of the field in document used for selection
+        :param document_query: query that returns unique document
         """
         async with self.cybrex as cybrex:
-            print(f"{colored('Document', 'green')}: {field}:{value}")
-            response = await cybrex.summarize_document(field, value)
+            print(f"{colored('Document', 'green')}: {document_query}")
+            response = await cybrex.summarize_document(document_query)
             print(f"{colored('Summarization', 'green')}: {response}")
 
-    async def semantic_search(self, query: str, n_chunks: int = 10, n_documents: int = 30):
+    async def semantic_search(self, query: str, n_chunks: int = 5, n_documents: int = 10):
         """
         Ask a question about content of document identified by DOI.
 

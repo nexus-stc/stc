@@ -14,8 +14,7 @@ class BasePrompter:
     def qa_prompt(self, question, chunks: List[dict]):
         if len(chunks) >= 1:
             return '''
-You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
-ALWAYS add references using DOIs from extracted parts near corresponding statements in your answer.
+SYSTEM: You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
 If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 
 USER:
@@ -27,7 +26,7 @@ Question:
 ASSISTANT:'''.format(question=question, summary=self.generate_summary(chunks))
         else:
             return '''
-You are Cybrex AI created by People of Nexus. Answer the question.
+SYSTEM: You are Cybrex AI created by People of Nexus. Answer the question.
 If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 
 USER:
@@ -37,7 +36,7 @@ ASSISTANT:'''.format(question=question)
 
     def summarize_prompt(self, chunks: List[dict]):
         return '''
-You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
+SYSTEM: You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
 
 USER:
 Extracted parts:
@@ -49,14 +48,15 @@ ASSISTANT:'''.format(summary=self.generate_summary(chunks))
         chunk_summaries = []
         chunk_summaries_grouped = OrderedDict()
         for chunk in chunks:
-            doi = chunk.get("metadata", {}).get("doi")
-            if doi not in chunk_summaries_grouped:
-                chunk_summaries_grouped[doi] = []
-            chunk_summaries_grouped[doi].append(chunk['text'])
-        for doi, texts in chunk_summaries_grouped.items():
+            id_ = chunk["metadata"]["id"]
+            if id_ not in chunk_summaries_grouped:
+                chunk_summaries_grouped[id_] = []
+            chunk_summaries_grouped[id_].append(chunk['text'])
+        for id_, texts in chunk_summaries_grouped.items():
             texts = ' <..> '.join(texts)
-            if doi:
-                chunk_summaries.append(f'DOI: {doi}\nCONTENT: {texts}')
+            if id_:
+                index_alias, field, value = id_.split(':', 2)
+                chunk_summaries.append(f'{field.upper()}: {value}\nCONTENT: {texts}')
             else:
                 chunk_summaries.append(f'CONTENT: {texts}')
         return '\n'.join(chunk_summaries)
@@ -68,7 +68,6 @@ class Llama27bPrompter(BasePrompter):
             return '''
 <s><<SYS>>
 You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
-ALWAYS add references using DOIs from extracted parts near corresponding statements in your answer.
 If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 <</SYS>>
 [INST]

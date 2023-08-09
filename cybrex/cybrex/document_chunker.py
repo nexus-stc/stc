@@ -3,20 +3,22 @@ from typing import List
 
 from bs4 import BeautifulSoup
 
+from .data_source.base import SourceDocument
+
 
 class DocumentChunker:
     def __init__(self, text_splitter, minimal_chunk_size: int = 128):
         self.text_splitter = text_splitter
         self.minimal_chunk_size = minimal_chunk_size
 
-    def to_chunks(self, document: dict) -> List[dict]:
+    def to_chunks(self, document: SourceDocument) -> List[dict]:
         logging.getLogger('statbox').info({
             'action': 'chunking',
-            'id': f'doi:{document["doi"]}',
+            'id': document.document_id,
             'mode': 'cybrex',
         })
-        abstract = document.get('abstract', '')
-        content = document.get('content')
+        abstract = document.document.get('abstract', '')
+        content = document.document.get('content')
         if not content:
             return []
 
@@ -41,7 +43,7 @@ class DocumentChunker:
             chunks.append({
                 'text': chunk,
                 'metadata': {
-                    'doi': document['doi'],
+                    'id': document.document_id,
                     'length': len(chunk),
                     'chunk_id': chunk_id,
                 }

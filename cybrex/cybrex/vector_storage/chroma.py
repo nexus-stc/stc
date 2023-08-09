@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 from typing import List
 
@@ -8,11 +7,13 @@ from .base import BaseVectorStorage
 
 
 class ChromaVectorStorage(BaseVectorStorage):
-    def __init__(self, path, collection_name):
+    def __init__(self, path, collection_name, embedding_function=None):
         self.db = chromadb.PersistentClient(path=path)
         self.collection_name = collection_name
-
-        self.collection = self.db.get_or_create_collection(name=self.collection_name)
+        self.collection = self.db.get_or_create_collection(
+            name=self.collection_name,
+            embedding_function=embedding_function,
+        )
 
     def _unpack(self, chroma_response, i: int = 0) -> List[dict]:
         chunks = []
@@ -44,43 +45,35 @@ class ChromaVectorStorage(BaseVectorStorage):
         metadatas = []
         texts = []
         for chunk in chunks:
-            embeddings.append(chunk['embedding'])
+            if 'embedding' in chunk:
+                embeddings.append(chunk['embedding'])
             if 'metadata' in chunk:
                 metadatas.append(chunk['metadata'])
             if 'text' in chunk:
                 texts.append(chunk['text'])
         return embeddings, metadatas, texts
 
-    async def get_by_field_value(self, field, value) -> List[dict]:
-        chrome_response = await asyncio.get_running_loop().run_in_executor(
-            None,
-            lambda: self.collection.get(where={field: value}),
-        )
+    def get_by_field_value(self, field, value) -> List[dict]:
+        chrome_response = self.collection.get(where={field: value})
         return self._unpack(chrome_response)
 
-    async def query(self, query_embeddings, n_chunks: int, where: dict = None):
-        responses = await asyncio.get_running_loop().run_in_executor(
-            None,
-            lambda: self.collection.query(
-                query_embeddings=query_embeddings,
-                n_results=n_chunks,
-                include=['documents', 'metadatas', 'distances'],
-                where=where,
-            )
+    def query(self, query_embeddings, n_chunks: int, where: dict = None):
+        responses = self.collection.query(
+            query_embeddings=query_embeddings,
+            n_results=n_chunks,
+            include=['documents', 'metadatas', 'distances'],
+            where=where,
         )
         unpacked_responses = []
         for i in range(len(responses["documents"])):
             unpacked_responses.append(self._unpack(responses, i=i))
         return unpacked_responses
 
-    async def upsert(self, chunks: List[dict]):
+    def upsert(self, chunks: List[dict]):
         embeddings, metadatas, texts = self._pack(chunks)
-        await asyncio.get_running_loop().run_in_executor(
-            None,
-            lambda: self.collection.upsert(
-                embeddings=embeddings,
-                documents=texts or None,
-                metadatas=metadatas or None,
-                ids=[str(uuid.uuid1()) for _ in range(len(embeddings))]
-            )
+        return self.collection.upsert(
+            embeddings=embeddings or None,
+            documents=texts or None,
+            metadatas=metadatas or None,
+            ids=[str(uuid.uuid1()) for _ in range(len(embeddings or texts))]
         )

@@ -11,7 +11,7 @@ aiocrossref
 aiogrobid==0.1.12
 aiokit>=1.2.3
 aiosqlite
-cybrex>=1.3.1
+cybrex>=1.4.5
 base36
 dateparser
 emoji
@@ -21,8 +21,7 @@ izihawa_loglib>=1.0.2
 izihawa_utils
 lru-dict
 markdownify
-pybind11
 sqlalchemy
-stc-geck>=1.3.4
+stc-geck>=1.4.4
 telethon
 uvloop

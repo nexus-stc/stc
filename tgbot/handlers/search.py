@@ -87,7 +87,7 @@ class BaseSearchHandler(BaseHandler, ABC):
         language = request_context.chat['language']
         librarian_service_id = None
 
-        preprocessed_query = self.application.query_processor.preprocess_query(query)
+        preprocessed_query = self.application.geck.get_query_processor().preprocess_query(query)
 
         try:
             search_widget = await SearchWidget.create(
@@ -189,8 +189,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                 view = holder.view_builder(language).add_new_line(2).add_view(bot_name=request_context.bot_name).build()
                 remote_request_link = None
                 if librarian_service_id:
-                    # remote_request_link = f'https://t.me/{self.application.librarian_service.group_name}/{librarian_service_id}'
-                    remote_request_link = f'https://www.wosonhj.com/'
+                    remote_request_link = f'https://t.me/{self.application.librarian_service.group_name}/{librarian_service_id}'
                 buttons = holder.buttons_builder(language, remote_request_link).add_default_layout(
                     bot_name=request_context.bot_name,
                     position=0,
@@ -278,7 +277,7 @@ class InlineSearchHandler(BaseSearchHandler):
                 await event.answer([])
                 raise events.StopPropagation()
 
-            preprocessed_query = self.application.query_processor.preprocess_query(event.text)
+            preprocessed_query = self.application.geck.get_query_processor().preprocess_query(event.text)
             inline_search_widget = await InlineSearchWidget.create(
                 application=self.application,
                 request_context=request_context,
@@ -371,7 +370,7 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
             )
 
         query = reply_message.raw_text.replace(f'@{request_context.bot_name}', '').strip()
-        preprocessed_query = self.application.query_processor.preprocess_query(query)
+        preprocessed_query = self.application.geck.get_query_processor().preprocess_query(query)
 
         try:
             search_widget = await SearchWidget.create(

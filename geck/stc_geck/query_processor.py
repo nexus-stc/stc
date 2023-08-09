@@ -7,78 +7,21 @@ from typing import (
     Union,
 )
 
-from izihawa_nlptools.language_detect import detect_language
-from multidict import MultiDict
-
-languages = {
-    '🇪🇹': 'am',
-    '🇦🇪': 'ar',
-    '🇩🇪': 'de',
-    '🇬🇧': 'en',
-    '🏴󠁧󠁢󠁥󠁮󠁧󠁿': 'en',
-    '🇪🇸': 'es',
-    '🇮🇷': 'fa',
-    '🇮🇳': 'hi',
-    '🇮🇩': 'id',
-    '🇮🇹': 'it',
-    '🇯🇵': 'ja',
-    '🇲🇾': 'ms',
-    '🇧🇷': 'pb',
-    '🇷🇺': 'ru',
-    '🇹🇯': 'tg',
-    '🇹🇷': 'tr',
-    '🇺🇦': 'uk',
-    '🇺🇿': 'uz',
-}
-
-
-def build_inverse_dict(d: dict):
-    inverse = MultiDict()
-    r = dict()
-    for k, v in d.items():
-        inverse.add(v, k)
-    for k in inverse:
-        allvalues = inverse.getall(k)
-        if len(allvalues) > 1:
-            r[k] = '(' + ' '.join(inverse.getall(k)) + ')'
-        else:
-            r[k] = allvalues[0]
-    return r
-
-
-default_icon = '📝'
-type_icons = {
-    'book': '📚',
-    'book-chapter': '🔖',
-    'chapter': '🔖',
-    'dataset': '📊',
-    'component': '📊',
-    'dissertation': '🧑‍🎓',
-    'edited-book': '📚',
-    'journal-article': '🔬',
-    'monograph': '📚',
-    'peer-review': '🤝',
-    'proceedings': '📚',
-    'proceedings-article': '🔬',
-    'reference-book': '📚',
-    'report': '📝',
-    'standard': '🛠',
-}
-
-
-def get_type_icon(type_):
-    return type_icons.get(type_, default_icon)
-
-
-inversed_type_icons = build_inverse_dict(type_icons)
+from .advices import (
+    PR_TEMPORAL_RANKING_FORMULA,
+    TEMPORAL_RANKING_FORMULA,
+)
+from .utils import (
+    inversed_type_icons,
+    languages,
+)
 
 
 def _nexus_science_default_scorer_functions(query):
     if query and 'order_by:date' in query:
         return {'eval_expr': 'issued_at'}
     else:
-        return {'eval_expr': "original_score * custom_score * fastsigm(abs(now - issued_at) / (86400 * 30) + 5, -1) * "
-                             "1.96 * fastsigm(iqpr(quantized_page_rank), 0.15)"}
+        return {'eval_expr': PR_TEMPORAL_RANKING_FORMULA}
 
 
 def _nexus_free_default_scorer_functions(query):
@@ -88,7 +31,7 @@ def _nexus_free_default_scorer_functions(query):
         }
     else:
         return {
-            'eval_expr': "original_score * custom_score * fastsigm(abs(now - issued_at) / (86400 * 30) + 5, -1)"
+            'eval_expr': TEMPORAL_RANKING_FORMULA
         }
 
 
@@ -127,7 +70,7 @@ default_scorer_functions = {
 }
 
 default_removed_fields = {
-    'nexus_free': ["doi", "rd", "ev"],
+    'nexus_free': ["doi", "rd", "ev", "concepts"],
     'nexus_science': ["id"],
 }
 
@@ -193,19 +136,22 @@ class QueryProcessor:
         return preprocessed_query
 
     def process(
-            self,
-            query: str,
-            page_size: int,
-            page: int = 0,
-            is_fieldnorms_scoring_enabled: Optional[bool] = None,
-            index_aliases: Optional[List[str]] = None,
-            collector: str = 'top_docs',
-            extra_filter: Optional[Dict] = None,
-            fields: Optional[Union[List[str], Dict[str, List[str]]]] = None,
-            skip_doi_isbn_term_field_mapper: bool = False,
+        self,
+        query: str,
+        limit: int,
+        offset: int = 0,
+        is_fieldnorms_scoring_enabled: Optional[bool] = None,
+        index_aliases: Optional[List[str]] = None,
+        collector: str = 'top_docs',
+        extra_filter: Optional[Dict] = None,
+        fields: Optional[Union[List[str], Dict[str, List[str]]]] = None,
+        skip_doi_isbn_term_field_mapper: bool = False,
+        query_language: str = 'en',
     ):
         queries = []
         query = self.process_filters(escape(query, quote=False))
+        if not index_aliases:
+            index_aliases = ["nexus_free", "nexus_science"]
         if isinstance(fields, List):
             new_fields = {}
             for index_alias in index_aliases:
@@ -214,13 +160,14 @@ class QueryProcessor:
         for index_alias in index_aliases:
             queries.append(self.query_builders[index_alias].build(
                 query,
-                page,
-                page_size,
+                limit,
+                offset,
                 is_fieldnorms_scoring_enabled=is_fieldnorms_scoring_enabled,
                 collector=collector,
                 extra_filter=extra_filter,
                 fields=fields[index_alias] if fields else None,
                 skip_doi_isbn_term_field_mapper=skip_doi_isbn_term_field_mapper,
+                query_language=query_language,
             ))
         return queries
 
@@ -228,16 +175,14 @@ class QueryProcessor:
 class IndexQueryBuilder:
 
     def __init__(
-            self,
-            index_alias: str,
-            scorer_function,
-            snippet_configs: Optional[Dict] = None,
-            is_fieldnorms_scoring_enabled: bool = False,
-            exact_matches_promoter: Optional[Dict] = None,
-            removed_fields: Optional[List] = None,
-            term_field_mapper_configs: Optional[Dict] = None,
-            page: int = 0,
-            page_size: int = 5,
+        self,
+        index_alias: str,
+        scorer_function,
+        snippet_configs: Optional[Dict] = None,
+        is_fieldnorms_scoring_enabled: bool = False,
+        exact_matches_promoter: Optional[Dict] = None,
+        removed_fields: Optional[List] = None,
+        term_field_mapper_configs: Optional[Dict] = None,
     ):
         self.index_alias = index_alias
         self.scorer_function = scorer_function
@@ -246,8 +191,6 @@ class IndexQueryBuilder:
         self.exact_matches_promoter = exact_matches_promoter
         self.term_field_mapper_configs = term_field_mapper_configs
         self.removed_fields = removed_fields
-        self.page = page
-        self.page_size = page_size
 
     @staticmethod
     def from_profile(index_alias: str, profile: str):
@@ -289,23 +232,23 @@ class IndexQueryBuilder:
                 raise ValueError('incorrect profile')
 
     def build(
-            self,
-            query: str,
-            page: int,
-            page_size: int,
-            is_fieldnorms_scoring_enabled: Optional[bool] = None,
-            collector: str = 'top_docs',
-            extra_filter: Optional[Dict] = None,
-            fields: Optional[List[str]] = None,
-            skip_doi_isbn_term_field_mapper: bool = False,
+        self,
+        query: str,
+        limit: int,
+        offset: int,
+        is_fieldnorms_scoring_enabled: Optional[bool] = None,
+        collector: str = 'top_docs',
+        extra_filter: Optional[Dict] = None,
+        fields: Optional[List[str]] = None,
+        skip_doi_isbn_term_field_mapper: bool = False,
+        query_language: str = 'en'
     ):
         query = query.lower()
         if query:
             query_value = query.replace('order_by:date', '').strip()
             query_struct = {'match': {'value': query_value}}
-            query_language = detect_language(query_value)
             query_parser_config = {
-                'query_language': query_language or 'en',
+                'query_language': query_language,
                 'term_limit': 20,
                 'field_aliases': default_field_aliases[self.index_alias],
             }
@@ -333,14 +276,14 @@ class IndexQueryBuilder:
                 }
             }
         collector_struct = {
-            'limit': page_size,
+            'limit': limit,
         }
         if collector == 'top_docs':
             if scorer := self.scorer_function(query):
                 collector_struct['scorer'] = scorer
             if self.snippet_configs:
                 collector_struct['snippet_configs'] = self.snippet_configs
-            if offset := page_size * page:
+            if offset:
                 collector_struct['offset'] = offset
         if fields:
             collector_struct['fields'] = fields

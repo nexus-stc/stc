@@ -113,9 +113,9 @@ class BaseHandler(ABC):
         ]
 
     async def get_scored_document(self, index_aliases, field: str, value: str):
-        queries = self.application.query_processor.process(
+        queries = self.application.geck.get_query_processor().process(
             f'{field}:{value}',
-            page_size=1,
+            limit=1,
             is_fieldnorms_scoring_enabled=False,
             index_aliases=index_aliases,
             skip_doi_isbn_term_field_mapper=True,

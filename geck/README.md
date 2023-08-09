@@ -1,7 +1,7 @@
 # GECK (Garden of Eden Creation Kit)
 
-GECK is a Python library and Bash tool for interacting with STC programmatically.
-It allows to startup embedded Summa instance, do search queries to find scholarly publications and to iterate over all database if you need.
+GECK is a Python library and Bash tool for access STC - the large corpus of scholarly texts.
+GECK allows to startup embedded [Summa](https://github.com/izihawa/summa) instance, feed it with IPFS-based data, do search queries to find scholarly publications and iterate over all database if you need.
 
 ## Install
 
@@ -55,4 +55,39 @@ INFO: Searching hemoglobin...
 
 ### Python
 
-Examples for Python can be found in [examples directory](/geck/examples/search-stc.ipynb)
+```python
+from stc_geck.client import StcGeck
+geck = StcGeck(
+    ipfs_http_base_url='http://10.1.2.2:8080',
+    index_names=('nexus_science',),
+    timeout=300,
+)
+
+# Connects to IPFS and instantiate configured indices for searching It will take a time depending on your IPFS performance
+await geck.start()
+
+# GECK encapsulates Python client to Summa. It can be either external stand-alone server or embed server, but details are hidden behind SummaClient interface.
+summa_client = geck.get_summa_client()
+
+# Match search returns top-5 documents which contain `additive manufacturing` in their title, abstract or content.
+search_response = await summa_client.search([{
+    "index_alias": "nexus_science",
+    "query": {
+        "match": {
+            "value": "additive manufacturing",
+            "query_parser_config": {"default_fields": ["abstract", "title", "content"]}
+        }
+    },
+    "collectors": [{"top_docs": {"limit": 5}}],
+    "is_fieldnorms_scoring_enabled": False,
+}])
+for scored_document in search_response.collector_outputs[0].documents.scored_documents:
+    document = json.loads(scored_document.document)
+    print('DOI:', document['doi'])
+    print('Title:', document['title'])
+    print('Abstract:', document.get('abstract'))
+    print('Links:', document.get('links'))
+    print('-----')
+```
+
+More example for Python can be found in [examples directory](/geck/examples/search-stc.ipynb)

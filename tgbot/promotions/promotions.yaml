@@ -28,8 +28,11 @@ promotions:
       it: ⤴️ Resta aggiornato con noi su @{related_channel} e [Twitter]({twitter_contact_url})
       pb: ⤴️ Fique ligado conosco em @{related_channel} e [Twitter]({twitter_contact_url})
       ru: ⤴️ Оставайся на связи с нами на @{related_channel} и в [Twitter]({twitter_contact_url})
-    weight: 20
+    weight: 5
+  - texts:
+      en: 🧬🪅 Join [Nexus Communities](https://t.me/+fPQIvxQmJGQ3MzU8), the spaces to discuss science
+    weight: 50
   - texts:
       en: ⤴️ Try [Standard Template Construct](http://standard-template-construct.org) library
       ru: ⤴️ Заходи в библиотеку [Стандартных Шаблонных Конструкций](http://standard-template-construct.org)
-    weight: 20
+    weight: 5

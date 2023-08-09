@@ -80,6 +80,7 @@ telegram:
     - tgbot.handlers.aboutus.AboutusHandler
     - tgbot.handlers.close.CloseHandler
     - tgbot.handlers.cybrex.CybrexHandler
+    - tgbot.handlers.cybrex.CybrexDocHandler
     - tgbot.handlers.download.DownloadHandler
     - tgbot.handlers.howtohelp.HowToHelpHandler
     - tgbot.handlers.help.HelpHandler
@@ -108,7 +109,5 @@ summa:
     index_names:
       - nexus_free
     ipfs_data_directory: /ipns/standard-template-construct.org/data/
-  query_processor:
-    profile: light
 twitter:
   contact_url: https://twitter.com/the_superpirate

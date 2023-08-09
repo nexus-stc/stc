@@ -73,6 +73,18 @@ class CybrexModel:
                     'type': 'default'
                 },
             },
+            'llama-2-13b': {
+                'config': {
+                    'context_length': 4096,
+                    'max_new_tokens': 512,
+                    'model_file': 'llama-2-13b-chat.ggmlv3.q4_K_S.bin',
+                    'model_path_or_repo_id': 'TheBloke/Llama-2-13B-chat-GGML',
+                },
+                'model_type': 'llama',
+                'prompter': {
+                    'type': 'llama-7b'
+                },
+            },
             'openai': {
                 'config': {}
             },

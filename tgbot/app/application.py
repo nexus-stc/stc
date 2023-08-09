@@ -14,7 +14,6 @@ from library.telegram.dynamic_bot_manager import DynamicBotManager
 from library.telegram.promotioner import Promotioner
 from library.user_manager import UserManager
 from tgbot.app.database import Database
-from tgbot.app.query_builder import QueryProcessor
 from tgbot.promotions import get_promotions
 
 
@@ -48,6 +47,7 @@ class TelegramApplication(AioRootThing):
             default_bot=config['application'].get('default_bot')
         )
         self.starts.append(self.dynamic_bot_manager)
+
         self.geck = StcGeck(
             ipfs_http_base_url=self.config['ipfs']['http']['base_url'],
             ipfs_data_directory=self.config['summa']['embed']['ipfs_data_directory'],
@@ -55,16 +55,15 @@ class TelegramApplication(AioRootThing):
             grpc_api_endpoint=self.config['summa']['endpoint'],
         )
         self.starts.append(self.geck)
+
         self.summa_client = self.geck.get_summa_client()
+        self.starts.append(self.summa_client)
 
         self.cybrex_ai = cybrex_ai.CybrexAI(
             home_path='/usr/lib/stc-tgbot/cybrex',
             geck=self.geck,
         )
         self.starts.append(self.cybrex_ai)
-
-        self.starts.append(self.summa_client)
-        self.query_processor = QueryProcessor(self.config['summa']['query_processor']['profile'])
 
         self.ipfs_http_client = IpfsHttpClient(base_url=config['ipfs']['http']['base_url'], retry_delay=5.0)
         self.starts.append(self.ipfs_http_client)

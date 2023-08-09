@@ -122,14 +122,10 @@ class StcGeckCli:
         print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
         async with self.geck as geck:
             print(f"{colored('INFO', 'green')}: Searching {query}...")
-            response = await geck.get_summa_client().search([{
-                "index_alias": self.index_name,
-                "query": {
-                    "match": {"value": query}
-                },
-                "collectors": [{"top_docs": {"limit": limit}}],
-                "is_fieldnorms_scoring_enabled": False,
-            }])
+            query_processor = geck.get_query_processor()
+            processed_query = query_processor.process(query, limit=limit, index_aliases=[self.index_name])
+            summa_client = geck.get_summa_client()
+            response = await summa_client.search(processed_query)
             documents = list(map(lambda x: json.loads(x.document), response.collector_outputs[0].documents.scored_documents))
             return documents
 

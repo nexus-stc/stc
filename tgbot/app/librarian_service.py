@@ -11,6 +11,7 @@ from datetime import (
 
 from aiokit import AioThing
 from izihawa_utils.importlib import import_object
+from stc_geck.utils import get_type_icon
 
 from library.pdftools.cleaner import clean_metadata
 from library.pdftools.exceptions import (
@@ -20,7 +21,6 @@ from library.pdftools.exceptions import (
 from library.telegram.base import BaseTelegramClient
 from library.telegram.utils import safe_execution
 from library.textutils import DOI_REGEX
-from tgbot.app.query_builder import get_type_icon
 from tgbot.views.telegram.base_holder import BaseHolder
 from tgbot.views.telegram.common import vote_button
 

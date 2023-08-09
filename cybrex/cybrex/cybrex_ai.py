@@ -17,13 +17,14 @@ from aiokit import AioThing
 from izihawa_configurator import Configurator
 from izihawa_utils.exceptions import BaseError
 from izihawa_utils.file import mkdir_p
-from stc_geck.advices import get_documents_on_topic
 from stc_geck.client import StcGeck
 
 from .chains.map_reduce import (
     QAChain,
     SummarizeChain,
 )
+from .data_source.base import SourceDocument
+from .data_source.geck_data_source import GeckDataSource
 from .document_chunker import DocumentChunker
 from .models import CybrexModel
 from .vector_storage.chroma import ChromaVectorStorage
@@ -80,60 +81,67 @@ class CybrexAI(AioThing):
         if not self.geck:
             self.geck = StcGeck(
                 ipfs_http_base_url=config['ipfs']['http']['base_url'],
-                grpc_api_endpoint=config['summa']['endpoint']
+                grpc_api_endpoint=config['summa']['endpoint'],
+                timeout=600,
             )
             self.starts.append(self.geck)
 
+        self.data_source = GeckDataSource(self.geck)
         self.vector_storage = ChromaVectorStorage(
             path=os.path.join(self.home_path, 'chroma'),
             collection_name=self.model.get_embeddings_id(),
+            embedding_function=self.model.embed_documents,
         )
 
-    async def resolve_document_content(self, document: dict) -> Optional[str]:
+    async def resolve_document_content(self, document: SourceDocument) -> Optional[str]:
+        document = document.document
         if 'content' in document:
             return document['content']
         elif 'links' in document:
             primary_link = document['links'][0]
             file_content = await self.geck.download(document['links'][0]['cid'])
-            match primary_link['type']:
+            match primary_link['extension']:
                 case 'pdf':
                     pdf_reader = pypdf.PdfReader(io.BytesIO(file_content))
                     return '\n'.join(page.extract_text() for page in pdf_reader.pages)
                 case _:
                     raise RuntimeError("Unsupported extension")
 
-    async def generate_chunks_from_document(self, document: dict) -> List[dict]:
-        document['content'] = await self.resolve_document_content(document)
+    async def generate_chunks_from_document(self, document: SourceDocument) -> List[dict]:
+        document.document['content'] = await self.resolve_document_content(document)
         return self.document_chunker.to_chunks(document)
 
-    async def _get_missing_chunks(self, documents: List[dict], skip_downloading_pdf: bool = True) -> List[dict]:
-        chunks = []
+    async def _get_missing_chunks(self, documents: List[SourceDocument], skip_downloading_pdf: bool = True) -> List[dict]:
+        all_chunks = []
         for document in documents:
-            doi = document['doi']
-            if await self.vector_storage.get_by_field_value('doi', doi):
+            chunks = await asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: self.vector_storage.get_by_field_value('id', document.document_id)
+            )
+            if chunks:
                 logging.getLogger('statbox').info({
                     'action': 'already_stored',
                     'mode': 'cybrex',
-                    'doi': doi,
+                    'id': document.document_id,
                 })
                 continue
             if skip_downloading_pdf and 'content' not in document:
                 logging.getLogger('statbox').info({
                     'action': 'no_content',
                     'mode': 'cybrex',
-                    'doi': doi,
+                    'id': document.document_id,
                 })
                 continue
             logging.getLogger('statbox').info({
                 'action': 'retrieve_content',
                 'mode': 'cybrex',
-                'doi': doi,
+                'id': document.document_id,
             })
             document_chunks = await self.generate_chunks_from_document(document)
-            chunks.extend(document_chunks)
-        return chunks
+            all_chunks.extend(document_chunks)
+        return all_chunks
 
-    async def add_full_documents(self, documents: List[dict], skip_downloading_pdf: bool = True):
+    async def upsert_documents(self, documents: List[SourceDocument], skip_downloading_pdf: bool = True):
         if not documents:
             return
         chunks = await self._get_missing_chunks(documents, skip_downloading_pdf=skip_downloading_pdf)
@@ -143,23 +151,22 @@ class CybrexAI(AioThing):
                 'mode': 'cybrex',
                 'n': len(chunks),
             })
-            await self.vector_storage.upsert(chunks)
+            await asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: self.vector_storage.upsert(chunks)
+            )
             logging.getLogger('statbox').info({
                 'action': 'added_full_documents',
                 'mode': 'cybrex',
                 'n': len(chunks),
             })
 
-    async def add_full_document_by_field_value(self, field, value) -> List[dict]:
-        documents = await self.geck.get_summa_client().search_documents([{
-            'index_alias': 'nexus_science',
-            'collectors': [{'top_docs': {'limit': 1}}],
-            'query': {'term': {'field': field, 'value': value}}
-        }])
+    async def upsert_document_by_query(self, query: str, skip_downloading_pdf: bool = True):
+        documents = await self.data_source.query_documents(query, limit=1)
         if not documents:
-            raise DocumentNotFoundError(**{field: value})
-        await self.add_full_documents(documents)
-        return await self.vector_storage.get_by_field_value(field, value)
+            raise DocumentNotFoundError(id_=query)
+        await self.upsert_documents(documents, skip_downloading_pdf=skip_downloading_pdf)
+        return documents[0].document_id
 
     async def export_chunks(self, query: str, output_path: str, n_documents: int, skip_downloading_pdf: bool = True):
         documents = await self.keywords_search(query, n_documents=n_documents)
@@ -178,12 +185,18 @@ class CybrexAI(AioThing):
         with GzipFile(input_path, mode='rb') as zipper:
             for line in zipper.readlines():
                 chunk = json.loads(line)
-                doi = chunk['metadata']['doi']
-                if await self.vector_storage.get_by_field_value('doi', doi):
+                if 'doi' in chunk['metadata']:
+                    chunk['metadata']['id'] = f"nexus_science:doi:{chunk['metadata'].pop('doi')}"
+                document_id = chunk['metadata']['id']
+                chunks_from_storage = await asyncio.get_running_loop().run_in_executor(
+                    None,
+                    lambda: self.vector_storage.get_by_field_value('id', document_id)
+                )
+                if chunks_from_storage:
                     logging.getLogger('statbox').info({
                         'action': 'already_stored',
                         'mode': 'cybrex',
-                        'doi': doi,
+                        'id': document_id,
                     })
                     continue
                 chunk['embedding'] = base64.b64decode(chunk['embedding'])
@@ -191,28 +204,22 @@ class CybrexAI(AioThing):
                 chunks.append(chunk)
 
         if chunks:
-            await self.vector_storage.upsert(chunks)
-
-    async def chat_document(self, field, value, query, n_chunks: int):
-        await self.add_full_document_by_field_value(field, value)
-
-        documents = await self._query(query, n_chunks, where={field: value})
-        result = await asyncio.get_running_loop().run_in_executor(
-            None,
-            lambda: self.model.llm.ask_documents(query, documents),
-        )
-
-        return result
+            await asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: self.vector_storage.upsert(chunks),
+            )
 
     async def chat_science(self, query: str, n_chunks: int, n_documents: int, semantic_threshold: float = 0.5):
         full_documents = await self.keywords_search(query, n_documents)
 
-        await self.add_full_documents(full_documents)
+        await self.upsert_documents(full_documents)
 
         chunks = await self._query(query, n_chunks, semantic_threshold=semantic_threshold)
         chain = QAChain(query=query, llm=self.model.llm)
-        answer = chain.process(chunks)
-
+        answer = await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: chain.process(chunks),
+        )
         return answer, chunks, await self.get_summa_documents_from_documents(chunks)
 
     async def _query(self, query: str, n_chunks: int = 3, where: Optional[dict] = None, semantic_threshold: float = 0.5):
@@ -223,7 +230,10 @@ class CybrexAI(AioThing):
             'n_chunks': n_chunks,
             'where': where,
         })
-        chunks = await self.vector_storage.query([self.model.embedder.embed_query(query)], n_chunks=n_chunks, where=where)
+        chunks = await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: self.vector_storage.query([self.model.embedder.embed_query(query)], n_chunks=n_chunks, where=where),
+        )
         chunks = chunks[0]
         filtered_chunks = []
         for chunk in chunks:
@@ -258,23 +268,21 @@ class CybrexAI(AioThing):
             'keywords': keywords,
         })
         topic = ' '.join(map(lambda x: x[0], filter(lambda x: x[1] > 0.5, keywords)))
-        documents = await get_documents_on_topic(
-            summa_client=self.geck.get_summa_client(),
-            topic=topic,
-            documents=n_documents,
-        )
+        documents = await self.data_source.query_documents(query=topic, limit=n_documents)
         return documents
 
     async def get_summa_documents_from_documents(self, documents):
-        dois = set([document['metadata']['doi'] for document in documents])
-        _summa_documents = await asyncio.gather(*[
-            self.geck.get_summa_client().search_documents([{
-                'index_alias': 'nexus_science',
-                'query': {'term': {'field': 'doi', 'value': doi}},
-                'collectors': [{'top_docs': {'limit': 100}}],
-            }])
-            for doi in dois
-        ])
+        ids = set([document['metadata']['id'] for document in documents])
+        search_requests = []
+        for id_ in ids:
+            index_alias, field, value = id_.split(':', 2)
+            search_request = {
+                'index_alias': index_alias,
+                'query': {'term': {'field': field, 'value': value}},
+                'collectors': [{'top_docs': {'limit': 1}}],
+            }
+            search_requests.append(self.geck.get_summa_client().search_documents([search_request]))
+        _summa_documents = await asyncio.gather(*search_requests)
         summa_documents = []
         for summa_document in _summa_documents:
             summa_documents.append(summa_document[0])
@@ -282,11 +290,27 @@ class CybrexAI(AioThing):
 
     async def semantic_search(self, query: str, n_chunks: int = 10, n_documents: int = 30):
         documents = await self.keywords_search(query, n_documents)
-        await self.add_full_documents(documents)
+        await self.upsert_documents(documents)
         return await self._query(query, n_chunks)
 
-    async def summarize_document(self, field, value):
-        chunks = await self.add_full_document_by_field_value(field, value)
+    async def chat_document(self, document_query: str, query: str, n_chunks: int):
+        document_id = await self.upsert_document_by_query(str(document_query), skip_downloading_pdf=False)
+        chunks = await self._query(query=query, n_chunks=n_chunks, where={'id': document_id})
+
+        chain = QAChain(query=query, llm=self.model.llm)
+        answer = await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: chain.process(chunks),
+        )
+
+        return answer.strip()
+
+    async def summarize_document(self, document_query):
+        document_id = await self.upsert_document_by_query(document_query)
+        chunks = self.vector_storage.get_by_field_value('id', document_id)
         chain = SummarizeChain(llm=self.model.llm)
-        result = chain.process(chunks)
+        result = await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: chain.process(chunks),
+        )
         return result.strip()

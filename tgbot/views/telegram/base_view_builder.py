@@ -7,6 +7,7 @@ from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 from izihawa_types.datetime import CustomDatetime
+from stc_geck.utils import get_type_icon
 from telethon import Button
 
 from library.telegram.common import close_button
@@ -16,7 +17,6 @@ from library.textutils.utils import (
 )
 from tgbot.translations import t
 
-from ...app.query_builder import get_type_icon
 from ...markdownifytg import (
     highlight_md_converter,
     md_converter,
@@ -458,7 +458,7 @@ class BaseButtonsBuilder:
     def add_remote_request_button(self):
         if self.remote_request_link:
             self.buttons[-1].append(
-                Button.url('🇨🇳', self.remote_request_link)
+                Button.url('🤌', self.remote_request_link)
             )
         return self
 

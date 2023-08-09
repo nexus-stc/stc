@@ -2,7 +2,12 @@ import json
 import logging
 import re
 import tempfile
-from typing import Tuple
+from typing import (
+    AsyncIterator,
+    Literal,
+    Optional,
+    Tuple,
+)
 from urllib.parse import urlparse
 
 import aiohttp
@@ -16,6 +21,7 @@ from izihawa_ipfs_api import (
 )
 from izihawa_utils.random import reservoir_sampling_async
 
+from .query_processor import QueryProcessor
 from .utils import (
     create_car,
     is_endpoint_listening,
@@ -53,7 +59,7 @@ async def query_wrapper(response):
         yield orjson.loads(scored_document.document)
 
 
-async def load_document(documents):
+async def load_document(documents: AsyncIterator):
     async for document in documents:
         document = orjson.loads(document)
         if 'cid' in document:
@@ -88,10 +94,22 @@ class StcGeck(AioThing):
         ipfs_http_base_url: str = 'http://127.0.0.1:8080',
         ipfs_api_base_url: str = 'http://127.0.0.1:5001',
         ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
-        index_names: Tuple[str, ...] = ('nexus_science',),
+        index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...] = ('nexus_science',),
         grpc_api_endpoint: str = '127.0.0.1:10082',
-        timeout: int = 120,
+        timeout: int = 300,
     ):
+        """
+        Constructs GECK that may be used to access STC dataset.
+
+        :param ipfs_http_base_url: IPFS HTTP base url, i.e `http://127.0.0.1:8080`
+        :param ipfs_api_base_url: IPFS API base url, i.e `http://127.0.0.1:5001`
+        :param ipfs_data_directory: path to the directory with indices
+        :param index_names: tuple with "nexus_free" and/or "nexus_science" for configuring what indices will be used
+        :param grpc_api_endpoint:
+            endpoint for setting up Summa. If there is Summa listening on the port before launching, then
+            GECK uses existing instance otherwise launches its own one
+        :param timeout: timeout for requests sent to IPFS
+        """
         super().__init__()
         self.ipfs_http_base_url = canonoize_base_url(ipfs_http_base_url)
         self.ipfs_http_client = IpfsHttpClient(self.ipfs_http_base_url, timeout=timeout)
@@ -101,19 +119,20 @@ class StcGeck(AioThing):
         self.ipfs_data_directory = '/' + ipfs_data_directory.strip('/') + '/'
         self.index_names = index_names
         self.grpc_api_endpoint = grpc_api_endpoint
-        self.is_embed = False
+        self.temp_dir = tempfile.TemporaryDirectory()
+
+        self.is_embed = not is_endpoint_listening(self.grpc_api_endpoint)
         self.summa_embed_server = None
+
+        self.query_processor = QueryProcessor('light' if self.is_embed else 'full')
         self.summa_client = SummaClient(
             endpoint=self.grpc_api_endpoint,
             max_message_length=2 * 1024 * 1024 * 1024 - 1,
         )
-        self.temp_dir = None
 
     async def start(self):
-        self.temp_dir = tempfile.TemporaryDirectory()
-        if not is_endpoint_listening(self.grpc_api_endpoint):
+        if self.is_embed:
             logging.getLogger('info').info({'action': 'launching_embedded'})
-            self.is_embed = True
 
             server_config = get_config()
             server_config['api']['grpc_endpoint'] = self.grpc_api_endpoint
@@ -149,13 +168,36 @@ class StcGeck(AioThing):
             self.summa_embed_server = None
         self.temp_dir.cleanup()
 
-    def get_summa_client(self):
+    def get_summa_client(self) -> SummaClient:
+        """
+        Returns Summa client
+        :return: Summa client
+        """
         return self.summa_client
 
+    def get_query_processor(self) -> QueryProcessor:
+        """
+        Returns the instance of QueryProcessor according to embedding mode
+        :return: query processor
+        """
+        return self.query_processor
+
     async def download(self, cid: str):
+        """
+        Download item by its IPFS CID
+
+        :param cid: IPFS CID to the item required to download
+        :return: `bytes` with the file content
+        """
         return await self.ipfs_http_client.get_item(cid)
 
     async def random_cids(self, n: int = 1000):
+        """
+        Returns random CIDs from STC dataset. May be helpful for pinning random subsets of STC.
+
+        :param n: the number of Random CIDs
+        :return:
+        """
         items = await reservoir_sampling_async(
             async_iterator=trace_iteration(
                 self.ipfs_api_client.ls_stream(
@@ -179,10 +221,20 @@ class StcGeck(AioThing):
         self,
         index_name: str,
         output_car: str,
-        query: str = None,
+        query: Optional[str] = None,
         limit: int = 100,
         name_template: str = '{id}.{extension}',
-    ):
+    ) -> str:
+        """
+        Creates an importable CAR file with items from STC.
+
+        :param index_name: the index to scan
+        :param output_car: filename of the output CAR
+        :param query: query to narrow down storing items
+        :param limit: how many items will be stored
+        :param name_template: template that will be used for naming items inside CAR
+        :return: the root CID that you can use for addressing directory after importing CAR to IPFS daemon
+        """
         if query and self.is_embed:
             logging.getLogger('warning').warning('Too high limit for embedded Summa')
         if query:

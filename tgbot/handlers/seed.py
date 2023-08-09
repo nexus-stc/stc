@@ -93,13 +93,13 @@ class SeedHandler(BaseHandler):
         wait_message = await event.respond(t('SEED_GENERATION', language=request_context.chat['language']))
         request_context.statbox(
             action='request',
-            page=page,
-            page_size=page_size,
+            offset=page * page_size,
+            limit=page_size,
             query=query,
         )
 
         if random_seed:
-            queries = self.application.query_processor.process(
+            queries = self.application.geck.get_query_processor().process(
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
                 index_aliases=self.bot_index_aliases,
@@ -109,14 +109,14 @@ class SeedHandler(BaseHandler):
                     'nexus_science': ['links', 'doi', 'title', 'authors', 'issued_at', 'metadata'],
                 },
                 collector='reservoir_sampling',
-                page_size=page_size,
+                limit=page_size,
             )
 
             response = await self.application.summa_client.search(queries)
             documents = response.collector_outputs[0].documents.scored_documents
             count = response.collector_outputs[1].count.count
         else:
-            queries = self.application.query_processor.process(
+            queries = self.application.geck.get_query_processor().process(
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
                 index_aliases=self.bot_index_aliases,
@@ -125,8 +125,8 @@ class SeedHandler(BaseHandler):
                     'nexus_free': ['links', 'title', 'authors', 'issued_at', 'metadata'],
                     'nexus_science': ['links', 'doi', 'title', 'authors', 'issued_at', 'metadata'],
                 },
-                page=page,
-                page_size=page_size,
+                offset=page * page_size,
+                limit=page_size,
             )
 
             response = await self.application.summa_client.search(queries)
