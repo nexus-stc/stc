@@ -2,9 +2,9 @@ import random
 import re
 import time
 
-from izihawa_nlptools.language_detect import detect_language
 from telethon import events
 
+from library.sciparse.language_detect import detect_language
 from library.telegram.base import RequestContext
 from tgbot.views.telegram.base_holder import BaseHolder
 

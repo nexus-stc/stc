@@ -5,8 +5,8 @@ Cybrex AI integrates several strategies to use AI for facilitating navigation th
 More technical description:
 - IPFS is utilized to access the Standard Template Construct (STC).
 - STC provides the raw documents for Cybrex.
-- Embedding Model (OpenAI or free Instructor-XL) constructs embeddings for these documents and Cybrex stores these embeddings locally in the Chroma database.
-- These embeddings are then used to filter relevant documents before they are sent to LLM (Open AI or any other one) for Q&A and summarization.
+- Embedding Model constructs embeddings for these documents and Cybrex stores these embeddings in the vector database.
+- These embeddings are then used to retrieve relevant documents and then they are sent to LLM for Q&A and summarization.
 
 ## Install
 
@@ -31,12 +31,13 @@ export OPENAI_API_KEY=...
 # (Optional) Launch Summa search engine, then you will not have to wait bootstrapping every time.
 # It will take a time!
 # If you decided to launch it, switch to another Terminal window
-geck --ipfs-http-base-url 127.0.0.1:8080 - serve
+geck --ipfs-http-base-url 127.0.0.1:8080 --index-names='["nexus_free","nexus_science"]' - serve
 ```
+
 Now we should initialize Cybrex and choose which models will be used:
 
 ``` console
-cybrex - write-config
+cybrex - write-config --force
 
 # Summarize a document
 cybrex - sum-doc doi:10.1155/2022/7138756
@@ -68,7 +69,7 @@ syncytial virus (RSV) and to stimulate the secretion of higher levels of TNF-α,
 and RSV clearance.
 
 # Question enitre science
-cybrex - chat-sci "What is the antivirus effect of resveratrol?" --n-chunks 15 --n-documents 40
+cybrex - chat-sci "What is the antivirus effect of resveratrol?" --n-chunks 4 --n-documents 10
 
 Q: What is the antivirus effect of resveratrol?
 A: Resveratrol has been found to possess antiviral activity against a variety of viruses, including herpes simplex virus, human immunodeficiency virus, and hepatitis C virus. It has been shown to inhibit the replication of several viruses, including HIV, herpes simplex virus, and influenza virus, and to regulate TLR3 expression, thus affecting the recruitment of downstream related factors and finally affecting the regulation process of related signal pathways. It has also been studied for its antiviral activity against Reoviridae, and for its potential to inhibit Zika virus cytopathy effect. It has been active against Epstein virus, rotavirus, and vesicular stomatitis virus, and has been reported to alleviate virus-induced reproductive failure and to promote RSV clearance in the body more quickly.

@@ -58,7 +58,7 @@ export default defineConfig({
     },
     proxy: {
       '/data': {
-        target: `${summa_config.ipfs_http_base_url}/ipns/standard-template-construct.org`,
+        target: `${summa_config.ipfs_http_base_url}/ipfs/bafyb4ibqcg3sqpoyu6revg7kgtsgxze7ssxvgg5zkdlfv6jjrtv3gvrsqe`,
         changeOrigin: true,
         secure: false
       }

@@ -40,7 +40,6 @@ export default defineComponent({
   data () {
     return {
       has_bookmark: false,
-      snippet_length: 180
     }
   },
   async created () {

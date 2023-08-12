@@ -43,7 +43,7 @@ ipfs:
   # Base URL for IPFS Gateway. You can choose any public gateway, such as https://dweb.link/ or https://ipfs.io/
   # or setup your own gateway locally and set it with http://127.0.0.1:8080
   http:
-    base_url: http://ipfs:8080/
+    base_url: http://0.0.0.0:8080/
 # Configure Librarian service for uploading files. Cannot be used in light mode
 librarian:
   # Credentials of admin account for managing Aaron's groups
@@ -80,7 +80,6 @@ telegram:
     - tgbot.handlers.aboutus.AboutusHandler
     - tgbot.handlers.close.CloseHandler
     - tgbot.handlers.cybrex.CybrexHandler
-    - tgbot.handlers.cybrex.CybrexDocHandler
     - tgbot.handlers.download.DownloadHandler
     - tgbot.handlers.howtohelp.HowToHelpHandler
     - tgbot.handlers.help.HelpHandler
@@ -103,7 +102,7 @@ telegram:
     - tgbot.handlers.search.SearchPagingHandler
     - tgbot.handlers.search.InlineSearchHandler
 summa:
-  endpoint: summa:10082
+  endpoint: summa-server:10082
   embed:
     enabled: true
     index_names:

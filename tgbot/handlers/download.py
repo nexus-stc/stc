@@ -57,14 +57,6 @@ async def do_download_thumb(isbn, timeout=5.0):
                 return data
 
 
-async def first_task(*tasks):
-    done, pending = await asyncio.wait(tasks, timeout=1200, return_when=asyncio.FIRST_COMPLETED)
-    for task in pending:
-        task.cancel()
-    for task in done:
-        return task.result()
-
-
 class DownloadTask(LongTask):
     def __init__(
         self,

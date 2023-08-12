@@ -1,7 +1,9 @@
-from izihawa_nlptools.language_detect import detect_language
+import sys
+
 from stc_geck.query_processor import PreprocessedQuery
 from telethon import Button
 
+from library.sciparse.language_detect import detect_language
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from tgbot.app.application import TelegramApplication
@@ -69,7 +71,7 @@ class BaseSearchWidget:
             offset=self.page * self.application.config['application']['page_size'],
             index_aliases=self.index_aliases,
             skip_doi_isbn_term_field_mapper=self.preprocessed_query.skip_doi_isbn_term_field_mapper,
-            query_language=query_language,
+            query_language=query_language or 'en',
         )
         self._search_response = await self.application.summa_client.search(queries)
 

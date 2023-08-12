@@ -45,6 +45,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { useObservable } from '@vueuse/rxjs'
 import { liveQuery } from 'dexie'
 import { defineComponent } from 'vue'
@@ -150,7 +151,7 @@ export default defineComponent({
       this.is_loading = true
       this.enabled_indices.push(
         ...(await this.search_service.get_enabled_index_configs()).map(
-          (index_config) => index_config.index_name
+          (index_config: { index_name: string }) => index_config.index_name
         )
       )
     } catch (e) {
@@ -184,7 +185,7 @@ export default defineComponent({
             p: new_page,
             d: this.selected_index_name,
             l: this.selected_language,
-            ds: this.date_sorting
+            ds: this.date_sorting.toString()
           }
         })
       }

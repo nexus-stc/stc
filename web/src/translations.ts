@@ -1,3 +1,4 @@
+// @ts-nocheck
 const translations = {
   en: {
     about: 'About',

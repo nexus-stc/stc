@@ -173,7 +173,7 @@ class LibrarianService(AioThing):
                         'filesize': len(data),
                     })
                     try:
-                        processed_document = await self.application.grobid_client.process_fulltext_document(pdf_file=data)
+                        processed_document = await self.application.sciparser.process_paper({'data': data})
                         if not processed_document or 'doi' not in processed_document:
                             continue
                     except Exception as e:
@@ -196,6 +196,8 @@ class LibrarianService(AioThing):
                             })
                             continue
                     document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi)
+                    if not document:
+                        continue
                     try:
                         data = await asyncio.wait_for(
                             asyncio.get_running_loop().run_in_executor(

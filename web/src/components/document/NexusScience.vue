@@ -49,6 +49,7 @@ export default defineComponent({
   },
   created () {
     document.title = `${this.document.title} - STC`
+    console.log(this.document)
     this.find_references()
   },
   methods: {

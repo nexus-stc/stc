@@ -66,7 +66,7 @@
       h6 Python GECK
       p <a href="https://github.com/nexus-stc/stc/tree/master/geck">GECK</a> contains embedded Summa server that can be utlizied. Install it and then launch serving
       pre
-        code geck --ipfs-http-base-url http://10.1.2.2:8080 - serve
+        code geck --ipfs-http-base-url http://127.0.0.1:8080 - serve
   p The STC provides three different search indices:
   ul
     li <code>nexus_science</code> - all DOI-stamped papers and books

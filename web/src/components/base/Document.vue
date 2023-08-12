@@ -4,25 +4,28 @@ import { defineComponent } from 'vue'
 import { format_bytes } from '@/utils'
 
 const default_icon = '📝'
-const type_icons = {
-  book: '📚',
+type Author = { family: string, given: string, name: string, orcid: string }
+const type_icons: {
+  [key: string]: string;
+} = {
+  'book': '📚',
   'book-chapter': '🔖',
-  chapter: '🔖',
-  dataset: '📊',
-  component: '📊',
-  dissertation: '🧑‍🎓',
+  'chapter': '🔖',
+  'dataset': '📊',
+  'component': '📊',
+  'dissertation': '🧑‍🎓',
   'edited-book': '📚',
   'journal-article': '🔬',
-  monograph: '📚',
+  'monograph': '📚',
   'peer-review': '🤝',
-  proceedings: '📚',
+  'proceedings': '📚',
   'proceedings-article': '🔬',
   'reference-book': '📚',
-  report: '📝',
-  standard: '🛠'
+  'report': '📝',
+  'standard': '🛠'
 }
 
-function get_type_icon (type_name) {
+function get_type_icon (type_name: string) {
   return type_icons[type_name] ?? default_icon
 }
 
@@ -45,14 +48,16 @@ export default defineComponent({
   data () {
     const document = JSON.parse(this.scored_document.document)
     return {
-      cover: null,
+      cover: "",
+      index_name: "",
+      snippet_length: 180,
       document
     }
   },
   computed: {
     authors () {
       if (this.document.authors) {
-        let authors = this.document.authors.slice(0, 3).map((author) => {
+        let authors = this.document.authors.slice(0, 3).map((author: Author) => {
           let plain_author = ''
           if (author.family && author.given) {
             plain_author = author.given + ' ' + author.family

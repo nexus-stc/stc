@@ -28,5 +28,21 @@ def process_tags(soup):
             el.name = 'section'
         elif el.name in {'title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}:
             el.name = 'header'
-        el.attrs = {}
+        elif el.name == 'p' and 'ref' in el.attrs.get('class', []):
+            el.name = 'ref'
+        if 'href' in el.attrs:
+            el.attrs = {'href': el.attrs['href']}
+        else:
+            el.attrs = {}
+    return soup
+
+
+def headerize_headers(soup):
+    for el in soup.find_all():
+        if el.name == 'p':
+            children = list(el.children)
+            if len(children) == 1 and children[0].name == 'b':
+                new_header = children[0]
+                new_header.name = 'header'
+                el.replace_with(new_header)
     return soup

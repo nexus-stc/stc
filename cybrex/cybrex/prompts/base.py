@@ -6,6 +6,7 @@ class BasePrompter:
     @staticmethod
     def prompter_from_type(type_):
         return {
+            'beluga': BelugaPrompter(),
             'default': BasePrompter(),
             'llama2-7b': Llama27bPrompter(),
             'openai': OpenAIPrompter()
@@ -48,14 +49,14 @@ ASSISTANT:'''.format(summary=self.generate_summary(chunks))
         chunk_summaries = []
         chunk_summaries_grouped = OrderedDict()
         for chunk in chunks:
-            id_ = chunk["metadata"]["id"]
-            if id_ not in chunk_summaries_grouped:
-                chunk_summaries_grouped[id_] = []
-            chunk_summaries_grouped[id_].append(chunk['text'])
-        for id_, texts in chunk_summaries_grouped.items():
+            document_id = chunk.get("document_id")
+            if document_id not in chunk_summaries_grouped:
+                chunk_summaries_grouped[document_id] = []
+            chunk_summaries_grouped[document_id].append(chunk['text'])
+        for document_id, texts in chunk_summaries_grouped.items():
             texts = ' <..> '.join(texts)
-            if id_:
-                index_alias, field, value = id_.split(':', 2)
+            if document_id:
+                index_alias, field, value = document_id.split(':', 2)
                 chunk_summaries.append(f'{field.upper()}: {value}\nCONTENT: {texts}')
             else:
                 chunk_summaries.append(f'CONTENT: {texts}')
@@ -66,7 +67,7 @@ class Llama27bPrompter(BasePrompter):
     def qa_prompt(self, question: str, chunks: List[dict]):
         if len(chunks) >= 1:
             return '''
-<s><<SYS>>
+<<SYS>>
 You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
 If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 <</SYS>>
@@ -79,7 +80,7 @@ Question:
 [/INST]'''.format(question=question, summary=self.generate_summary(chunks))
         else:
             return '''
-<s><<SYS>>
+<<SYS>>
 You are Cybrex AI created by People of Nexus. Answer the question.
 If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 <</SYS>>
@@ -90,7 +91,7 @@ Question:
 
     def summarize_prompt(self, chunks: List[dict]):
         return '''
-<s><<SYS>>
+<<SYS>>
 You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
 <</SYS>>
 [INST]
@@ -143,3 +144,42 @@ Given the following extracted parts of a long document, summarize its content
 Extracted parts:
 {summary}
 '''.format(summary=self.generate_summary(chunks))
+
+
+class BelugaPrompter(BasePrompter):
+    def qa_prompt(self, question: str, chunks: List[dict]):
+        if len(chunks) >= 1:
+            return '''
+### System:
+You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+
+### User:
+Extracted parts:
+{summary}
+
+Question:
+{question}
+### Assistant:'''.format(question=question, summary=self.generate_summary(chunks))
+        else:
+            return '''
+### System:
+You are Cybrex AI created by People of Nexus. Answer the user's question.
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+
+### User:
+Question:
+{question}
+
+### Assistant:'''.format(question=question)
+
+    def summarize_prompt(self, chunks: List[dict]):
+        return '''
+### System:
+You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
+
+### User:
+Extracted parts:
+{summary}
+
+### Assistant:'''.format(summary=self.generate_summary(chunks))

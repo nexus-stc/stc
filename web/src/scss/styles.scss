@@ -28,3 +28,6 @@ $code-color-dark: $base-dark;
   }
 }
 
+abstract > header { @extend h6; }
+abstract > section header { @extend b; }
+

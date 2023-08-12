@@ -16,6 +16,7 @@
       "@/*": ["./src/*"]
     },
     "resolveJsonModule": true,
+    "strict": false,
     "types": ["node"]
   },
 

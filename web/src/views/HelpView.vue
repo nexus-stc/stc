@@ -79,17 +79,21 @@
                   i.bi.bi-mastodon
                   span.ms-2 Mastodon
               li.nav-item
-                a.nav-link.text-secondary.text-nowrap(href="https://t.me/nexus_search" target="_blank")
-                  i.bi.bi-telegram
-                  span.ms-2 Telegram Channel
-              li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://t.me/+wN8n75kr4nxlMmZi" target="_blank")
                   i.bi.bi-telegram
-                  span.ms-2 Telegram Chat
+                  span.ms-2 Support
+              li.nav-item
+                a.nav-link.text-secondary.text-nowrap(href="https://t.me/nexus_search" target="_blank")
+                  i.bi.bi-telegram
+                  span.ms-2 Nexus News
+              li.nav-item
+                a.nav-link.text-secondary.text-nowrap(href="https://t.me/+nZLdjlcRKwY3MTBk" target="_blank")
+                  i.bi.bi-telegram
+                  span.ms-2 Nexus Communities
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://t.me/science_nexus_bot" target="_blank")
                   i.bi.bi-telegram
-                  span.ms-2 Telegram Bot
+                  span.ms-2 Nexus Bot
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://github.com/nexus-stc/stc" target="_blank")
                   i.bi.bi-github

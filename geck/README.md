@@ -68,7 +68,7 @@ from stc_geck.client import StcGeck
 
 
 geck = StcGeck(
-    ipfs_http_base_url='http://10.1.2.2:8080',
+    ipfs_http_base_url='http://127.0.0.1:8080',
     index_names=('nexus_science',),
     timeout=300,
 )

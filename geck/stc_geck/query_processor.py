@@ -1,6 +1,5 @@
 import dataclasses
 import logging
-from html import escape
 from typing import (
     Dict,
     List,
@@ -150,7 +149,7 @@ class QueryProcessor:
         query_language: str = 'en',
     ):
         queries = []
-        query = self.process_filters(escape(query, quote=False))
+        query = self.process_filters(query)
         if not index_aliases:
             index_aliases = ["nexus_free", "nexus_science"]
         if isinstance(fields, List):
@@ -211,11 +210,7 @@ class IndexQueryBuilder:
                     },
                     is_fieldnorms_scoring_enabled=False,
                     exact_matches_promoter=None,
-                    term_field_mapper_configs={
-                        'doi': {'fields': ['doi']},
-                        'doi_isbn': {'fields': ['metadata.isbns']},
-                        'isbn': {'fields': ['metadata.isbns']},
-                    }
+                    term_field_mapper_configs=default_term_field_mapper_configs[index_alias]
                 )
             case 'full':
                 return IndexQueryBuilder(
@@ -257,6 +252,10 @@ class IndexQueryBuilder:
                 'query_language': query_language,
                 'term_limit': 20,
                 'field_aliases': default_field_aliases[self.index_alias],
+                'field_boosts': {
+                    'title': 1.3,
+                    'extra': 0.3,
+                }
             }
             if self.exact_matches_promoter:
                 query_parser_config['exact_matches_promoter'] = self.exact_matches_promoter

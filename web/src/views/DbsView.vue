@@ -71,6 +71,7 @@ div(v-else)
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { useObservable } from '@vueuse/rxjs'
 import { liveQuery } from 'dexie'
 import type { IndexConfig } from 'summa-wasm'

@@ -3,13 +3,17 @@ import logging
 import os
 from concurrent.futures import ProcessPoolExecutor
 
-from aiogrobid import GrobidClient
+from aiobaseclient import BaseClient
 from aiokit import AioRootThing
 from izihawa_ipfs_api import IpfsHttpClient
 from izihawa_utils.importlib import import_object
 from stc_geck.client import StcGeck
 
 from cybrex import cybrex_ai
+from library.sciparse.sciparser import (
+    ClientPool,
+    SciParser,
+)
 from library.telegram.dynamic_bot_manager import DynamicBotManager
 from library.telegram.promotioner import Promotioner
 from library.user_manager import UserManager
@@ -77,8 +81,13 @@ class TelegramApplication(AioRootThing):
             and self.config['grobid'].get('enabled', True)
             and not self.is_read_only()
         ):
-            self.grobid_client = GrobidClient(base_url=config['grobid']['base_url'])
-            self.starts.append(self.grobid_client)
+            self.grobid_pool = ClientPool.from_pool_config(BaseClient, pool_config=config['grobid']['pool'])
+            self.starts.append(self.grobid_pool)
+            self.sciparser = SciParser(
+                grobid_pool=self.grobid_pool,
+                ipfs_http_client=self.ipfs_http_client,
+            )
+            self.starts.append(self.sciparser)
 
         self.metadata_retriever = None
         if (

@@ -26,6 +26,8 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
+
 import { useObservable } from '@vueuse/rxjs'
 import { liveQuery } from 'dexie'
 import { defineComponent, type PropType } from 'vue'

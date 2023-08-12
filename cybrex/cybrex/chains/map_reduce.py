@@ -35,28 +35,32 @@ class MapReduceChain:
 
 
 class ChunkAccumulator:
-    def __init__(self, prompter):
+    def __init__(self, prompter, max_chunk_length: int):
         self.prompter = prompter
+        self.max_chunk_length = max_chunk_length
         self.chunks = []
+        self.current_chunk_length = 0
 
     def accept(self, chunk):
+        self.current_chunk_length += len(chunk['text'])
         self.chunks.append(chunk)
 
     def is_full(self):
-        return len(self.chunks) >= 7
+        return self.current_chunk_length >= self.max_chunk_length
 
     def is_empty(self):
         return len(self.chunks) == 0
 
 
 class QAChunkAccumulator(ChunkAccumulator):
-    def __init__(self, query: str, prompter):
-        super().__init__(prompter=prompter)
+    def __init__(self, query: str, prompter, max_chunk_length: int):
+        super().__init__(prompter=prompter, max_chunk_length=max_chunk_length)
         self.query = query
 
     def produce(self):
         collected_chunks = self.chunks
         self.chunks = []
+        self.current_chunk_length = 0
         return self.prompter.qa_prompt(self.query, collected_chunks)
 
 
@@ -64,14 +68,27 @@ class SummarizeChunkAccumulator(ChunkAccumulator):
     def produce(self):
         collected_chunks = self.chunks
         self.chunks = []
+        self.current_chunk_length = 0
         return self.prompter.summarize_prompt(collected_chunks)
 
 
 class QAChain(MapReduceChain):
     def __init__(self, query: str, llm):
-        super().__init__(llm=llm, chunk_accumulator=QAChunkAccumulator(query=query, prompter=llm.prompter))
+        super().__init__(
+            llm=llm,
+            chunk_accumulator=QAChunkAccumulator(
+                query=query,
+                prompter=llm.prompter,
+                max_chunk_length=llm.max_prompt_chars,
+            ))
 
 
 class SummarizeChain(MapReduceChain):
     def __init__(self, llm):
-        super().__init__(llm=llm, chunk_accumulator=SummarizeChunkAccumulator(prompter=llm.prompter))
+        super().__init__(
+            llm=llm,
+            chunk_accumulator=SummarizeChunkAccumulator(
+                prompter=llm.prompter,
+                max_chunk_length=llm.max_prompt_chars,
+            )
+        )

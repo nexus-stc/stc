@@ -91,6 +91,7 @@ export async function get_startup_configs () {
           lang: 'language',
           ev: 'metadata.event.name',
           pub: 'metadata.publisher',
+          rd: 'references.doi',
           ser: 'metadata.series'
         },
         field_boosts: {

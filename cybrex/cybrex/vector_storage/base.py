@@ -5,5 +5,5 @@ from typing import (
 
 
 class BaseVectorStorage:
-    def query(self, query_embeddings: List[List[float]], n_chunks: int, where: Optional[dict] = None):
+    def query(self, query_embedding: List[float], n_chunks: int, where: Optional[dict] = None):
         raise NotImplementedError()

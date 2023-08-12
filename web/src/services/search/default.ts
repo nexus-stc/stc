@@ -1,3 +1,4 @@
+// @ts-nocheck
 export function default_queries (
   index_alias: string,
   query: string,

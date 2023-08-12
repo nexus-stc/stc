@@ -31,7 +31,15 @@ class GeckDataSource(BaseDataSource):
                 case 'nexus_science':
                     document_id = f'nexus_science:doi:{document["doi"]}'
                 case 'nexus_free':
-                    document_id = f'nexus_free:id.isbns:{document["id"]["isbns"][0]}'
+                    if 'id' in document:
+                        if 'isbns' in document['id']:
+                            document_id = f'nexus_free:id.isbns:{document["id"]["isbns"][0]}'
+                        elif 'internal_iso' in document['id']:
+                            document_id = f'nexus_free:id.internal_iso:{document["id"]["internal_iso"]}'
+                        else:
+                            continue
+                    else:
+                        continue
                 case _:
                     raise RuntimeError("Unsupported table")
             source_documents.append(SourceDocument(

@@ -1,17 +1,16 @@
 beautifulsoup4
-izihawa_nlptools
 lxml
 pandas
+fasttext-wheel
 PyCryptodome
-pypdf==3.12.0
+pypdf>=3.15.1
 seaborn
 
 aiobaseclient
 aiocrossref
-aiogrobid==0.1.12
 aiokit>=1.2.3
 aiosqlite
-cybrex>=1.4.5
+cybrex>=1.6.24
 base36
 dateparser
 emoji
@@ -22,6 +21,6 @@ izihawa_utils
 lru-dict
 markdownify
 sqlalchemy
-stc-geck>=1.4.4
+stc-geck>=1.5.11
 telethon
 uvloop
