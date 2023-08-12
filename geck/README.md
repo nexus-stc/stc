@@ -1,7 +1,7 @@
 # GECK (Garden of Eden Creation Kit)
 
 GECK is a Python library and Bash tool for access STC - the large corpus of scholarly texts.
-GECK allows to startup embedded [Summa](https://github.com/izihawa/summa) instance, feed it with IPFS-based data, do search queries to find scholarly publications and iterate over all database if you need.
+GECK includes embedded search engine [Summa](https://github.com/izihawa/summa), helps to feed it with prepared IPFS-based databases, do search queries over these databases and iterate over all documents if you need.
 
 ## Install
 
@@ -15,6 +15,12 @@ pip install stc-geck
 
 **Attention!** STC does not contain every book or publication in the world. We are constantly increasing coverage but there is still a lot to do.
 STC contains metadata for the most of the items, but `links` or `content` fields may be absent.
+Metadata is split into two tables, `nexus_free` and `nexus_science`.
+
+- `nexus_science` coincides with CrossRef database and contains records for all DOI-stamped things. Unique key of the table is ISBN.
+- `nexus_free` is all non DOI-stamped items. Consists of all non DOI-stamped LibGen books and standards.
+
+Databases can be queries through CLI or Python library
 
 ### CLI
 
@@ -22,10 +28,10 @@ STC contains metadata for the most of the items, but `links` or `content` fields
 # (Optional) Launch Summa search engine, then you will not have to wait bootstrapping every time.
 # It will take a time!
 # If you decided to launch it, switch to another Terminal window
-geck --ipfs-http-base-url 127.0.0.1:8080 - serve
+geck --ipfs-http-base-url 127.0.0.1:8080 --index-names='["nexus_free","nexus_science"]' - serve
 
 # Iterate over all stored documents
-geck --ipfs-http-base-url 127.0.0.1:8080 - documents
+geck --ipfs-http-base-url 127.0.0.1:8080 --index-names='["nexus_science"]' - documents
 
 INFO: Setting up indices: nexus_science...
 {"authors":[{"family":"Manresa Presasa","given":"JM","sequence":"first"},{"family":"Rebull Fatsinib","given":"J","sequence":"additional"},{"family":"Miravalls Figuerolac","given":"M","sequence":"additional"},{"family":"Caballol Angelatsd","given":"R","sequence":"additional"},{"family":"Minué Magañae","given":"P","sequence":"additional"},{"family":"Juan Franquetf","given":"R","sequence":"additional"}],"ctr":0.1,"custom_score":1.0,"doi":"10.1157/13053458","issued_at":7376313600,"language":"es","metadata":{"container_title":"Atención Primaria","first_page":435,"issns":["0212-6567","1578-1275"],"issue":"7","last_page":436,"publisher":"Elsevier BV","volume":"32"},"page_rank":0.16246586,"referenced_by_count":5,"tags":["Family Practice","General Medicine"],"title":"La espirometría en el diagnóstico de la enfermedad pulmonar obstructiva crónica en atención primaria","type":"journal-article","updated_at":1687530735}
@@ -56,7 +62,11 @@ INFO: Searching hemoglobin...
 ### Python
 
 ```python
+import json
+
 from stc_geck.client import StcGeck
+
+
 geck = StcGeck(
     ipfs_http_base_url='http://10.1.2.2:8080',
     index_names=('nexus_science',),

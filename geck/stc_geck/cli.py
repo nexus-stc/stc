@@ -4,7 +4,11 @@ import json
 import logging
 import os.path
 import sys
-from typing import Optional
+from typing import (
+    Literal,
+    Optional,
+    Tuple,
+)
 
 import fire
 import humanfriendly
@@ -35,20 +39,22 @@ class StcGeckCli:
         ipfs_http_base_url: str,
         ipfs_api_base_url: str,
         ipfs_data_directory: str,
-        index_name: str,
+        index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...],
         grpc_api_endpoint: str,
         timeout: int,
+        profile: str,
     ):
         self.geck = StcGeck(
             ipfs_http_base_url=ipfs_http_base_url,
             ipfs_api_base_url=ipfs_api_base_url,
             ipfs_data_directory=ipfs_data_directory,
-            index_names=(index_name,),
+            index_names=index_names,
             grpc_api_endpoint=grpc_api_endpoint,
             timeout=timeout,
+            profile=profile,
         )
         self.grpc_api_endpoint = grpc_api_endpoint
-        self.index_name = index_name
+        self.index_names = index_names
 
     async def documents(self):
         """
@@ -56,9 +62,11 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
+        if len(self.index_names) > 1:
+            raise RuntimeError("Cannot create ipfs directory for multiple indices")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
         async with self.geck as geck:
-            async for document in geck.get_summa_client().documents(self.index_name):
+            async for document in geck.get_summa_client().documents(self.index_names[0]):
                 print(document)
 
     async def download(self, query: str, output_path: str):
@@ -119,11 +127,12 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
         async with self.geck as geck:
             print(f"{colored('INFO', 'green')}: Searching {query}...")
             query_processor = geck.get_query_processor()
-            processed_query = query_processor.process(query, limit=limit, index_aliases=[self.index_name])
+            processed_query = query_processor.process(query, limit=limit, index_aliases=self.index_names)
+            logging.getLogger('statbox').info({'action': 'search', 'processed_query': processed_query})
             summa_client = geck.get_summa_client()
             response = await summa_client.search(processed_query)
             documents = list(map(lambda x: json.loads(x.document), response.collector_outputs[0].documents.scored_documents))
@@ -133,7 +142,7 @@ class StcGeckCli:
         """
         Start serving Summa
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
         async with self.geck:
             print(f"{colored('INFO', 'green')}: Serving on {self.grpc_api_endpoint}")
             while True:
@@ -151,25 +160,29 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_name}...")
+        if len(self.index_names) > 1:
+            raise RuntimeError("Cannot create ipfs directory for multiple indices")
+        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
         async with self.geck as geck:
-            return await geck.create_ipfs_directory(self.index_name, output_car, query, limit, name_template)
+            return await geck.create_ipfs_directory(self.index_names[0], output_car, query, limit, name_template)
 
 
 async def stc_geck_cli(
     ipfs_http_base_url: str = 'http://127.0.0.1:8080',
     ipfs_api_base_url: str = 'http://127.0.0.1:5001',
     ipfs_data_directory: str = '/ipns/standard-template-construct.org/data/',
-    index_name: str = 'nexus_science',
+    index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...] = ('nexus_science',),
     grpc_api_endpoint: str = '127.0.0.1:10082',
+    profile: str = 'light',
     timeout: int = 120,
     debug: bool = False,
 ):
     """
     :param ipfs_http_base_url: IPFS HTTP API Endpoint
     :param ipfs_data_directory: path to the directory with index
-    :param index_name: `nexus_free` (non-classified content) or `nexus_science` (similar to Crossref)
+    :param index_names: `nexus_free` (non-classified content) or `nexus_science` (similar to Crossref)
     :param grpc_api_endpoint: port used for Summa
+    :param profile: query processor profile
     :param timeout: timeout for requests to IPFS
     :param debug: add debugging output
     :return:
@@ -179,14 +192,15 @@ async def stc_geck_cli(
         ipfs_http_base_url=ipfs_http_base_url,
         ipfs_api_base_url=ipfs_api_base_url,
         ipfs_data_directory=ipfs_data_directory,
-        index_name=index_name,
+        index_names=index_names,
         grpc_api_endpoint=grpc_api_endpoint,
         timeout=timeout,
+        profile=profile,
     )
     return {
         'create-ipfs-directory': stc_geck_client.create_ipfs_directory,
+        'documents': stc_geck_client.documents,
         'download': stc_geck_client.download,
-        'chunks': stc_geck_client.documents,
         'random-cids': stc_geck_client.random_cids,
         'search': stc_geck_client.search,
         'serve': stc_geck_client.serve,

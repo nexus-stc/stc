@@ -96,6 +96,7 @@ class StcGeck(AioThing):
         ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
         index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...] = ('nexus_science',),
         grpc_api_endpoint: str = '127.0.0.1:10082',
+        profile: Optional[str] = None,
         timeout: int = 300,
     ):
         """
@@ -124,7 +125,7 @@ class StcGeck(AioThing):
         self.is_embed = not is_endpoint_listening(self.grpc_api_endpoint)
         self.summa_embed_server = None
 
-        self.query_processor = QueryProcessor('light' if self.is_embed else 'full')
+        self.query_processor = QueryProcessor(profile or ('light' if self.is_embed else 'full'))
         self.summa_client = SummaClient(
             endpoint=self.grpc_api_endpoint,
             max_message_length=2 * 1024 * 1024 * 1024 - 1,
@@ -219,7 +220,7 @@ class StcGeck(AioThing):
 
     async def create_ipfs_directory(
         self,
-        index_name: str,
+        index_names: Literal['nexus_free', 'nexus_science'],
         output_car: str,
         query: Optional[str] = None,
         limit: int = 100,
@@ -228,7 +229,7 @@ class StcGeck(AioThing):
         """
         Creates an importable CAR file with items from STC.
 
-        :param index_name: the index to scan
+        :param index_names: the indices to scan
         :param output_car: filename of the output CAR
         :param query: query to narrow down storing items
         :param limit: how many items will be stored
@@ -241,7 +242,7 @@ class StcGeck(AioThing):
             return await create_car(
                 output_car,
                 query_wrapper(await self.summa_client.search([{
-                    'index_alias': index_name,
+                    'index_alias': index_names,
                     'collectors': [{'top_docs': {'limit': limit, 'scorer': {'order_by': 'issued_at'}}}],
                     'query': {'boolean': {'subqueries': [
                         {'occur': 'must', 'query': {'match': {'value': query}}},
@@ -254,7 +255,7 @@ class StcGeck(AioThing):
         else:
             return await create_car(
                 output_car,
-                load_document(self.summa_client.documents(index_name)),
+                load_document(self.summa_client.documents(index_names)),
                 limit=limit,
                 name_template=name_template,
             )

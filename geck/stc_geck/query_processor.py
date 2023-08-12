@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 from html import escape
 from typing import (
     Dict,
@@ -194,6 +195,11 @@ class IndexQueryBuilder:
 
     @staticmethod
     def from_profile(index_alias: str, profile: str):
+        logging.getLogger('statbox').info({
+            'action': 'build_query_processor',
+            'index_alias': index_alias,
+            'profile': profile,
+        })
         match profile:
             case 'light':
                 return IndexQueryBuilder(

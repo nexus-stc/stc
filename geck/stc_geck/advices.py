@@ -10,7 +10,7 @@ PR_TEMPORAL_RANKING_FORMULA = f"{TEMPORAL_RANKING_FORMULA} * 1.96 * fastsigm(iqp
 
 
 default_ranking_formula = {
-    'nexus_free': TEMPORAL_RANKING_FORMULA,
+    'nexus_free': TEMPORAL_RANKING_FORMULA + " * 1.2",
     'nexus_science': PR_TEMPORAL_RANKING_FORMULA,
 }
 
