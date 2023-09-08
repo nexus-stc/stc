@@ -6,6 +6,7 @@ GECK includes embedded search engine [Summa](https://github.com/izihawa/summa), 
 ## Install
 
 You should have [installed IPFS](http://standard-template-construct.org/#/help/install-ipfs)
+Pre-built wheels available for Python 3.8, 3.9, 3.10 and 3.11
 
 ```bash
 pip install stc-geck
@@ -15,10 +16,6 @@ pip install stc-geck
 
 **Attention!** STC does not contain every book or publication in the world. We are constantly increasing coverage but there is still a lot to do.
 STC contains metadata for the most of the items, but `links` or `content` fields may be absent.
-
-Database coincides with CrossRef database and contains records for all DOI-stamped things.
-
-Databases can be queries through CLI or Python library
 
 ### CLI
 
