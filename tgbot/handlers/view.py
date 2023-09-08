@@ -9,7 +9,7 @@ from telethon.errors import MessageIdInvalidError
 
 from library.telegram.base import RequestContext
 from tgbot.translations import t
-from tgbot.views.telegram.base_holder import BaseHolder
+from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 
 from .base import BaseHandler
 
@@ -42,13 +42,12 @@ class ViewHandler(BaseHandler):
         try:
             prefetch_message = await event.reply(t("SEARCHING", request_context.chat['language']))
             scored_document = await self.get_scored_document(
-                self.bot_index_aliases,
                 'cid',
                 cid,
             )
             if not scored_document:
                 return await event.reply(t("OUTDATED_VIEW_LINK", language))
-            holder = BaseHolder.create(scored_document)
+            holder = BaseTelegramDocumentHolder.create(scored_document)
             promo = self.application.promotioner.choose_promotion(language)
             view_builder = holder.view_builder(language).add_view(bot_name=request_context.bot_name).add_new_line(2).add(promo, escaped=True)
             buttons = holder.buttons_builder(language).add_default_layout(

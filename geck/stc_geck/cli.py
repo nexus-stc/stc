@@ -1,36 +1,32 @@
 #!/usr/bin/env python3
 import asyncio
+import functools
 import json
 import logging
 import os.path
 import sys
-from typing import (
-    Literal,
-    Optional,
-    Tuple,
-)
+from typing import Optional
 
 import fire
 import humanfriendly
 from termcolor import colored
 
 from .client import StcGeck
+from .exceptions import IpfsConnectionError
 
 
-class ItemNotFound(Exception):
-    def __init__(self, query):
-        self.query = query
-
-    def __str__(self):
-        return f'ItemNotFound(query="{self.query}")'
-
-
-class CidNotFound(Exception):
-    def __init__(self, query):
-        self.query = query
-
-    def __str__(self):
-        return f'CidNotFound(query="{self.query}")'
+def exception_handler(func):
+    @functools.wraps(func)
+    async def wrapper_func(*args, **kwargs):
+        try:
+            await func(*args, **kwargs)
+        except IpfsConnectionError as e:
+            print(
+                f"{colored('INFO', 'red')}: Cannot connect to IPFS: {e.info}\n"
+                f"Try to pass working IPFS address with `--ipfs-http-base-url` parameter",
+                file=sys.stderr,
+            )
+    return wrapper_func
 
 
 class StcGeckCli:
@@ -39,8 +35,8 @@ class StcGeckCli:
         ipfs_http_base_url: str,
         ipfs_api_base_url: str,
         ipfs_data_directory: str,
-        index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...],
         grpc_api_endpoint: str,
+        index_alias: str,
         timeout: int,
         profile: str,
     ):
@@ -48,27 +44,33 @@ class StcGeckCli:
             ipfs_http_base_url=ipfs_http_base_url,
             ipfs_api_base_url=ipfs_api_base_url,
             ipfs_data_directory=ipfs_data_directory,
-            index_names=index_names,
             grpc_api_endpoint=grpc_api_endpoint,
+            index_alias=index_alias,
             timeout=timeout,
             profile=profile,
         )
         self.grpc_api_endpoint = grpc_api_endpoint
-        self.index_names = index_names
+        self.index_alias = index_alias
 
+    def prompt(self):
+        if self.geck.is_embed:
+            print(f"{colored('INFO', 'green')}: Setting up indices...", file=sys.stderr)
+        else:
+            print(f"{colored('INFO', 'green')}: Using existent instance on {self.geck.grpc_api_endpoint}", file=sys.stderr)
+
+    @exception_handler
     async def documents(self):
         """
         Stream all STC chunks.
 
         :return: metadata records
         """
-        if len(self.index_names) > 1:
-            raise RuntimeError("Cannot create ipfs directory for multiple indices")
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
+        self.prompt()
         async with self.geck as geck:
-            async for document in geck.get_summa_client().documents(self.index_names[0]):
+            async for document in geck.get_summa_client().documents(self.index_alias):
                 print(document)
 
+    @exception_handler
     async def download(self, query: str, output_path: str):
         """
         Download file from STC using default Summa match queries.
@@ -83,25 +85,28 @@ class StcGeckCli:
         output_path, output_path_ext = os.path.splitext(output_path)
         output_path_ext = output_path_ext.lstrip('.')
         if results:
-            print(f"{colored('INFO', 'green')}: Found {query}")
+            print(f"{colored('INFO', 'green')}: Found {query}", file=sys.stderr)
             if 'cid' in results[0]:
-                print(f"{colored('INFO', 'green')}: Receiving file {query}...")
+                print(f"{colored('INFO', 'green')}: Receiving file {query}...", file=sys.stderr)
                 if (real_extension := results[0].get('extension', 'pdf')) != output_path_ext:
                     print(
                         f"{colored('WARN', 'yellow')}: Receiving file extension `{real_extension}` "
-                        f"is not matching with your output path extension `{output_path_ext}`. Changed to correct one.")
+                        f"is not matching with your output path extension `{output_path_ext}`. Changed to correct one.",
+                        file=sys.stderr
+                    )
                     output_path_ext = real_extension
                 data = await self.geck.download(results[0]["cid"])
                 final_file_name = output_path + '.' + output_path_ext
                 with open(final_file_name, 'wb') as f:
                     f.write(data)
                     f.close()
-                    print(f"{colored('INFO', 'green')}: File {final_file_name} is written")
+                    print(f"{colored('INFO', 'green')}: File {final_file_name} is written", file=sys.stderr)
             else:
                 print(f"{colored('ERROR', 'red')}: Not found CID for {query}", file=sys.stderr)
         else:
             print(f"{colored('ERROR', 'red')}: Not found {query}", file=sys.stderr)
 
+    @exception_handler
     async def random_cids(self, n: Optional[int] = None, space: Optional[str] = None):
         """
         Return random CIDs for pinning from the STC Hub API.
@@ -114,6 +119,7 @@ class StcGeckCli:
         if space:
             # 3.61MB is the average size of the item
             n = int(humanfriendly.parse_size(space) / (3.61 * 1024 * 1024))
+        self.prompt()
         async with self.geck as geck:
             return await geck.random_cids(n=n)
 
@@ -127,11 +133,11 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
+        self.prompt()
         async with self.geck as geck:
-            print(f"{colored('INFO', 'green')}: Searching {query}...")
+            print(f"{colored('INFO', 'green')}: Searching {query}...", file=sys.stderr)
             query_processor = geck.get_query_processor()
-            processed_query = query_processor.process(query, limit=limit, index_aliases=self.index_names)
+            processed_query = query_processor.process(query, limit=limit)
             logging.getLogger('statbox').info({'action': 'search', 'processed_query': processed_query})
             summa_client = geck.get_summa_client()
             response = await summa_client.search(processed_query)
@@ -142,12 +148,13 @@ class StcGeckCli:
         """
         Start serving Summa
         """
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
+        self.prompt()
         async with self.geck:
-            print(f"{colored('INFO', 'green')}: Serving on {self.grpc_api_endpoint}")
+            print(f"{colored('INFO', 'green')}: Serving on {self.grpc_api_endpoint}", file=sys.stderr)
             while True:
                 await asyncio.sleep(5)
 
+    @exception_handler
     async def create_ipfs_directory(
         self,
         output_car: str,
@@ -160,28 +167,27 @@ class StcGeckCli:
 
         :return: metadata records
         """
-        if len(self.index_names) > 1:
-            raise RuntimeError("Cannot create ipfs directory for multiple indices")
-        print(f"{colored('INFO', 'green')}: Setting up indices: {self.index_names}...")
+        self.prompt()
         async with self.geck as geck:
-            return await geck.create_ipfs_directory(self.index_names[0], output_car, query, limit, name_template)
+            return await geck.create_ipfs_directory(output_car, query, limit, name_template)
 
 
 async def stc_geck_cli(
     ipfs_http_base_url: str = 'http://127.0.0.1:8080',
     ipfs_api_base_url: str = 'http://127.0.0.1:5001',
-    ipfs_data_directory: str = '/ipns/standard-template-construct.org/data/',
-    index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...] = ('nexus_science',),
+    ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
     grpc_api_endpoint: str = '127.0.0.1:10082',
+    index_alias: str = 'nexus_science',
     profile: str = 'light',
     timeout: int = 120,
     debug: bool = False,
 ):
     """
-    :param ipfs_http_base_url: IPFS HTTP API Endpoint
+    :param ipfs_http_base_url: IPFS HTTP Endpoint
+    :param ipfs_api_base_url: IPFS HTTP API Endpoint
     :param ipfs_data_directory: path to the directory with index
-    :param index_names: `nexus_free` (non-classified content) or `nexus_science` (similar to Crossref)
     :param grpc_api_endpoint: port used for Summa
+    :param index_alias: default index alias
     :param profile: query processor profile
     :param timeout: timeout for requests to IPFS
     :param debug: add debugging output
@@ -192,8 +198,8 @@ async def stc_geck_cli(
         ipfs_http_base_url=ipfs_http_base_url,
         ipfs_api_base_url=ipfs_api_base_url,
         ipfs_data_directory=ipfs_data_directory,
-        index_names=index_names,
         grpc_api_endpoint=grpc_api_endpoint,
+        index_alias=index_alias,
         timeout=timeout,
         profile=profile,
     )

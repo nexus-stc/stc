@@ -59,8 +59,7 @@ class SubmitHandler(BaseHandler):
             case 'application/pdf':
                 if self.application.librarian_service:
                     document = await self.get_scored_document(
-                        ['nexus_science'],
-                        'doi',
+                        'id.dois',
                         doi_hint,
                     )
                     uploaded_message = await self.application.librarian_service.process_file(

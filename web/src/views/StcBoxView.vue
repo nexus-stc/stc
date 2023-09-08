@@ -1,6 +1,6 @@
 <template lang="pug">
 .container
-  h3 Replicate STC for Home or Library Use
+  h3 Build STC Box for Home or Library Use
   p You can set up STC on a small computer to act as a personal or group library.
   h5 Minimum Requirements
   p For testing, we used an Orange PI 5 with 4GB of RAM, a Sandisk 128GB MicroSD, and a 16TB Seagate Exos HDD attached externally by a USB cord, all of which demonstrated strong performance.

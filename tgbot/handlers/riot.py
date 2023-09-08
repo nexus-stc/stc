@@ -33,7 +33,6 @@ class RiotBFHandler(BaseHandler):
                 bot_name=bot_name,
                 bot_token=bot_token,
                 user_id=int(event.message.peer_id.user_id),
-                index_aliases=self.application.config['application']['default_riot_indices'],
             )
             await event.reply(
                 'Done! Now you should provide application credentials for launching your bot.\n'

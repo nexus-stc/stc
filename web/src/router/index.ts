@@ -15,7 +15,8 @@ const router = createRouter({
       props: (route) => ({
         q: route.query.q,
         p: Number.parseInt(route.query.p),
-        d: route.query.d
+        t: route.query.t,
+        y: route.query.y
       })
     },
     {
@@ -71,12 +72,7 @@ const router = createRouter({
       ]
     },
     {
-      path: '/dbs',
-      name: 'dbs',
-      component: async () => await import('../views/DbsView.vue')
-    },
-    {
-      path: '/:index_alias/:id(.+)',
+      path: '/nexus_science/:id(.+)',
       name: 'document',
       component: async () => await import('../views/DocumentView.vue'),
       props: true

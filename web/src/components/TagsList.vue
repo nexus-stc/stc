@@ -1,7 +1,8 @@
 <template lang="pug">
-span(v-for="(tag, index) in tags")
-  span.me-2.ms-2(v-if="index > 0") -
-  router-link.text-decoration-none(:to="'/?q=tags:\"' + tag + '\"'") {{ tag }}
+div
+  span(v-for="(tag, index) in tags")
+    span.ms-1.me-1(v-if="index > 0") -
+    router-link.text-decoration-none(:to="'/?q=tags:\"' + tag + '\"'") {{ tag }}
 </template>
 
 <script lang="ts">

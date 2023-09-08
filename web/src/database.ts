@@ -1,5 +1,4 @@
 import Dexie from 'dexie'
-import { MetaDb } from 'summa-wasm'
 
 import { average } from '@/utils'
 
@@ -96,5 +95,4 @@ export class SearchMetric implements ISearchMetric {
   }
 }
 
-export const meta_db = new MetaDb('MetaDb', 8)
 export const user_db = new UserDb('UserDb', 8)

@@ -16,10 +16,19 @@ class Converter(MarkdownConverter):
     def convert_header(self, el, text, convert_as_inline):
         return super().convert_b(el, text, convert_as_inline) + '\n'
 
+    def convert_formula(self, el, text, convert_as_inline):
+        return '🔢'
+
 
 class SnippetConverter(MarkdownConverter):
     convert_highlight = abstract_inline_conversion(lambda self: '**')
-    convert_i = abstract_inline_conversion(lambda self: '__')
+    convert_i = abstract_inline_conversion(lambda self: '')
+
+    def convert_header(self, el, text, convert_as_inline):
+        return ''
+
+    def convert_formula(self, el, text, convert_as_inline):
+        return '🔢'
 
 
 md_converter = Converter(escape_asterisks=False)

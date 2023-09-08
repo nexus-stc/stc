@@ -1,4 +1,3 @@
-import random
 import re
 import time
 
@@ -6,7 +5,7 @@ from telethon import events
 
 from library.sciparse.language_detect import detect_language
 from library.telegram.base import RequestContext
-from tgbot.views.telegram.base_holder import BaseHolder
+from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 
 from .base import BaseHandler
 
@@ -29,13 +28,12 @@ class RollHandler(BaseHandler):
                 query,
                 collector='reservoir_sampling',
                 limit=1,
-                index_aliases=[random.choice(self.bot_index_aliases)]
             )
         )
         documents = response.collector_outputs[0].documents.scored_documents
 
         if documents:
-            holder = BaseHolder.create(documents[0])
+            holder = BaseTelegramDocumentHolder.create(documents[0])
             promo = self.application.promotioner.choose_promotion(language)
             view = holder.view_builder(language).add_view(bot_name=request_context.bot_name).add_new_line(2).add(promo, escaped=True).build()
             buttons_builder = holder.buttons_builder(language)

@@ -7,14 +7,14 @@ from telethon import Button
 
 from library.telegram.common import close_button
 from tgbot.translations import t
-from tgbot.views.telegram.base_holder import BaseHolder
+from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 
 
 class DocumentListWidget:
     def __init__(
         self,
         chat: dict,
-        document_holders: List[BaseHolder],
+        document_holders: List[BaseTelegramDocumentHolder],
         bot_name,
         header: Optional[str] = None,
         promotioner=None,

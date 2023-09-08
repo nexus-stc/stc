@@ -1,1 +1,1 @@
-export { SearchService } from './search-service'
+export { IpfsSearchService } from './ipfs-search-service'

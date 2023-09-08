@@ -154,7 +154,10 @@ class CybrexAI(AioThing):
 
     async def generate_chunks_from_document(self, document: SourceDocument) -> List[dict]:
         document.document['content'] = await self.resolve_document_content(document)
-        return self.document_chunker.to_chunks(document)
+        return await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: self.document_chunker.to_chunks(document)
+        )
 
     async def _get_missing_chunks(self, documents: List[SourceDocument], skip_downloading_pdf: bool = True) -> List[dict]:
         all_chunks = []
@@ -340,18 +343,25 @@ class CybrexAI(AioThing):
         return answer.strip(), chunks
 
     async def chat_science(self, query: str, n_chunks: int, n_documents: int, minimum_score: float = 0.5):
-        chunks = await self.semantic_search(
-            query=query,
-            n_chunks=n_chunks,
-            n_documents=n_documents,
-            minimum_score=minimum_score,
-        )
-        chain = QAChain(query=query, llm=self.model.llm)
-        answer = await asyncio.get_running_loop().run_in_executor(
-            None,
-            lambda: chain.process(chunks),
-        )
-        return answer.strip(), chunks
+        if n_chunks:
+            chunks = await self.semantic_search(
+                query=query,
+                n_chunks=n_chunks,
+                n_documents=n_documents,
+                minimum_score=minimum_score,
+            )
+            chain = QAChain(query=query, llm=self.model.llm)
+            answer = await asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: chain.process(chunks),
+            )
+            return answer.strip(), chunks
+        else:
+            answer = await asyncio.get_running_loop().run_in_executor(
+                None,
+                lambda: self.model.llm.process(self.model.llm.prompter.question(query)),
+            )
+            return answer.strip(), []
 
     async def summarize_document(self, document_query):
         document_id = await self.upsert_document_by_query(document_query, skip_downloading_pdf=False)
@@ -362,6 +372,15 @@ class CybrexAI(AioThing):
             lambda: chain.process(chunks),
         )
         return answer.strip(), chunks
+
+    async def general_text_processing(self, request, text):
+        answer = await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: self.model.llm.process(
+                self.model.llm.prompter.general_text_processing(request=request, text=text)
+            ),
+        )
+        return answer.strip()
 
     async def get_documents_from_chunks(self, chunks):
         ids = set([chunk['document_id'] for chunk in chunks])

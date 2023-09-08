@@ -108,19 +108,15 @@ class BaseHandler(ABC):
         self.banned_chat_ids = set(self.application.config['application']['banned_chat_ids'])
         self.bot_config = bot_config
         self.extra_warning = extra_warning
-        self.bot_index_aliases = [
-            index_alias for index_alias in bot_config.get('index_aliases', '').split(',')
-        ]
 
-    async def get_scored_document(self, index_aliases, field: str, value: str):
-        queries = self.application.geck.get_query_processor().process(
+    async def get_scored_document(self, field: str, value: str):
+        query = self.application.geck.get_query_processor().process(
             f'{field}:{value}',
             limit=1,
             is_fieldnorms_scoring_enabled=False,
-            index_aliases=index_aliases,
             skip_doi_isbn_term_field_mapper=True,
         )
-        response = await self.application.summa_client.search(queries)
+        response = await self.application.summa_client.search(query)
         if response.collector_outputs[0].documents.scored_documents:
             return response.collector_outputs[0].documents.scored_documents[0]
 

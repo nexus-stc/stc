@@ -13,6 +13,7 @@ from aiokit import AioThing
 from izihawa_utils.importlib import import_object
 from stc_geck.utils import get_type_icon
 
+from library.document import LinksWrapper
 from library.pdftools.cleaner import clean_metadata
 from library.pdftools.exceptions import (
     PdfProcessingError,
@@ -21,7 +22,7 @@ from library.pdftools.exceptions import (
 from library.telegram.base import BaseTelegramClient
 from library.telegram.utils import safe_execution
 from library.textutils import DOI_REGEX
-from tgbot.views.telegram.base_holder import BaseHolder
+from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 from tgbot.views.telegram.common import vote_button
 
 
@@ -89,11 +90,12 @@ class LibrarianService(AioThing):
                 for doi in list(self.requests.keys()):
                     if document := await self.application.summa_client.get_one_by_field_value(
                         'nexus_science',
-                        'doi',
+                        'id.dois',
                         doi.lower()
                     ):
-                        if 'links' in document and document['links'][0]['type'] == 'primary':
-                            await self.delete_request(doi)
+                        if 'links' in document:
+                            if LinksWrapper(document['links']).get_link_with_extension('pdf'):
+                                await self.delete_request(doi)
                 await asyncio.sleep(3600)
         except asyncio.CancelledError:
             logging.getLogger('debug').debug({
@@ -160,12 +162,12 @@ class LibrarianService(AioThing):
         logging.getLogger('debug').debug({
             'action': 'collecting_requests',
             'mode': 'librarian_service',
-            'is_grobid_enabled': bool(self.application.grobid_client),
+            'is_sciparser_enabled': bool(self.application.sciparser),
         })
         async for message in self.admin_telegram_client.iter_messages(self.group_name):
             if doi := self.is_request(message):
                 self.requests[doi] = message.id
-            if self.application.grobid_client:
+            if self.application.sciparser:
                 if data := await self.try_download_media(message):
                     logging.getLogger('debug').debug({
                         'action': 'found_media',
@@ -173,7 +175,7 @@ class LibrarianService(AioThing):
                         'filesize': len(data),
                     })
                     try:
-                        processed_document = await self.application.sciparser.process_paper({'data': data})
+                        processed_document = await self.application.sciparser.parse_paper({'data': data})
                         if not processed_document or 'doi' not in processed_document:
                             continue
                     except Exception as e:
@@ -195,7 +197,7 @@ class LibrarianService(AioThing):
                                 'doi_hint': doi_hint,
                             })
                             continue
-                    document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi)
+                    document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'id.dois', doi)
                     if not document:
                         continue
                     try:
@@ -283,7 +285,7 @@ class LibrarianService(AioThing):
         pdf_file = await event.message.download_media(file=bytes)
         await event.delete()
 
-        holder = BaseHolder.create(document)
+        holder = BaseTelegramDocumentHolder.create(document)
         short_abstract = (
             holder.view_builder(request_context.chat['language'])
             .add_short_description()

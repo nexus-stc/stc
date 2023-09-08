@@ -127,10 +127,10 @@ class Database(AioThing):
         """, (bot_name, user_id, doi, cid, -1))
         await self.users_db_wrapper.db.commit()
 
-    async def add_new_bot(self, bot_name, bot_token, user_id: int, index_aliases=('nexus_free', 'nexus_science')):
+    async def add_new_bot(self, bot_name, bot_token, user_id: int):
         await self.bots_db_wrapper.db.execute("""
             insert into
-            user_bots(bot_name, bot_token, owner_id, index_aliases, created_at, is_deleted)
+            user_bots(bot_name, bot_token, owner_id, created_at, is_deleted)
             values (?, ?, ?, ?, ?, ?)
             on conflict(bot_name) do update
             set bot_token = EXCLUDED.bot_token,
@@ -142,7 +142,6 @@ class Database(AioThing):
             bot_name,
             bot_token,
             user_id,
-            ','.join(index_aliases),
             int(time.time()),
             False
         ))

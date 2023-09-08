@@ -9,9 +9,6 @@ application:
   data_directory: /usr/lib/stc-tgbot
   # Debugging mode
   debug: false
-  # Default index_aliases for new rioted bots
-  default_riot_indices:
-    - nexus_free
   # URL of picture to show in error message
   error_picture_url:
   eth_donate_address: '0x199bECe965e4e1e2fE3065d3F551Ebe8520AC555'
@@ -83,6 +80,7 @@ telegram:
     - tgbot.handlers.download.DownloadHandler
     - tgbot.handlers.howtohelp.HowToHelpHandler
     - tgbot.handlers.help.HelpHandler
+    - tgbot.handlers.q.QHandler
     - tgbot.handlers.report.ReportHandler
     - tgbot.handlers.riot.RiotHandler
     - tgbot.handlers.riot.RiotBFHandler
@@ -105,8 +103,6 @@ summa:
   endpoint: summa-server:10082
   embed:
     enabled: true
-    index_names:
-      - nexus_free
     ipfs_data_directory: /ipns/standard-template-construct.org/data/
 twitter:
   contact_url: https://twitter.com/the_superpirate

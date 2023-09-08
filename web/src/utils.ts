@@ -1,5 +1,12 @@
 import { utils } from 'summa-wasm'
 
+async function get_default_cover() {
+  const default_cover = await fetch('./default-cover.jpg')
+  const blob = await default_cover.blob()
+  return URL.createObjectURL(blob);
+}
+export const default_cover = await get_default_cover()
+
 export function format_bytes (bytes: number, decimals = 2) {
   if (!+bytes) return '0 Bytes'
 
@@ -63,7 +70,7 @@ export function generate_cid_external_links (cid: string, filename: string) {
 }
 export function generate_filename (title: string) {
   return (
-    title
+      (title || "unnamed")
       .toLowerCase()
       .replace(/[^\p{L}\p{N}]/gu, ' ')
       .replace(/\s+/gu, ' ')
@@ -85,3 +92,37 @@ export function average (arr: number[]) {
   }
   return total / arr.length
 }
+
+export function decode_html(html) {
+    const txt = document.createElement('textarea');
+    txt.innerHTML = html;
+    return txt.value;
+}
+
+export function remove_unpaired_escaped_tags(str) {
+    const openTags = [];
+    const regex = /&lt;\/?([a-z][a-z0-9]*)\b[^&]*&gt;/gi;
+
+    // First pass: Handle and remove unpaired closing tags
+    let intermediateStr = str.replace(regex, (match, p1) => {
+        if (match.startsWith('&lt;/')) {
+            if (openTags.length && openTags[openTags.length - 1] === p1) {
+                openTags.pop();
+                return match; // Keep the closing tag if it matches the last opening tag
+            }
+            return ''; // Remove the closing tag if it doesn't match the last opening tag
+        } else {
+            openTags.push(p1);
+            return match; // Keep the opening tag for now
+        }
+    });
+
+    // Second pass: Remove unpaired opening tags
+    for (const tag of openTags) {
+        const unpairedTag = new RegExp(`&lt;${tag}\\b[^&]*&gt;`, 'gi');
+        intermediateStr = intermediateStr.replace(unpairedTag, '');
+    }
+
+    return intermediateStr;
+}
+

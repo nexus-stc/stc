@@ -4,35 +4,31 @@
     loading-spinner(:label="get_label('loading_document') + '...'")
   div(v-else-if="is_loading_failed")
     connectivity-issues-view
-  div(v-else-if="scored_document").col-lg-9
-    nexus-free-document(v-if='$route.params.index_alias === "nexus_free"', :scored_document="scored_document")
-    nexus-media-document(v-if='$route.params.index_alias === "nexus_media"', :scored_document="scored_document")
-    nexus-science-document(v-if='$route.params.index_alias === "nexus_science"', :scored_document="scored_document")
+  div(v-else-if="document").col-lg-9
+    document(:document="document" )
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 
 import ConnectivityIssuesView from '@/components/ConnectivityIssues.vue'
-import NexusFreeDocument from '@/components/document/NexusFree.vue'
-import NexusMediaDocument from '@/components/document/NexusMedia.vue'
-import NexusScienceDocument from '@/components/document/NexusScience.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import Document from "@/components/Document.vue";
+import DocumentButtons from "@/components/DocumentButtons.vue";
+import TagsList from "@/components/TagsList.vue";
+import ReferencesList from "@/components/ReferencesList.vue";
 
 export default defineComponent({
   name: 'DocumentView',
   components: {
     ConnectivityIssuesView,
+    DocumentButtons,
     LoadingSpinner,
-    NexusFreeDocument,
-    NexusMediaDocument,
-    NexusScienceDocument
+    ReferencesList,
+    TagsList,
+    Document
   },
   props: {
-    index_name: {
-      type: String,
-      required: true
-    },
     id: {
       type: String,
       required: true
@@ -40,9 +36,9 @@ export default defineComponent({
   },
   data () {
     return {
-      scored_document: undefined,
+      document: undefined,
       is_loading: false,
-      is_loading_failed: false
+      is_loading_failed: false,
     }
   },
   watch: {
@@ -62,8 +58,9 @@ export default defineComponent({
           page_size: 1,
           index_name: this.index_name
         })
-        this.scored_document =
-          collector_outputs[0].collector_output.documents.scored_documents[0]
+        const scored_document = collector_outputs[0].collector_output.documents.scored_documents[0]
+        this.document = JSON.parse(scored_document.document)
+        document.title = `${this.document.title} - STC`
       } catch (e) {
         this.is_loading_failed = true
       } finally {

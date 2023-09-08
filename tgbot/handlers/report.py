@@ -23,7 +23,7 @@ class ReportHandler(BaseCallbackQueryHandler):
 
         document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'cid', cid)
 
-        if not document or 'doi' not in document:
+        if not document or 'dois' not in document['id']:
             return await asyncio.gather(
                 event.reply('Only those items that have DOI can be reported'),
                 event.delete(),
@@ -31,7 +31,7 @@ class ReportHandler(BaseCallbackQueryHandler):
         await self.application.database.add_vote_broken_file(
             bot_name=self.bot_config['bot_name'],
             user_id=request_context.chat['chat_id'],
-            doi=document['doi'],
+            doi=document['id']['dois'][0],
             cid=cid,
         )
         async with safe_execution():

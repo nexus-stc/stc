@@ -30,6 +30,8 @@ def process_tags(soup):
             el.name = 'header'
         elif el.name == 'p' and 'ref' in el.attrs.get('class', []):
             el.name = 'ref'
+        elif el.name == 'disp-formula':
+            el.name = 'formula'
         if 'href' in el.attrs:
             el.attrs = {'href': el.attrs['href']}
         else:

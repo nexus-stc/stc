@@ -6,8 +6,8 @@ import { createApp } from 'vue'
 
 import App from './App.vue'
 import router from './router'
-import { SearchService } from './services'
 import { get_label } from './translations'
+import { IpfsSearchService } from "@/services/search/ipfs-search-service";
 
 // Set theme to the user's preferred color scheme
 function updateTheme () {
@@ -33,7 +33,7 @@ app.mixin({
     get_label
   }
 })
-app.config.globalProperties.search_service = new SearchService({
+app.config.globalProperties.search_service = new IpfsSearchService({
   logging_level: 'info'
 })
 

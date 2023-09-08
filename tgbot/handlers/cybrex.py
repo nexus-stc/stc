@@ -1,3 +1,4 @@
+import asyncio
 import re
 import shlex
 
@@ -52,7 +53,20 @@ class CybrexHandler(BaseHandler):
             text = "My name is Cybrex and I can respond queries based on STC data."
             return await event.reply(text)
 
-        wait_message = await event.reply('`Looking for the answer in STC (2-3 minutes)...`')
+        reply_message = await event.get_reply_message()
+        if reply_message:
+            wait_message = await event.reply('`All right, wait a sec...`')
+
+            text = reply_message.raw_text
+            answer = await self.application.cybrex_ai.general_text_processing(query, text)
+            response = f'🤔 **{query}**'
+            response = f'{response}\n\n🤖: {answer.strip()}'
+            return await asyncio.gather(
+                wait_message.delete(),
+                reply_message.reply(response),
+            )
+
+        wait_message = await event.reply('`Looking for the answer in STC...`')
 
         cli = {
             'chat-doc': self.application.cybrex_ai.chat_document,
@@ -96,5 +110,7 @@ class CybrexHandler(BaseHandler):
         if references:
             response += f'\n\n**References:**\n\n{references}'
 
-        await event.reply(response)
-        await wait_message.delete()
+        return await asyncio.gather(
+            wait_message.delete(),
+            event.reply(response),
+        )

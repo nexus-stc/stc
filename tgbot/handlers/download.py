@@ -24,7 +24,7 @@ from library.telegram.base import RequestContext
 from library.telegram.utils import safe_execution
 from tgbot.app.exceptions import DownloadError
 from tgbot.translations import t
-from tgbot.views.telegram.base_holder import BaseHolder
+from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 from tgbot.views.telegram.common import (
     recode_base64_to_base36,
     remove_button,
@@ -170,7 +170,7 @@ class DownloadTask(LongTask):
                     duration=time.time() - start_time,
                 )
             except asyncio.CancelledError:
-                await self.external_cancel()
+                pass
             finally:
                 messages = filter_none([progress_bar_download.message])
                 if messages:
@@ -275,12 +275,12 @@ class DownloadHandler(BaseCallbackQueryHandler):
         cid = self.parse_pattern(event)
         request_context.add_default_fields(mode='download', cid=cid)
         request_context.statbox(action='get')
-        scored_document = await self.get_scored_document(self.bot_index_aliases, 'cid', cid)
+        scored_document = await self.get_scored_document('cid', cid)
         if not scored_document:
             return await event.answer(
                 f'{t("CID_DISAPPEARED", request_context.chat["language"])}',
             )
-        document_holder = BaseHolder.create(scored_document)
+        document_holder = BaseTelegramDocumentHolder.create(scored_document)
         download_link = None
         for link in document_holder.links:
             if link['cid'] == cid:

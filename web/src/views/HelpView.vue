@@ -1,23 +1,23 @@
 <template lang="pug">
-.container.small
+.container
   .row
     .col-md-4.col-lg-3.mb-3
       ul.nav.flex-column.mb-auto
         li.nav-item
-          a.btn.btn-sm.text-nowrap(href="#/help")
-            i.bi.bi-house
+          a.btn.text-nowrap(href="#/help")
+            i.bi.bi-houme
             span.ms-2 Welcome
         li.nav-item
-          a.btn.btn-sm.text-nowrap(href="#/help/how-to-search")
+          a.btn.text-nowrap(href="#/help/how-to-search")
             i.bi.bi-question-circle-fill
             span.ms-2 How to Search
         li.nav-item
-          a.btn.btn-sm.text-nowrap(href="#/help/donate")
+          a.btn.text-nowrap(href="#/help/donate")
             i.bi.bi-currency-dollar
             span.ms-2 Donate
         hr
         li.nav-item
-          button.btn.btn-sm.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#projects-collapse")
+          button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#projects-collapse")
             i.bi.bi-caret-down
             span.ms-2 Projects
           .collapse.ms-3(id="projects-collapse")
@@ -43,7 +43,7 @@
                   i.bi.bi-telegram
                   span.ms-2 Telegram Bots
         li.nav-item
-          button.btn.btn-sm.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#guides-collapse")
+          button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#guides-collapse")
             i.bi.bi-caret-down
             span.ms-2 Guides
           .collapse.ms-3(id="guides-collapse")
@@ -55,7 +55,7 @@
               li.nav-item
                 a.nav-link.text-secondary(href="#/help/stc-box")
                   i.bi.bi-book
-                  span.ms-2 Replicate STC for Home or Library Use
+                  span.ms-2  Build STC Box for Home or Library Use
               li.nav-item
                 a.nav-link.text-secondary(href="#/help/replicate")
                   i.bi.bi-cloud-download
@@ -65,11 +65,11 @@
                   i.bi.bi-radioactive
                   span.ms-2 Doomsday Guide
         li.nav-item
-          button.btn.btn-sm.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#links-collapse")
+          button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#links-collapse")
             i.bi.bi-caret-down
             span.ms-2 Links
           .collapse.ms-3.show(id="links-collapse")
-            ul.btn-toggle-nav.list-unstyled.fw-normal.pb-1.small
+            ul.btn-toggle-nav.list-unstyled.fw-normal.pb-1
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://twitter.com/the_superpirate" target="_blank")
                   i.bi.bi-twitter
@@ -85,15 +85,15 @@
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://t.me/nexus_search" target="_blank")
                   i.bi.bi-telegram
-                  span.ms-2 Nexus News
+                  span.ms-2 News
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://t.me/+nZLdjlcRKwY3MTBk" target="_blank")
                   i.bi.bi-telegram
-                  span.ms-2 Nexus Communities
+                  span.ms-2 Communities
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://t.me/science_nexus_bot" target="_blank")
                   i.bi.bi-telegram
-                  span.ms-2 Nexus Bot
+                  span.ms-2 Bot
               li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://github.com/nexus-stc/stc" target="_blank")
                   i.bi.bi-github

@@ -4,13 +4,12 @@ import re
 import tempfile
 from typing import (
     AsyncIterator,
-    Literal,
     Optional,
-    Tuple,
 )
 from urllib.parse import urlparse
 
 import aiohttp
+import aiohttp.client_exceptions
 import orjson
 import summa_embed
 from aiokit import AioThing
@@ -21,6 +20,7 @@ from izihawa_ipfs_api import (
 )
 from izihawa_utils.random import reservoir_sampling_async
 
+from .exceptions import IpfsConnectionError
 from .query_processor import QueryProcessor
 from .utils import (
     create_car,
@@ -94,8 +94,8 @@ class StcGeck(AioThing):
         ipfs_http_base_url: str = 'http://127.0.0.1:8080',
         ipfs_api_base_url: str = 'http://127.0.0.1:5001',
         ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
-        index_names: Tuple[Literal['nexus_free', 'nexus_science'], ...] = ('nexus_science',),
         grpc_api_endpoint: str = '127.0.0.1:10082',
+        index_alias: str = 'nexus_science',
         profile: Optional[str] = None,
         timeout: int = 300,
     ):
@@ -105,7 +105,6 @@ class StcGeck(AioThing):
         :param ipfs_http_base_url: IPFS HTTP base url, i.e `http://127.0.0.1:8080`
         :param ipfs_api_base_url: IPFS API base url, i.e `http://127.0.0.1:5001`
         :param ipfs_data_directory: path to the directory with indices
-        :param index_names: tuple with "nexus_free" and/or "nexus_science" for configuring what indices will be used
         :param grpc_api_endpoint:
             endpoint for setting up Summa. If there is Summa listening on the port before launching, then
             GECK uses existing instance otherwise launches its own one
@@ -118,14 +117,14 @@ class StcGeck(AioThing):
         self.ipfs_api_client = IpfsApiClient(canonoize_base_url(ipfs_api_base_url), timeout=timeout)
         self.starts.append(self.ipfs_api_client)
         self.ipfs_data_directory = '/' + ipfs_data_directory.strip('/') + '/'
-        self.index_names = index_names
         self.grpc_api_endpoint = grpc_api_endpoint
+        self.index_alias = index_alias
         self.temp_dir = tempfile.TemporaryDirectory()
 
         self.is_embed = not is_endpoint_listening(self.grpc_api_endpoint)
         self.summa_embed_server = None
 
-        self.query_processor = QueryProcessor(profile or ('light' if self.is_embed else 'full'))
+        self.query_processor = QueryProcessor(self.index_alias, profile or ('light' if self.is_embed else 'full'))
         self.summa_client = SummaClient(
             endpoint=self.grpc_api_endpoint,
             max_message_length=2 * 1024 * 1024 * 1024 - 1,
@@ -139,28 +138,33 @@ class StcGeck(AioThing):
             server_config['api']['grpc_endpoint'] = self.grpc_api_endpoint
             server_config['data_path'] = self.temp_dir.name
             server_config['log_path'] = self.temp_dir.name
-            for index_name in self.index_names:
-                query_parser_config = {
-                    'default_fields': ['abstract', 'content', 'title']
-                }
-                full_path = self.ipfs_http_base_url + self.ipfs_data_directory + index_name + '/'
-                headers_template = {'range': 'bytes={start}-{end}'}
-                remote_index_config = {'remote': {
-                    'method': 'GET',
-                    'url_template': f'{full_path}{{file_name}}',
-                    'headers_template': headers_template,
-                    'cache_config': {'cache_size': 536870912},
-                }}
+            query_parser_config = {
+                'default_fields': ['abstract', 'content', 'title']
+            }
+            full_path = self.ipfs_http_base_url + self.ipfs_data_directory
+            headers_template = {'range': 'bytes={start}-{end}'}
+            remote_index_config = {'remote': {
+                'method': 'GET',
+                'url_template': f'{full_path}{{file_name}}',
+                'headers_template': headers_template,
+                'cache_config': {'cache_size': 536870912},
+            }}
+            try:
                 if host_header := await detect_host_header(full_path):
                     headers_template['host'] = host_header
-                server_config['core']['indices'][index_name] = {
-                    'query_parser_config': query_parser_config,
-                    'config': remote_index_config,
-                    'field_triggers': {},
-                }
+            except (aiohttp.client_exceptions.ClientConnectorError, ConnectionRefusedError) as e:
+                raise IpfsConnectionError(base_error=e)
+            server_config['core']['indices'][self.index_alias] = {
+                'query_parser_config': query_parser_config,
+                'config': remote_index_config,
+                'field_triggers': {},
+            }
             self.summa_embed_server = summa_embed.SummaEmbedServerBin(server_config)
             await self.summa_embed_server.start()
-        await self.summa_client.start()
+        try:
+            await self.summa_client.start()
+        except (aiohttp.client_exceptions.ClientConnectorError, ConnectionRefusedError) as e:
+            raise IpfsConnectionError(base_error=e)
 
     async def stop(self):
         await self.summa_client.stop()
@@ -220,7 +224,6 @@ class StcGeck(AioThing):
 
     async def create_ipfs_directory(
         self,
-        index_names: Literal['nexus_free', 'nexus_science'],
         output_car: str,
         query: Optional[str] = None,
         limit: int = 100,
@@ -229,7 +232,6 @@ class StcGeck(AioThing):
         """
         Creates an importable CAR file with items from STC.
 
-        :param index_names: the indices to scan
         :param output_car: filename of the output CAR
         :param query: query to narrow down storing items
         :param limit: how many items will be stored
@@ -241,21 +243,21 @@ class StcGeck(AioThing):
         if query:
             return await create_car(
                 output_car,
-                query_wrapper(await self.summa_client.search([{
-                    'index_alias': index_names,
+                query_wrapper(await self.summa_client.search({
+                    'index_alias': self.index_alias,
                     'collectors': [{'top_docs': {'limit': limit, 'scorer': {'order_by': 'issued_at'}}}],
                     'query': {'boolean': {'subqueries': [
                         {'occur': 'must', 'query': {'match': {'value': query}}},
                         {'occur': 'must', 'query': {'exists': {'field': 'cid'}}},
                     ]}},
-                }])),
+                })),
                 limit=limit,
                 name_template=name_template,
             )
         else:
             return await create_car(
                 output_car,
-                load_document(self.summa_client.documents(index_names)),
+                load_document(self.summa_client.documents(self.index_alias)),
                 limit=limit,
                 name_template=name_template,
             )

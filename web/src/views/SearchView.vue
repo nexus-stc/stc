@@ -8,31 +8,34 @@
         connectivity-issues-view(:reason="loading_failure_reason")
       div(v-else)
         div.float-end.small.mb-1
-          a.small(href="#/help/how-to-search" target=_blank) How to search?
+          a(href="#/help/how-to-search" target=_blank) How to search?
         form(@submit.stop.prevent="on_search")
           div.input-group
             input.form-control.form-control-md(v-model="query" type="search" :placeholder="get_label('search_placeholder')" autofocus)
         div
           .mt-3
           form.row.g-3
-            .col-lg-3.col-6
-              select.form-select.form-select-sm(v-model="selected_index_name" @change="set_page(1)")
-                option(v-for="enabled_index in enabled_indices" :value="enabled_index") {{ display_names[enabled_index] }}
-            .col-lg-3.col-6
-              select.form-select.form-select-sm(v-model="selected_language" @change="set_page(1)")
-                option(v-for="enabled_language in enabled_languages" :value="enabled_language") {{ display_languages[enabled_language] }}
+            .col-6.col-lg-3
+              select.form-select.form-select(v-model="selected_type" @change="switch_parameter()")
+                option(v-for="[type, display_type] of types" :value="type") {{ display_type }}
+            .col-6.col-lg-4
+              select.form-select.form-selectm(v-model="selected_language" @change="switch_parameter()")
+                option(v-for="[language, display_language] of languages" :value="language") {{ display_language }}
+            .col-6.col-lg-4
+              select.form-select.form-selectm(v-model="selected_timerange" @change="switch_parameter()")
+                option(v-for="[year, display_year] of years" :value="year") {{ display_year }}
+            .col-1.offset-5.col-lg-1.offset-lg-0
+              h4.mt-1.me-3.text-decoration-none.text-end(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
           div(v-if="total_documents !== null")
             hr
-            i.small.ms-3 {{ total_documents }} {{ get_label('found') }}
-        div.mt-5(v-if="!search_used")
-          items-showcase
-        div(v-else-if="is_documents_loading" style="margin-top: 140px")
+            i.ms-3 {{ total_documents }} {{ get_label('found') }}
+        div(v-if="is_documents_loading" style="margin-top: 140px")
           loading-spinner(:label="get_label('loading') + '...'")
         div(v-else-if="loading_documents_failure_reason !== undefined")
           connectivity-issues-view(:reason="loading_documents_failure_reason")
-        div.mt-3.mb-3(v-else)
+        div.mt-3(v-else)
           search-list(:scored_documents='scored_documents')
-          nav(v-if="has_next || page > 1")
+          nav(v-if="(has_next || page > 1) && !is_rolled")
             ul.pagination.justify-content-center
               li.page-item(v-if="page > 2" v-on:click="set_page(1);")
                 a.page-link &lt;&lt;
@@ -52,24 +55,28 @@ import { defineComponent } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import ConnectivityIssuesView from '@/components/ConnectivityIssues.vue'
-import NexusFreeDocument from '@/components/document/NexusFree.vue'
-import NexusMediaDocument from '@/components/document/NexusMedia.vue'
-import NexusScienceDocument from '@/components/document/NexusScience.vue'
-import ItemsShowcase from '@/components/ItemsShowcase.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SearchList from '@/components/SearchList.vue'
-import { meta_db } from '@/database'
-import { get_label } from '@/translations'
+import {Language, Type} from "@/services/search/query-processor";
+
+function generate_year_ranges() {
+  let ranges = [[undefined, "All times"]];
+  let current_year = new Date().getFullYear();
+  for (let shift of [0, 1, 2]) {
+    const left_date = new Date(Date.UTC(current_year - shift, 0, 1));
+    const right_date = new Date(Date.UTC(current_year - shift + 1, 0, 1));
+    ranges.push([[left_date / 1000, right_date / 1000], (current_year - shift).toString()])
+  }
+  const right_date = new Date(Date.UTC(current_year - 2, 0, 1)) / 1000;
+  ranges.push([[0, right_date], "Before " + (current_year - 2).toString()]);
+  return ranges;
+}
 
 export default defineComponent({
   name: 'SearchView',
   components: {
-    ItemsShowcase,
     ConnectivityIssuesView,
     LoadingSpinner,
-    NexusFreeDocument,
-    NexusMediaDocument,
-    NexusScienceDocument,
     RouterLink,
     SearchList
   },
@@ -92,52 +99,24 @@ export default defineComponent({
   },
   data () {
     return {
+      has_next: false,
       page: Number.parseInt((this.$route.query.p ?? 1).toString()),
       query: this.$route.query.q,
-      selected_index_name: this.$route.query.d,
+      selected_timerange: this.$route.query.y,
+      selected_type: this.$route.query.t,
       selected_language: this.$route.query.l,
-      index_configs: useObservable(
-        liveQuery(async () => {
-          return meta_db.index_configs.toArray()
-        })
-      ),
+      is_date_sorting_enabled: this.$route.query.ds === 'true',
       is_loading: false,
+      is_rolled: false,
       is_documents_loading: false,
+      languages: [[undefined, "All languages"], ...Object.entries(Language)],
       loading_documents_failure_reason: undefined,
       loading_failure_reason: undefined,
       scored_documents: [],
       search_used: false,
       total_documents: null,
-      has_next: false,
-      enabled_indices: [undefined],
-      enabled_languages: [undefined, 'en', 'ar', 'pb', 'zh', 'am', 'fa', 'de', 'hi', 'id', 'it', 'ja', 'ms', 'ru', 'es', 'tg', 'uk', 'uz'],
-      date_sorting: this.$route.query.ds === 'true',
-      display_names: {
-        undefined: get_label('everywhere'),
-        nexus_free: '♾️ Free',
-        nexus_media: '🧲 Media',
-        nexus_science: '🔬 Science'
-      },
-      display_languages: {
-        undefined: get_label('all_languages'),
-        en: '🇬🇧 English',
-        ar: '🇦🇪 Arabic',
-        pb: '🇧🇷 Brazilian Portuguese',
-        zh: '🇨🇳 Chinese',
-        am: '🇪🇹 Ethiopian',
-        fa: '🇮🇷 Farsi',
-        de: '🇩🇪 German',
-        hi: '🇮🇳 Hindi',
-        id: '🇮🇩 Indonesian',
-        it: '🇮🇹 Italian',
-        ja: '🇯🇵 Japanese',
-        ms: '🇲🇾 Malay',
-        ru: '🇷🇺 Russian',
-        es: '🇪🇸 Spanish',
-        tg: '🇹🇯 Tajik',
-        uk: '🇺🇦 Ukrainian',
-        uz: '🇺🇿 Uzbek'
-      }
+      types: [[undefined, "All types"], ...Object.entries(Type)],
+      years: generate_year_ranges(),
     }
   },
   watch: {
@@ -147,32 +126,27 @@ export default defineComponent({
     }
   },
   async created () {
-    try {
-      this.is_loading = true
-      this.enabled_indices.push(
-        ...(await this.search_service.get_enabled_index_configs()).map(
-          (index_config: { index_name: string }) => index_config.index_name
-        )
-      )
-    } catch (e) {
-      console.error(e)
-      this.loading_failure_reason = e
-    } finally {
-      this.is_loading = false
-    }
     await this.submit()
   },
   methods: {
     load_params () {
       this.page = Number.parseInt((this.$route.query.p ?? 1).toString())
       this.query = this.$route.query.q
-      this.selected_index_name = this.$route.query.d
+      this.selected_type = this.$route.query.t
       this.selected_language = this.$route.query.l
-      this.date_sorting = this.$route.query.ds === 'true'
+      this.selected_timerange = this.$route.query.y
+      this.is_date_sorting_enabled = this.$route.query.ds === 'true'
     },
     on_search (e: any) {
-      this.date_sorting = false
+      this.is_date_sorting_enabled = false
+      this.is_rolled = false;
       void this.set_page(1)
+    },
+    async switch_parameter () {
+      if (this.is_rolled && !this.query) {
+        return await this.roll();
+      }
+      return await this.set_page(1);
     },
     async set_page (new_page: number) {
       if (new_page < 1) {
@@ -183,9 +157,10 @@ export default defineComponent({
           query: {
             q: this.query,
             p: new_page,
-            d: this.selected_index_name,
+            t: this.selected_type,
             l: this.selected_language,
-            ds: this.date_sorting.toString()
+            y: this.selected_timerange,
+            ds: this.is_date_sorting_enabled.toString()
           }
         })
       }
@@ -194,26 +169,51 @@ export default defineComponent({
       this.scored_documents = []
       this.total_documents = null
       this.has_next = false
-      this.date_sorting = false
+      this.is_date_sorting_enabled = false
       document.title = 'STC'
+    },
+    async roll () {
+      try {
+        this.is_documents_loading = true;
+        this.is_rolled = true;
+        this.total_documents = null;
+        const collector_outputs = await this.search_service.custom_search(this.query, {
+          page: 1,
+          page_size: 5,
+          type: this.selected_type,
+          language: this.selected_language,
+          timerange: this.selected_timerange,
+          random: true,
+        })
+        this.scored_documents = collector_outputs[0].collector_output.documents.scored_documents
+      } catch (e) {
+        console.error(e)
+        this.loading_documents_failure_reason = e
+      } finally {
+        this.is_documents_loading = false
+      }
     },
     async submit () {
       if ((this.query ?? '') === '') {
         this.search_used = false
-        this.remove_query(); return
+        this.remove_query();
+        return
       }
       document.title = `${this.query} - STC`
       this.total_documents = null
       this.is_documents_loading = true
       this.search_used = true
+      this.is_rolled = false;
+
       try {
         const collector_outputs = await this.search_service.custom_search(
           this.query,
           {
-            index_name: this.selected_index_name,
+            type: this.selected_type,
             page: this.page,
             language: this.selected_language,
-            date_sorting: this.date_sorting
+            timerange: this.selected_timerange,
+            is_date_sorting_enabled: this.is_date_sorting_enabled
           }
         )
         this.scored_documents =
@@ -224,10 +224,11 @@ export default defineComponent({
         // Pre-fetch next page
         if (this.page > 1 && this.has_next) {
           this.search_service.custom_search(this.query, {
-            index_name: this.selected_index_name,
+            type: this.selected_type,
             page: this.page + 1,
             language: this.selected_language,
-            date_sorting: this.date_sorting
+            timerange: this.selected_timerange,
+            is_date_sorting_enabled: this.is_date_sorting_enabled
           })
         }
       } catch (e) {

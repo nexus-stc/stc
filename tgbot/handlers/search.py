@@ -27,8 +27,8 @@ from tgbot.app.exceptions import (
 )
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import (
-    BaseHolder,
-    NexusScienceHolder,
+    BaseDocumentHolder,
+    BaseTelegramDocumentHolder,
 )
 from tgbot.views.telegram.common import encode_deep_query
 from tgbot.widgets.search_widget import (
@@ -95,7 +95,6 @@ class BaseSearchHandler(BaseHandler, ABC):
                 request_context=request_context,
                 chat=request_context.chat,
                 preprocessed_query=preprocessed_query,
-                index_aliases=self.bot_index_aliases,
                 is_group_mode=request_context.is_group_mode(),
             )
         except InvalidSearchError:
@@ -124,21 +123,20 @@ class BaseSearchHandler(BaseHandler, ABC):
                 return text, buttons, False
 
             doi = is_doi_query(preprocessed_query.query)
-            if doi and await self.application.metadata_retriever.try_to_download_metadata(doi):
+            if doi and await self.application.metadata_retriever.try_to_download_metadata({'doi': doi}):
                 search_widget = await SearchWidget.create(
                     application=self.application,
                     request_context=request_context,
                     chat=request_context.chat,
                     preprocessed_query=preprocessed_query,
-                    index_aliases=self.bot_index_aliases,
                     is_group_mode=request_context.is_group_mode(),
                 )
 
         if len(search_widget.scored_documents) == 1:
-            holder = BaseHolder.create(search_widget.scored_documents[0])
+            holder = BaseTelegramDocumentHolder.create(search_widget.scored_documents[0])
 
-            if isinstance(holder, NexusScienceHolder):
-                if holder.has_field('doi') and not holder.has_field('links') or preprocessed_query.skip_ipfs or preprocessed_query.is_upstream:
+            if isinstance(holder, BaseDocumentHolder):
+                if holder.has_field('dois') and not holder.has_field('links') or preprocessed_query.skip_ipfs or preprocessed_query.is_upstream:
                     if self.application.is_read_only() or not self.application.started:
                         text, buttons = await search_widget.render(request_context=request_context)
                         if self.application.is_read_only():
@@ -165,10 +163,9 @@ class BaseSearchHandler(BaseHandler, ABC):
                             request_context=request_context,
                             chat=request_context.chat,
                             preprocessed_query=preprocessed_query,
-                            index_aliases=self.bot_index_aliases,
                             is_group_mode=request_context.is_group_mode(),
                         )
-                        holder = BaseHolder.create(search_widget.scored_documents[0])
+                        holder = BaseTelegramDocumentHolder.create(search_widget.scored_documents[0])
                         await self.application.get_telegram_client(request_context.bot_name).upload_file(
                             file,
                             cache_key=holder.cid,
@@ -283,7 +280,6 @@ class InlineSearchHandler(BaseSearchHandler):
                 request_context=request_context,
                 chat=request_context.chat,
                 preprocessed_query=preprocessed_query,
-                index_aliases=self.bot_index_aliases,
                 is_group_mode=request_context.is_group_mode(),
             )
             items = inline_search_widget.render(builder=builder, request_context=request_context)
@@ -378,7 +374,6 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
                 request_context=request_context,
                 chat=request_context.chat,
                 preprocessed_query=preprocessed_query,
-                index_aliases=self.bot_index_aliases,
                 page=page,
             )
         except InvalidSearchError:

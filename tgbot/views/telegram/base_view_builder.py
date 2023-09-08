@@ -5,8 +5,10 @@ from html import unescape
 from typing import Optional
 from urllib.parse import quote
 
+import bleach
 from bs4 import BeautifulSoup
 from izihawa_types.datetime import CustomDatetime
+from izihawa_types.safecast import safe_int
 from stc_geck.utils import get_type_icon
 from telethon import Button
 
@@ -15,12 +17,12 @@ from library.textutils.utils import (
     despace_full,
     escape_format,
 )
-from tgbot.translations import t
-
-from ...markdownifytg import (
+from tgbot.markdownifytg import (
     highlight_md_converter,
     md_converter,
 )
+from tgbot.translations import t
+
 from .common import (
     TooLongQueryError,
     add_expand_dot,
@@ -28,8 +30,10 @@ from .common import (
     get_formatted_filesize,
 )
 
+preprints = {'10.1101', '10.21203'}
 
-def highlight_markdown_snippet(snippet, wrapper_bold_open=b'**', wrapper_bold_close=b'**', wrapper_italic_open='__', wrapper_italic_close='__'):
+
+def highlight_markdown_snippet(snippet, wrapper_bold_open=b'**', wrapper_bold_close=b'**'):
     markdowned = b''
     start_from = 0
     for highlight in snippet.highlights:
@@ -46,12 +50,19 @@ def highlight_markdown_snippet(snippet, wrapper_bold_open=b'**', wrapper_bold_cl
     if markdowned[0].islower() or (markdowned[:2] == '**' and markdowned[2].islower()):
         markdowned = '...' + markdowned
     markdowned = markdowned + '...'
-    markdowned = wrapper_italic_open + markdowned + wrapper_italic_close
     return markdowned
 
 
 def highlight_html_snippet(snippet):
-    return highlight_markdown_snippet(snippet, b'<highlight>', b'</highlight>', '<i>', '</i>')
+    return highlight_markdown_snippet(snippet, b'<highlight>', b'</highlight>')
+
+
+def replace_broken_tags(abstract):
+    return abstract.replace('<disp-formula>', '<formula>').replace('</disp-formula>', '</formula>')
+
+
+def despace_abstract(abstract):
+    return abstract.replace('>\n<', '><')
 
 
 def plain_author(author, bot_name=None):
@@ -167,24 +178,34 @@ class BaseViewBuilder:
 
     def add_snippet(self, on_newline=True):
         snippet = self.document_holder.snippets.get('abstract')
-        if snippet and snippet.highlights:
-            highlighted_snippet = highlight_html_snippet(snippet)
-            highlighted_snippet = highlight_md_converter.convert(highlighted_snippet).replace('\n', ' ').strip()
-            if not highlighted_snippet:
-                return self
-            if on_newline:
-                self.add_new_line()
-            self.add(highlighted_snippet, escaped=True)
+        text = None
+        is_snippet = snippet and snippet.highlights
+        if is_snippet:
+            text = snippet
+            text = highlight_html_snippet(text)
+            text = bleach.clean(text, tags=['highlight'], strip=True, strip_comments=True)
         elif abstract := self.document_holder.abstract:
-            abstract = unescape(BeautifulSoup(abstract or '', 'lxml').text)
-            abstract = md_converter.convert(abstract).replace('\n', ' ').strip()
-            if not abstract:
-                return self
-            abstract = add_expand_dot(abstract, 140)
-            abstract = f'__{abstract}__'
-            if on_newline:
-                self.add_new_line()
-            self.add(abstract, escaped=True)
+            text = abstract
+            text = replace_broken_tags(text)
+            text = bleach.clean(text, strip=True, strip_comments=True)
+
+        if not text:
+            return self
+
+        text = highlight_md_converter.convert(text)
+        text = re.sub('\n+', ' ', text).strip()
+
+        if not text:
+            return self
+
+        if not is_snippet:
+            text = add_expand_dot(text, 140)
+        text = f'__{text}__'
+
+        if on_newline:
+            self.add_new_line()
+        self.add(text, escaped=True)
+
         return self
 
     def add_metadata(self, bot_name, on_newline=True):
@@ -201,6 +222,12 @@ class BaseViewBuilder:
                     self.document_holder.publisher,
                     escaped=True,
                 )
+        if self.document_holder.dois and len(self.document_holder.dois) > 1:
+            links = ', '.join([f'[{doi}](https://doi.org/{quote(doi)})' for doi in self.document_holder.dois[1:]])
+            self.add_new_line().add('Additional DOIs:', bold=True).add(
+                links,
+                escaped=True,
+            )
         if self.document_holder.series:
             try:
                 query = encode_query_to_deep_link(f'ser:"{self.document_holder.series}"', bot_name=bot_name)
@@ -377,28 +404,13 @@ class BaseViewBuilder:
                 .limits(3000)
         )
 
-    def add_title(self):
-        raise NotImplementedError()
-
-    def add_abstract(self):
-        raise NotImplementedError()
-
-    def add_locator(self, first_n_authors=1, markup=True, bot_name=None):
-        raise NotImplementedError()
-
-    def add_filedata(self, show_filesize=False, with_leading_pipe=False):
-        raise NotImplementedError()
-
-    def add_stats(self, end_newline=True):
-        return self
-
     def add_isbns(self, on_newline=False, label=False, end_newline=False):
-        if self.document_holder.isbns:
+        if isbns := self.document_holder.isbns or self.document_holder.parent_isbns:
             if on_newline:
                 self.add_new_line()
             if label:
                 self.add('ISBN:', bold=True)
-            self.add(', '.join(self.document_holder.isbns[:2]))
+            self.add(', '.join(isbns[:2]))
             if end_newline:
                 self.add_new_line()
         return self
@@ -407,6 +419,106 @@ class BaseViewBuilder:
         text = ''.join(map(str, self.parts)).strip()
         text = re.sub('\n\n+', '\n\n', text)
         return text
+
+    def add_edition(self, with_brackets=True, bold=False):
+        edition = self.document_holder.edition
+        if edition:
+            if edition.isdigit():
+                if edition[-1] == '1':
+                    edition += 'st edition'
+                elif edition[-1] == '2':
+                    edition += 'nd edition'
+                elif edition[-1] == '3':
+                    edition += 'rd edition'
+                else:
+                    edition += 'th edition'
+        return self.add(edition, with_brackets=with_brackets, bold=bold)
+
+    def is_preprint(self):
+        return self.document_holder.doi.split('/')[0] in preprints
+
+    def add_pages(self):
+        if self.document_holder.first_page:
+            if self.document_holder.last_page:
+                if self.document_holder.first_page == self.document_holder.last_page:
+                    self.add(f'p. {self.document_holder.first_page}')
+                else:
+                    self.add(f'pp. {self.document_holder.first_page}-{self.document_holder.last_page}')
+            else:
+                self.add(f'p. {self.document_holder.first_page}')
+        elif self.document_holder.last_page:
+            self.add(f'pp. {self.document_holder.last_page}')
+        return self
+
+    def add_container(self, bold=False, italic=False):
+        if self.document_holder.container_title:
+            self.add('in')
+            self.add(self.document_holder.container_title, bold=bold, italic=italic)
+        return self
+
+    def add_volume(self):
+        if self.document_holder.volume:
+            if self.document_holder.issue:
+                self.add(f'vol. {self.document_holder.volume}({self.document_holder.issue})')
+            else:
+                if safe_int(self.document_holder.volume):
+                    self.add(f'vol. {self.document_holder.volume}')
+                else:
+                    self.add(self.document_holder.volume)
+        return self
+
+    def add_title(self, bold=True):
+        title = BeautifulSoup(self.document_holder.title or '', 'lxml').get_text(separator='')
+        if self.document_holder.iso_id:
+            title = f'{self.document_holder.iso_id.upper()} - {title}'
+        elif self.document_holder.bs_id:
+            title = f'{self.document_holder.bs_id.upper()} - {title}'
+        if not title and self.document_holder.doi:
+            title = self.document_holder.doi
+        self.add(title, bold=bold)
+        self.add_edition(with_brackets=True, bold=bold)
+
+        return self
+
+    def add_locator(self, first_n_authors=1, markup=True, bot_name=None):
+        return (
+            self.add_authors(first_n_authors=first_n_authors, bot_name=bot_name)
+                .add_container(italic=markup)
+                .add_formatted_datetime()
+                .add_pages()
+        )
+
+    def add_filedata(self, show_filesize=False, with_leading_pipe=False):
+        filedata = self.document_holder.get_formatted_filedata(show_filesize=show_filesize)
+        if filedata:
+            if with_leading_pipe:
+                self.add('|')
+            self.add(filedata)
+        return self
+
+    def add_abstract(self):
+        if self.document_holder.abstract:
+            soup = BeautifulSoup(replace_broken_tags(despace_abstract(self.document_holder.abstract or '')), 'html.parser')
+            abstract = escape_format(unescape(md_converter.convert_soup(soup)), escape_font=False)
+            self.add(abstract.strip(), escaped=True)
+        return self
+
+    def add_stats(self, end_newline=True):
+        if self.document_holder.page_rank:
+            star_rank = int(round(min(self.document_holder.page_rank, 1) * 5)) * '⭐'
+            if star_rank:
+                self.add(f'**Rank**: {star_rank}', escaped=True)
+            else:
+                self.add('**Rank**: ❔', escaped=True)
+            if end_newline:
+                self.add_new_line()
+        return self
+
+    def add_doi(self, clickable=True, with_brackets=False, with_leading_pipe=False):
+        if self.document_holder.doi:
+            if with_leading_pipe:
+                self.add('|')
+            return self.add(self.document_holder.doi, clickable=clickable, with_brackets=with_brackets)
 
 
 class BaseButtonsBuilder:
@@ -445,7 +557,7 @@ class BaseButtonsBuilder:
 
     def add_remote_download_button(self, bot_name):
         # ⬇️ is a mark, Find+F over sources before replacing
-        if self.document_holder.has_field('doi'):
+        if self.document_holder.has_field('dois'):
             try:
                 encoded_query = encode_query_to_deep_link(f'doi:{self.document_holder.cid}', bot_name)
                 self.buttons[-1].append(
@@ -470,8 +582,49 @@ class BaseButtonsBuilder:
         self.buttons.append([])
         return self
 
-    def add_default_layout(self, bot_name, position: int = 0, is_group_mode: bool = False):
-        raise NotImplementedError()
-
     def build(self):
         return self.buttons
+
+    def add_linked_search_button(self, bot_name):
+        if self.document_holder.referenced_by_count:
+            try:
+                self.buttons[-1].append(
+                    Button.url(
+                        text=f'🔗 {self.document_holder.referenced_by_count or ""}',
+                        url=encode_query_to_deep_link(f'rd:{self.document_holder.doi}', bot_name=bot_name),
+                    )
+                )
+            except TooLongQueryError:
+                pass
+        return self
+
+    def add_journal_search(self, bot_name):
+        try:
+            if self.document_holder.has_field('issns'):
+                issn_query = f'issns:"{self.document_holder.issns[0]}" order_by:date'
+                self.buttons[-1].append(
+                    Button.url(
+                        text='📰',
+                        url=encode_query_to_deep_link(issn_query, bot_name=bot_name),
+                    )
+                )
+        except TooLongQueryError:
+            pass
+        return self
+
+    def add_default_layout(self, bot_name, position: int = 0, is_group_mode: bool = False):
+        if is_group_mode:
+            return (
+                self.add_remote_download_button(bot_name)
+                    .add_linked_search_button(bot_name)
+                    .add_journal_search(bot_name)
+                    .add_close_button()
+            )
+        else:
+            return (
+                self.add_download_button()
+                    .add_remote_request_button()
+                    .add_linked_search_button(bot_name)
+                    .add_journal_search(bot_name)
+                    .add_close_button()
+            )

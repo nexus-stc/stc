@@ -3,17 +3,20 @@ lxml
 pandas
 fasttext-wheel
 PyCryptodome
-pypdf>=3.15.1
+pypdf>=3.15.5
 seaborn
 
 aiobaseclient
 aiocrossref
 aiokit>=1.2.3
 aiosqlite
-cybrex>=1.6.24
+bleach
+cybrex>=1.7.0
 base36
 dateparser
 emoji
+isbnlib>=3.10.13
+iso639-lang
 izihawa_configurator>=1.0.4
 izihawa_ipfs_api>=1.0.0
 izihawa_loglib>=1.0.2
@@ -21,6 +24,6 @@ izihawa_utils
 lru-dict
 markdownify
 sqlalchemy
-stc-geck>=1.5.11
+stc-geck>=1.7.1
+
 telethon
-uvloop

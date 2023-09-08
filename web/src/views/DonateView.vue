@@ -2,7 +2,7 @@
 .container
   h4 Donate
   p(v-html='get_label("donate")')
-  .col-lg-6.small
+  .col-lg-6
     ul.nav.nav-tabs(id="currencies-tab" role="tablist")
       li.nav-item(role="presentation")
         button.nav-link.active(id="btc-tab" data-bs-toggle="tab" data-bs-target="#btc-tab-pane" type="button" role="tab" aria-controls="btc-tab-pane" aria-selected="true") BTC

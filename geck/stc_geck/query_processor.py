@@ -1,5 +1,4 @@
 import dataclasses
-import logging
 from typing import (
     Dict,
     List,
@@ -7,83 +6,42 @@ from typing import (
     Union,
 )
 
-from .advices import (
-    PR_TEMPORAL_RANKING_FORMULA,
-    TEMPORAL_RANKING_FORMULA,
-)
+from .advices import PR_TEMPORAL_RANKING_FORMULA
 from .utils import (
     inversed_type_icons,
     languages,
 )
 
 
-def _nexus_science_default_scorer_functions(query):
+def _default_scorer_function(query):
     if query and 'order_by:date' in query:
         return {'eval_expr': 'issued_at'}
     else:
         return {'eval_expr': PR_TEMPORAL_RANKING_FORMULA}
 
 
-def _nexus_free_default_scorer_functions(query):
-    if query and 'order_by:date' in query:
-        return {
-            'eval_expr': 'issued_at'
-        }
-    else:
-        return {
-            'eval_expr': TEMPORAL_RANKING_FORMULA
-        }
-
-
 default_field_aliases = {
-    'nexus_free': {
-        'author': 'authors.name',
-        'authors': 'authors.name',
-        'cid': 'links.cid',
-        'extension': 'links.extension',
-        'format': 'links.extension',
-        'isbns': 'id.isbns',
-        'issns': 'metadata.issns',
-        'lang': 'language',
-        'pub': 'metadata.publisher',
-        'ser': 'metadata.series',
-    },
-    'nexus_science': {
-        'author': 'authors.family',
-        'authors': 'authors.family',
-        'cid': 'links.cid',
-        'ev': 'metadata.event.name',
-        'extension': 'links.extension',
-        'format': 'links.extension',
-        'isbns': 'metadata.isbns',
-        'issns': 'metadata.issns',
-        'lang': 'language',
-        'pub': 'metadata.publisher',
-        'rd': 'references.doi',
-        'ser': 'metadata.series',
-    }
-}
-
-default_scorer_functions = {
-    'nexus_free': _nexus_free_default_scorer_functions,
-    'nexus_science': _nexus_science_default_scorer_functions,
-}
-
-default_removed_fields = {
-    'nexus_free': ["doi", "rd", "ev", "concepts"],
-    'nexus_science': ["id"],
+    'author': 'authors.family',
+    'authors': 'authors.family',
+    'cid': 'links.cid',
+    'doi': 'id.dois',
+    'ev': 'metadata.event.name',
+    'extension': 'links.extension',
+    'format': 'links.extension',
+    'isbn': 'metadata.isbns',
+    'isbns': 'metadata.isbns',
+    'issn': 'metadata.issns',
+    'issns': 'metadata.issns',
+    'lang': 'languages',
+    'pub': 'metadata.publisher',
+    'rd': 'references.doi',
+    'ser': 'metadata.series',
 }
 
 default_term_field_mapper_configs = {
-    'nexus_free': {
-        'doi_isbn': {'fields': ['id.isbns']},
-        'isbn': {'fields': ['id.isbns']},
-    },
-    'nexus_science': {
-        'doi': {'fields': ['doi']},
-        'doi_isbn': {'fields': ['metadata.isbns']},
-        'isbn': {'fields': ['metadata.isbns']},
-    }
+    'doi': {'fields': ['id.dois']},
+    'doi_isbn': {'fields': ['metadata.isbns']},
+    'isbn': {'fields': ['metadata.isbns']},
 }
 
 
@@ -97,13 +55,11 @@ class PreprocessedQuery:
 
 
 class QueryProcessor:
-    def __init__(self, profile: str):
-        self.query_builders = {}
-        for index_alias in ['nexus_free', 'nexus_science']:
-            self.query_builders[index_alias] = IndexQueryBuilder.from_profile(
-                index_alias,
-                profile
-            )
+    def __init__(self, index_alias: str, profile: str):
+        self.query_builder = IndexQueryBuilder.from_profile(
+            index_alias,
+            profile
+        )
 
     def process_filters(self, query):
         for term in query.split():
@@ -141,35 +97,24 @@ class QueryProcessor:
         limit: int,
         offset: int = 0,
         is_fieldnorms_scoring_enabled: Optional[bool] = None,
-        index_aliases: Optional[List[str]] = None,
         collector: str = 'top_docs',
         extra_filter: Optional[Dict] = None,
-        fields: Optional[Union[List[str], Dict[str, List[str]]]] = None,
+        fields: Optional[Union[List[str]]] = None,
         skip_doi_isbn_term_field_mapper: bool = False,
         query_language: str = 'en',
     ):
-        queries = []
         query = self.process_filters(query)
-        if not index_aliases:
-            index_aliases = ["nexus_free", "nexus_science"]
-        if isinstance(fields, List):
-            new_fields = {}
-            for index_alias in index_aliases:
-                new_fields[index_alias] = fields
-            fields = new_fields
-        for index_alias in index_aliases:
-            queries.append(self.query_builders[index_alias].build(
-                query,
-                limit,
-                offset,
-                is_fieldnorms_scoring_enabled=is_fieldnorms_scoring_enabled,
-                collector=collector,
-                extra_filter=extra_filter,
-                fields=fields[index_alias] if fields else None,
-                skip_doi_isbn_term_field_mapper=skip_doi_isbn_term_field_mapper,
-                query_language=query_language,
-            ))
-        return queries
+        return self.query_builder.build(
+            query,
+            limit,
+            offset,
+            is_fieldnorms_scoring_enabled=is_fieldnorms_scoring_enabled,
+            collector=collector,
+            extra_filter=extra_filter,
+            fields=fields,
+            skip_doi_isbn_term_field_mapper=skip_doi_isbn_term_field_mapper,
+            query_language=query_language,
+        )
 
 
 class IndexQueryBuilder:
@@ -194,11 +139,6 @@ class IndexQueryBuilder:
 
     @staticmethod
     def from_profile(index_alias: str, profile: str):
-        logging.getLogger('statbox').info({
-            'action': 'build_query_processor',
-            'index_alias': index_alias,
-            'profile': profile,
-        })
         match profile:
             case 'light':
                 return IndexQueryBuilder(
@@ -210,12 +150,12 @@ class IndexQueryBuilder:
                     },
                     is_fieldnorms_scoring_enabled=False,
                     exact_matches_promoter=None,
-                    term_field_mapper_configs=default_term_field_mapper_configs[index_alias]
+                    term_field_mapper_configs=default_term_field_mapper_configs
                 )
             case 'full':
                 return IndexQueryBuilder(
                     index_alias=index_alias,
-                    scorer_function=default_scorer_functions[index_alias],
+                    scorer_function=_default_scorer_function,
                     snippet_configs={
                         'title': 1024,
                         'abstract': 140,
@@ -223,11 +163,11 @@ class IndexQueryBuilder:
                     is_fieldnorms_scoring_enabled=True,
                     exact_matches_promoter={
                         'slop': 0,
-                        'boost': 1.5,
+                        'boost': 2.0,
                         'fields': ['abstract', 'extra', 'title']
                     },
-                    removed_fields=default_removed_fields[index_alias],
-                    term_field_mapper_configs=default_term_field_mapper_configs[index_alias]
+                    removed_fields=PR_TEMPORAL_RANKING_FORMULA,
+                    term_field_mapper_configs=default_term_field_mapper_configs
                 )
             case _:
                 raise ValueError('incorrect profile')
@@ -251,10 +191,11 @@ class IndexQueryBuilder:
             query_parser_config = {
                 'query_language': query_language,
                 'term_limit': 20,
-                'field_aliases': default_field_aliases[self.index_alias],
+                'field_aliases': default_field_aliases,
                 'field_boosts': {
-                    'title': 1.3,
+                    'authors': 2.0,
                     'extra': 0.3,
+                    'title': 2.0,
                 }
             }
             if self.exact_matches_promoter:

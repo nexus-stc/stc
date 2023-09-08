@@ -1,9 +1,5 @@
 {
-  "indices": {
-      "nexus_free": "bafyb4icgalhekgrfelhnxwzejhoujdoyp56jobdpnyuci7me5wx4ymojoa",
-      "nexus_media": "bafyb4if3exj3o2u3sm2s4xvbeu7fkpwm62g7euuzwlfffvq6nbbwueeloq",
-      "nexus_science": "bafyb4iavzshyl4ekrx25kwco5jlrwtglp2mkbjofwb3lid6jrks6ofhhvq"
-  },
+  "index": "bafyb4ib7we5sjobz4vzka5nsqzgraen5dmjckou4tv2l242ujlk6mrn4g4",
   "ipfs_api_multiaddr": "/ip4/10.1.2.3/tcp/5001",
   "ipfs_http_base_url": "http://10.1.2.3:8080"
 }

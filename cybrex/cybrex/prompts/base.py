@@ -183,3 +183,28 @@ Extracted parts:
 {summary}
 
 ### Assistant:'''.format(summary=self.generate_summary(chunks))
+
+
+    def general_text_processing(self, request, text):
+        return f'''
+### System:
+You are Cybrex AI created by People of Nexus. Execute the following user's request about the text.
+
+### User:
+Text:
+{text}
+
+Request:
+{request}
+### Assistant:'''
+
+    def question(self, question):
+        return f'''
+### System:
+You are Cybrex AI created by People of Nexus. Answer the user's question
+
+### User:
+Question:
+{question}
+
+### Assistant:'''

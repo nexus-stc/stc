@@ -3,7 +3,7 @@ div(v-if="is_launched")
   .d-flex.justify-content-center
     .spinner-border(role="status")
   .d-flex.justify-content-center.m-5(v-if="label")
-    .small {{ label }}
+    div {{ label }}
 </template>
 
 <script lang="ts">

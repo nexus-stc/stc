@@ -1,4 +1,5 @@
 // @ts-nocheck
+const stamp = 'Nexus - Terra - 08 Sep 23';
 const translations = {
   en: {
     about: 'About',
@@ -7,7 +8,7 @@ const translations = {
     <p>We have already transferred to STC:</p>
     <ul>
       <li>7 500 000 books</li>
-      <li>More than 1 000 000 of recent scientific papers</li>
+      <li>More than 2 000 000 of recent scientific papers</li>
     </ul>
     <p>However, there remains a multitude of knowledge that requires preservation and unchaining. We want <b>individuals capable of hosting and seeding</b> terabytes of data to join us in our mission.</p>
     <p>If you are interested in seeding, please reach us using the contacts below.</p>
@@ -18,9 +19,10 @@ const translations = {
     <p>The pace of liberating initiatives is too slow, and here we are, to help destruction of old, injust and improper chains.</p>
     `,
     about_intro: `
+    <p>You have met a full or partial installation of STC stamped as <b>${stamp}</b>.</p>
     <p>STC is a self-replicating search engine that grants sentient beings free and convenient access to knowledge discovered by the human race throughout its age of science and digital era.</p>
-    <p>Founded in 2021 year (Earth Time, Gregorian Calendar), STC relies upon <a href="https://github.com/izihawa/summa">Summa</a>, <a href="https://webassembly.org/">WASM</a> and <a href="https://ipfs.tech/">IPFS</a> for its operation.</p>
-    <p>STC is also a pure peer-to-peer system and does not have a centralized server. Queries made through the platform remain within the user's browser, and bookmarks are also stored locally. Therefore, users are solely responsible for backing up their bookmarks by using the export button on the Bookmark page.</p>
+    <p>Founded in 2021 year (Terra Time, Gregorian Calendar), STC relies upon <a href="https://github.com/izihawa/summa">Summa</a>, <a href="https://webassembly.org/">WASM</a> and <a href="https://ipfs.tech/">IPFS</a> for its operation.</p>
+    <p>STC is also a pure peer-to-peer system and does not have a centralized server. Queries made through the platform remain within the user's browser and/or distributed across semi-random peers. Bookmarks are also stored locally.</p>
     `,
     about_why: 'Why?',
     about_why_points: `
@@ -111,6 +113,7 @@ const translations = {
     `,
     search: 'Search',
     search_placeholder: 'by title, authors, content, doi...',
+    stamp: stamp,
     unsupported_browser: 'Unfortunately, you have unsupported browser. Try to update it or use another browser.',
     what_to_read: 'What To Read'
   },

@@ -43,7 +43,7 @@
       pre
         code
           | summa-cli 0.0.0.0:8082 attach-index nexus_science \
-          | '{"remote": {"config": {"method": "GET", "headers_template": {"range": "bytes={start}-{end}", "host": "standard--template--construct-org.ipns.localhost:8080"}, "url_template": "http://localhost:8080/data/nexus_science/{file_name}", "cache_config": {"cache_size": 536870912}}}}'
+          | '{"remote": {"config": {"method": "GET", "headers_template": {"range": "bytes={start}-{end}", "host": "standard--template--construct-org.ipns.localhost:8080"}, "url_template": "http://localhost:8080/data/{file_name}", "cache_config": {"cache_size": 536870912}}}}'
       p
         | <b>Pros:</b> always up to date
         br
@@ -54,7 +54,7 @@
       pre
         code
           | mkdir -p data/bin/nexus_science
-          | ipfs get /ipns/standard-template-construct.org/data/nexus_free --output data/bin/nexus_science --progress
+          | ipfs get /ipns/standard-template-construct.org/data --output data/bin/nexus_science --progress
       p Then, attach it to Summa
       pre
         code summa-cli 0.0.0.0:82 attach-index nexus_free '{"file": {}}'
@@ -67,12 +67,6 @@
       p <a href="https://github.com/nexus-stc/stc/tree/master/geck">GECK</a> contains embedded Summa server that can be utlizied. Install it and then launch serving
       pre
         code geck --ipfs-http-base-url http://127.0.0.1:8080 - serve
-  p The STC provides three different search indices:
-  ul
-    li <code>nexus_science</code> - all DOI-stamped papers and books
-    li <code>nexus_free</code> - all non-DOI-stamped books (mostly fiction and non-technical writings)
-    li <code>nexus_media</code> - a media database that is updated occasionally
-  p Above, we are using <code>nexus_science</code> as an example, but you can use any index you want.
   p Now, you have set up Summa with an attached STC index that can be used through the CLI, Python API, or GRPC API in any language.
 </template>
 <script lang="ts">

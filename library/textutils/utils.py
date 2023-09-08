@@ -1,6 +1,8 @@
 import re
 import struct
 
+import isbnlib
+
 from . import (
     EMAIL_REGEX,
     HASHTAG_REGEX,
@@ -103,3 +105,24 @@ def split_at(s, pos):
 
 def unwind_hashtags(text):
     return re.sub(HASHTAG_REGEX, r'\2', text)
+
+
+def process_isbns(isbnlikes):
+    isbns = []
+    for isbnlike in isbnlikes:
+        if not isbnlike:
+            continue
+        if isbnlike[0].isalpha() and len(isbnlike) == 10 and isbnlike[1:].isalnum():
+            isbns.append(isbnlike.upper())
+            continue
+        isbn = isbnlib.canonical(isbnlike)
+        if not isbn:
+            continue
+        isbns.append(isbn)
+        if isbnlib.is_isbn10(isbn):
+            if isbn13 := isbnlib.to_isbn13(isbn):
+                isbns.append(isbn13)
+        elif isbnlib.is_isbn13(isbn):
+            if isbn10 := isbnlib.to_isbn10(isbn):
+                isbns.append(isbn10)
+    return list(sorted(set(isbns)))

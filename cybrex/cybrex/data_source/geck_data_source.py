@@ -22,26 +22,15 @@ class GeckDataSource(BaseDataSource):
         limit: int = 5,
         sources: Optional[List[str]] = None
     ) -> List[SourceDocument]:
-        queries = self.geck.get_query_processor().process(query, limit=limit, index_aliases=sources)
+        queries = self.geck.get_query_processor().process(query, limit=limit)
         response = await self.geck.get_summa_client().search(queries)
         source_documents = []
         for scored_document in response.collector_outputs[0].documents.scored_documents:
             document = orjson.loads(scored_document.document)
-            match scored_document.index_alias:
-                case 'nexus_science':
-                    document_id = f'nexus_science:doi:{document["doi"]}'
-                case 'nexus_free':
-                    if 'id' in document:
-                        if 'isbns' in document['id']:
-                            document_id = f'nexus_free:id.isbns:{document["id"]["isbns"][0]}'
-                        elif 'internal_iso' in document['id']:
-                            document_id = f'nexus_free:id.internal_iso:{document["id"]["internal_iso"]}'
-                        else:
-                            continue
-                    else:
-                        continue
-                case _:
-                    raise RuntimeError("Unsupported table")
+            if 'dois' in document['id']:
+                document_id = f'doi:{document["dois"][0]}'
+            elif 'libgen_ids' in document['libgen_ids']:
+                document_id = f'libgen_ids:{document["dois"][0]}'
             source_documents.append(SourceDocument(
                 document=document,
                 document_id=document_id,

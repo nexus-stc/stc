@@ -8,12 +8,13 @@ import ipfs_hamt_directory_py
 from telethon import events
 from telethon.tl.types import DocumentAttributeFilename
 
+from library.document import LinksWrapper
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
 from library.textutils.utils import cast_string_to_single_string
 from tgbot.translations import t
-from tgbot.views.telegram.base_holder import BaseHolder
+from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 
 from .base import BaseHandler
 
@@ -24,24 +25,38 @@ def create_car(documents, name_template) -> (str, bytes):
         output_car = os.path.join(td, 'output.car')
         with open(input_data, 'wb') as f:
             for document in documents:
-                document_holder = BaseHolder.create(document)
-                link = document_holder.links[0]
-                if link['type'] != 'primary':
-                    continue
-                item_name = name_template.format(
-                    doi=document_holder.doi,
-                    md5=document_holder.md5,
-                    suggested_filename=document_holder.get_purified_name({
-                        'doi': document_holder.doi,
-                        'cid': link['cid'],
-                    }),
-                ) + '.' + link.get('extension', 'pdf')
-                f.write(quote(item_name, safe='').encode())
-                f.write(b' ')
-                f.write(link['cid'].encode())
-                f.write(b' ')
-                f.write(str(link.get('filesize') or 0).encode())
-                f.write(b'\n')
+                document_holder = BaseTelegramDocumentHolder.create(document)
+                links = LinksWrapper(document_holder.links)
+                if link := links.get_link_with_extension('pdf'):
+                    item_name = name_template.format(
+                        doi=document_holder.doi,
+                        md5=document_holder.md5,
+                        suggested_filename=document_holder.get_purified_name({
+                            'doi': document_holder.doi,
+                            'cid': link['cid'],
+                        }),
+                    ) + '.' + 'pdf'
+                    f.write(quote(item_name, safe='').encode())
+                    f.write(b' ')
+                    f.write(link['cid'].encode())
+                    f.write(b' ')
+                    f.write(str(link.get('filesize') or 0).encode())
+                    f.write(b'\n')
+                if link := links.epub_link:
+                    item_name = name_template.format(
+                        doi=document_holder.doi,
+                        md5=document_holder.md5,
+                        suggested_filename=document_holder.get_purified_name({
+                            'doi': document_holder.doi,
+                            'cid': link['cid'],
+                        }),
+                    ) + '.' + 'epub'
+                    f.write(quote(item_name, safe='').encode())
+                    f.write(b' ')
+                    f.write(link['cid'].encode())
+                    f.write(b' ')
+                    f.write(str(link.get('filesize') or 0).encode())
+                    f.write(b'\n')
         cid = ipfs_hamt_directory_py.from_file(input_data, output_car, td)
         with open(output_car, 'rb') as f:
             return cid, f.read()
@@ -99,37 +114,33 @@ class SeedHandler(BaseHandler):
         )
 
         if random_seed:
-            queries = self.application.geck.get_query_processor().process(
+            query = self.application.geck.get_query_processor().process(
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
-                index_aliases=self.bot_index_aliases,
-                extra_filter={'term': {'field': 'links.type', 'value': 'primary'}},
+                extra_filter={'term': {'field': 'links.extension', 'value': 'pdf'}},
                 fields={
-                    'nexus_free': ['links', 'title', 'authors', 'issued_at', 'metadata'],
-                    'nexus_science': ['links', 'doi', 'title', 'authors', 'issued_at', 'metadata'],
+                    'nexus_science': ['links', 'id', 'title', 'authors', 'issued_at', 'metadata'],
                 },
                 collector='reservoir_sampling',
                 limit=page_size,
             )
 
-            response = await self.application.summa_client.search(queries)
+            response = await self.application.summa_client.search(query)
             documents = response.collector_outputs[0].documents.scored_documents
             count = response.collector_outputs[1].count.count
         else:
-            queries = self.application.geck.get_query_processor().process(
+            query = self.application.geck.get_query_processor().process(
                 query.strip(),
                 is_fieldnorms_scoring_enabled=False,
-                index_aliases=self.bot_index_aliases,
-                extra_filter={'term': {'field': 'links.type', 'value': 'primary'}},
+                extra_filter={'term': {'field': 'links.extension', 'value': 'pdf'}},
                 fields={
-                    'nexus_free': ['links', 'title', 'authors', 'issued_at', 'metadata'],
-                    'nexus_science': ['links', 'doi', 'title', 'authors', 'issued_at', 'metadata'],
+                    'nexus_science': ['links', 'id', 'title', 'authors', 'issued_at', 'metadata'],
                 },
                 offset=page * page_size,
                 limit=page_size,
             )
 
-            response = await self.application.summa_client.search(queries)
+            response = await self.application.summa_client.search(query)
             documents = response.collector_outputs[0].documents.scored_documents
             count = response.collector_outputs[1].count.count
 

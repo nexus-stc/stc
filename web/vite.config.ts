@@ -57,10 +57,11 @@ export default defineConfig({
       allow: ['..']
     },
     proxy: {
-      '/data': {
-        target: `${summa_config.ipfs_http_base_url}/ipfs/bafyb4ibqcg3sqpoyu6revg7kgtsgxze7ssxvgg5zkdlfv6jjrtv3gvrsqe`,
+      '^/data': {
+        target: `${summa_config.ipfs_http_base_url}/ipns/standard-template-construct.org/data`,
         changeOrigin: true,
-        secure: false
+        secure: false,
+        rewrite: (path) => path.replace(/^\/data/, ''),
       }
     }
   }

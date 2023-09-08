@@ -55,7 +55,6 @@ class TelegramApplication(AioRootThing):
         self.geck = StcGeck(
             ipfs_http_base_url=self.config['ipfs']['http']['base_url'],
             ipfs_data_directory=self.config['summa']['embed']['ipfs_data_directory'],
-            index_names=self.config['summa']['embed']['index_names'],
             grpc_api_endpoint=self.config['summa']['endpoint'],
         )
         self.starts.append(self.geck)
@@ -75,7 +74,8 @@ class TelegramApplication(AioRootThing):
         self.cloudflare_ipfs_http_client = IpfsHttpClient(base_url='https://cloudflare-ipfs.com', retry_delay=5.0)
         self.starts.append(self.cloudflare_ipfs_http_client)
 
-        self.grobid_client = None
+        self.grobid_pool = None
+        self.sciparser = None
         if (
             'grobid' in self.config
             and self.config['grobid'].get('enabled', True)
@@ -127,7 +127,7 @@ class TelegramApplication(AioRootThing):
                 self.summa_client,
                 self.config['file_flow'],
                 index_alias='nexus_science',
-                pool=ProcessPoolExecutor()
+                pool=ProcessPoolExecutor(max_workers=128)
             )
             self.starts.append(self.file_flow)
 

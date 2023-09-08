@@ -78,7 +78,7 @@ class VoteHandler(BaseCallbackQueryHandler):
             await message.edit(text, buttons=None)
             pdf_file = await message.download_media(file=bytes)
             doi = self.doi_regexp.search(text).group('doi').strip().lower()
-            document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'doi', doi)
+            document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'id.dois', doi)
             await self.application.file_flow.pin_add(document, pdf_file, with_commit=True)
 
             await self.application.database.add_approve(message.id, 1)

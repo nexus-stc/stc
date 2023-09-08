@@ -5,7 +5,7 @@
   div(v-else-if="loading_failure_reason !== undefined")
     connectivity-issues-view(:reason="loading_failure_reason")
   div(v-else)
-    .d-flex.small
+    .d-flex
       i.ms-3.me-auto {{ bookmarks.length }} {{ get_label('bookmarks') }}
       a.text-secondary(type="button" @click.stop.prevent="export_bookmarks") export
     div.mt-3.mb-3(v-if="!is_loading")
@@ -27,9 +27,6 @@ import { defineComponent } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import ConnectivityIssuesView from '@/components/ConnectivityIssues.vue'
-import NexusFreeDocument from '@/components/document/NexusFree.vue'
-import NexusMediaDocument from '@/components/document/NexusMedia.vue'
-import NexusScienceDocument from '@/components/document/NexusScience.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SearchList from '@/components/SearchList.vue'
 import { user_db } from '@/database'
@@ -39,9 +36,6 @@ export default defineComponent({
   components: {
     ConnectivityIssuesView,
     LoadingSpinner,
-    NexusFreeDocument,
-    NexusMediaDocument,
-    NexusScienceDocument,
     RouterLink,
     SearchList
   },
