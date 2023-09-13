@@ -386,13 +386,13 @@ class CybrexAI(AioThing):
         ids = set([chunk['document_id'] for chunk in chunks])
         search_requests = []
         for id_ in ids:
-            index_alias, field, value = id_.split(':', 2)
+            field, value = id_.split(':', 1)
             search_request = {
-                'index_alias': index_alias,
+                'index_alias': 'nexus_science',
                 'query': {'match': {'value': f'{field}:"{value}"'}},
                 'collectors': [{'top_docs': {'limit': 1}}],
             }
-            search_requests.append(self.geck.get_summa_client().search_documents([search_request]))
+            search_requests.append(self.geck.get_summa_client().search_documents(search_request))
         _summa_documents = await asyncio.gather(*search_requests)
         summa_documents = []
         for summa_document in _summa_documents:

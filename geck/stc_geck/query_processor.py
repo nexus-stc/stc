@@ -66,7 +66,7 @@ class QueryProcessor:
             if term in inversed_type_icons:
                 query = query.replace(term, f' type:+{inversed_type_icons[term]} ')
             if term in languages:
-                query = query.replace(term, f' language:+{languages[term]} ')
+                query = query.replace(term, f' languages:+{languages[term]} ')
         return query
 
     def preprocess_query(self, query):

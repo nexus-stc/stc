@@ -8,7 +8,7 @@
         connectivity-issues-view(:reason="loading_failure_reason")
       div(v-else)
         div.float-end.small.mb-1
-          a(href="#/help/how-to-search" target=_blank) How to search?
+          a(href="#/help/how-to-search" target="_blank") How to search?
         form(@submit.stop.prevent="on_search")
           div.input-group
             input.form-control.form-control-md(v-model="query" type="search" :placeholder="get_label('search_placeholder')" autofocus)
@@ -25,7 +25,7 @@
               select.form-select.form-selectm(v-model="selected_timerange" @change="switch_parameter()")
                 option(v-for="[year, display_year] of years" :value="year") {{ display_year }}
             .col-1.offset-5.col-lg-1.offset-lg-0
-              h4.mt-1.me-3.text-decoration-none.text-end(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
+              h4.mt-1.text-center(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
           div(v-if="total_documents !== null")
             hr
             i.ms-3 {{ total_documents }} {{ get_label('found') }}
@@ -49,10 +49,8 @@
 
 <script lang="ts">
 // @ts-nocheck
-import { useObservable } from '@vueuse/rxjs'
-import { liveQuery } from 'dexie'
-import { defineComponent } from 'vue'
-import { RouterLink } from 'vue-router'
+import {defineComponent} from 'vue'
+import {RouterLink} from 'vue-router'
 
 import ConnectivityIssuesView from '@/components/ConnectivityIssues.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -97,8 +95,9 @@ export default defineComponent({
       type: Boolean
     }
   },
-  data () {
+  data() {
     return {
+      current_query_id: 0,
       has_next: false,
       page: Number.parseInt((this.$route.query.p ?? 1).toString()),
       query: this.$route.query.q,
@@ -120,16 +119,16 @@ export default defineComponent({
     }
   },
   watch: {
-    $route () {
+    $route() {
       this.load_params()
       void this.submit()
     }
   },
-  async created () {
+  async created() {
     await this.submit()
   },
   methods: {
-    load_params () {
+    load_params() {
       this.page = Number.parseInt((this.$route.query.p ?? 1).toString())
       this.query = this.$route.query.q
       this.selected_type = this.$route.query.t
@@ -137,18 +136,18 @@ export default defineComponent({
       this.selected_timerange = this.$route.query.y
       this.is_date_sorting_enabled = this.$route.query.ds === 'true'
     },
-    on_search (e: any) {
+    on_search(e: any) {
       this.is_date_sorting_enabled = false
       this.is_rolled = false;
       void this.set_page(1)
     },
-    async switch_parameter () {
+    async switch_parameter() {
       if (this.is_rolled && !this.query) {
         return await this.roll();
       }
       return await this.set_page(1);
     },
-    async set_page (new_page: number) {
+    async set_page(new_page: number) {
       if (new_page < 1) {
         new_page = 1
       } else {
@@ -165,78 +164,101 @@ export default defineComponent({
         })
       }
     },
-    remove_query () {
+    remove_query() {
       this.scored_documents = []
       this.total_documents = null
       this.has_next = false
       this.is_date_sorting_enabled = false
       document.title = 'STC'
     },
-    async roll () {
-      try {
-        this.is_documents_loading = true;
-        this.is_rolled = true;
-        this.total_documents = null;
-        const collector_outputs = await this.search_service.custom_search(this.query, {
-          page: 1,
-          page_size: 5,
-          type: this.selected_type,
-          language: this.selected_language,
-          timerange: this.selected_timerange,
-          random: true,
-        })
-        this.scored_documents = collector_outputs[0].collector_output.documents.scored_documents
-      } catch (e) {
-        console.error(e)
-        this.loading_documents_failure_reason = e
-      } finally {
-        this.is_documents_loading = false
+    async roll() {
+      this.is_documents_loading = true;
+      this.is_rolled = true;
+      this.total_documents = null;
+      this.current_query_id += 1;
+      const guard = this.current_query_id.valueOf();
+      const search_job = async () => {
+        try {
+          const collector_outputs = await this.search_service.custom_search(this.query, {
+            page: 1,
+            page_size: 5,
+            type: this.selected_type,
+            language: this.selected_language,
+            timerange: this.selected_timerange,
+            random: true,
+          })
+          if (guard == this.current_query_id) {
+            this.scored_documents = collector_outputs[0].collector_output.documents.scored_documents
+          }
+        } catch (e) {
+          console.error(e)
+          if (guard == this.current_query_id) {
+            this.loading_documents_failure_reason = e
+          }
+        } finally {
+          if (guard == this.current_query_id) {
+            this.is_documents_loading = false
+          }
+        }
       }
+      search_job()
     },
-    async submit () {
+    async submit() {
       if ((this.query ?? '') === '') {
         this.search_used = false
         this.remove_query();
         return
       }
+
       document.title = `${this.query} - STC`
       this.total_documents = null
       this.is_documents_loading = true
       this.search_used = true
       this.is_rolled = false;
 
-      try {
-        const collector_outputs = await this.search_service.custom_search(
-          this.query,
-          {
-            type: this.selected_type,
-            page: this.page,
-            language: this.selected_language,
-            timerange: this.selected_timerange,
-            is_date_sorting_enabled: this.is_date_sorting_enabled
+      this.current_query_id += 1;
+      const guard = this.current_query_id.valueOf();
+      const search_job = async () => {
+        try {
+          const collector_outputs = await this.search_service.custom_search(
+              this.query,
+              {
+                type: this.selected_type,
+                page: this.page,
+                language: this.selected_language,
+                timerange: this.selected_timerange,
+                is_date_sorting_enabled: this.is_date_sorting_enabled
+              }
+          )
+          if (guard == this.current_query_id) {
+            this.scored_documents =
+                collector_outputs[0].collector_output.documents.scored_documents
+            this.total_documents =
+                collector_outputs[1].collector_output.count.count
+            this.has_next = collector_outputs[0].collector_output.documents.has_next
+            // Pre-fetch next page
+            if (this.page > 1 && this.has_next) {
+              this.search_service.custom_search(this.query, {
+                type: this.selected_type,
+                page: this.page + 1,
+                language: this.selected_language,
+                timerange: this.selected_timerange,
+                is_date_sorting_enabled: this.is_date_sorting_enabled
+              })
+            }
           }
-        )
-        this.scored_documents =
-          collector_outputs[0].collector_output.documents.scored_documents
-        this.total_documents =
-          collector_outputs[1].collector_output.count.count
-        this.has_next = collector_outputs[0].collector_output.documents.has_next
-        // Pre-fetch next page
-        if (this.page > 1 && this.has_next) {
-          this.search_service.custom_search(this.query, {
-            type: this.selected_type,
-            page: this.page + 1,
-            language: this.selected_language,
-            timerange: this.selected_timerange,
-            is_date_sorting_enabled: this.is_date_sorting_enabled
-          })
+        } catch (e) {
+          console.error(e)
+          if (guard == this.current_query_id) {
+            this.loading_documents_failure_reason = e
+          }
+        } finally {
+          if (guard == this.current_query_id) {
+            this.is_documents_loading = false
+          }
         }
-      } catch (e) {
-        console.error(e)
-        this.loading_documents_failure_reason = e
-      } finally {
-        this.is_documents_loading = false
-      }
+      };
+      search_job();
     }
   }
 })

@@ -8,7 +8,7 @@ async function get_default_cover() {
 export const default_cover = await get_default_cover()
 
 export function format_bytes (bytes: number, decimals = 2) {
-  if (!+bytes) return '0 Bytes'
+  if (!+bytes) return '0&nbsp;Bytes'
 
   const k = 1024
   const dm = decimals < 0 ? 0 : decimals
@@ -16,7 +16,7 @@ export function format_bytes (bytes: number, decimals = 2) {
 
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))}&nbsp;${sizes[i]}`
 }
 
 export function format_date (unixtime: bigint): string {

@@ -21,13 +21,22 @@ class QdrantVectorStorage(BaseVectorStorage):
         self.collection_name = collection_name
         self.embedding_function = embedding_function
         self.force_recreate = force_recreate
+        self.is_existing = False
+
+    def _exists_collection(self, collection_name):
+        if self.is_existing:
+            return True
+        collections = self.db.get_collections()
+        for collection in collections.collections:
+            if collection.name == collection_name:
+                self.is_existing = True
+                return True
+        return False
 
     def _ensure_collection(self, collection_name, size):
         if not self.force_recreate:
-            collections = self.db.get_collections()
-            for collection in collections.collections:
-                if collection.name == collection_name:
-                    return
+            if self._exists_collection(collection_name):
+                return
             self.db.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(size=size, distance=Distance.COSINE),
@@ -38,6 +47,7 @@ class QdrantVectorStorage(BaseVectorStorage):
                 vectors_config=VectorParams(size=size, distance=Distance.COSINE),
             )
             self.force_recreate = False
+        self.is_existing = True
         self.db.create_payload_index(
             collection_name=collection_name,
             field_name="document_id",
@@ -45,6 +55,8 @@ class QdrantVectorStorage(BaseVectorStorage):
         )
 
     def get_by_field_value(self, field, value, sort: bool = True) -> List[dict]:
+        if not self._exists_collection(self.collection_name):
+            return []
         points, _ = self.db.scroll(
             collection_name=self.collection_name,
             scroll_filter=Filter(
@@ -63,6 +75,8 @@ class QdrantVectorStorage(BaseVectorStorage):
         return payloads
 
     def exists_by_field_value(self, field, value) -> bool:
+        if not self._exists_collection(self.collection_name):
+            return False
         points, _ = self.db.scroll(
             collection_name=self.collection_name,
             scroll_filter=Filter(

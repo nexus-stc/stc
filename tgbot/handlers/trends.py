@@ -1,5 +1,6 @@
 import datetime
 import io
+import json
 import re
 
 import pandas as pd
@@ -48,7 +49,7 @@ def derive_range(date_start: datetime.datetime, date_end: datetime.datetime):
         labels = [f'{period.year}' for period in ranges]
 
     timestamps = [period.to_timestamp().timestamp() for period in ranges]
-    query_ranges = list(map(lambda x: {"from": str(int(x[0])), "to": str(int(x[1]))}, zip(timestamps, timestamps[1:])))
+    query_ranges = list(map(lambda x: {"from": float(int(x[0])), "to": float(int(x[1]))}, zip(timestamps, timestamps[1:])))
 
     return query_ranges, labels[:-1]
 
@@ -56,7 +57,7 @@ def derive_range(date_start: datetime.datetime, date_end: datetime.datetime):
 class TrendsHelpHandler(BaseHandler):
     filter = events.NewMessage(
         incoming=True,
-        pattern=re.compile(r'^/trends$')
+        pattern=re.compile(r'^/trends?$')
     )
 
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
@@ -88,28 +89,24 @@ class TrendsBaseHandler(BaseHandler):
         series = {}
         for query in queries:
             aggregation = await self.application.summa_client.search({
-                'index_alias': ['nexus_science'],
-                'query': query.lower(),
+                'index_alias': 'nexus_science',
+                'query': {'match': {'value': query.lower()}},
                 'collectors': [{
-                    'aggregation': {'aggregations': {
+                    'aggregation': {'aggregations': json.dumps({
                         'topics_per_year': {
-                            'bucket': {
-                                'range': {
-                                    'field': 'issued_at',
-                                    'ranges': query_ranges,
-                                },
-                                'sub_aggregation': {
-                                    'topics': {
-                                        'metric': {
-                                            'stats': {
-                                                'field': 'issued_at',
-                                            }
-                                        }
+                            'range': {
+                                'field': 'issued_at',
+                                'ranges': query_ranges,
+                            },
+                            'aggs': {
+                                'topics': {
+                                    'stats': {
+                                        'field': 'issued_at',
                                     }
                                 }
                             }
                         }
-                    }}}
+                    })}}
                 ],
             })
 
@@ -120,8 +117,8 @@ class TrendsBaseHandler(BaseHandler):
 
             docs = []
             for output in aggregation.collector_outputs:
-                for bucket in output.aggregation.aggregation_results['topics_per_year'].bucket.range.buckets[1:-1]:
-                    docs.append(int(bucket.doc_count))
+                for bucket in json.loads(output.aggregation.aggregation_results)['topics_per_year']['buckets'][1:-1]:
+                    docs.append(int(bucket['doc_count']))
             series[query] = pd.Series(docs)
 
         data = pd.DataFrame({'date': labels, **series})
@@ -150,7 +147,7 @@ class TrendsBaseHandler(BaseHandler):
 class TrendsHandler(TrendsBaseHandler):
     filter = events.NewMessage(
         incoming=True,
-        pattern=re.compile(r'^/trends(?:@\w+)?\s+(.*)\s+to\s+(.*)\n+([\S\s]*)$')
+        pattern=re.compile(r'^/trends?(?:@\w+)?\s+(.*)\s+to\s+(.*)\n+([\S\s]*)$')
     )
     is_group_handler = True
 
@@ -168,7 +165,7 @@ class TrendsHandler(TrendsBaseHandler):
 class TrendsEditHandler(TrendsBaseHandler):
     filter = events.MessageEdited(
         incoming=True,
-        pattern=re.compile(r'^/trends(?:@\w+)?\s+(.*)\s+to\s+(.*)\n+([\S\s]*)$')
+        pattern=re.compile(r'^/trends?(?:@\w+)?\s+(.*)\s+to\s+(.*)\n+([\S\s]*)$')
     )
     is_group_handler = True
 

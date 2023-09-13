@@ -85,7 +85,7 @@ class CybrexCli:
             references = []
             visited = set()
             for chunk in chunks:
-                index_alias, field, value = chunk['document_id'].split(':', 2)
+                field, value = chunk['document_id'].split(':', 1)
                 document_id = f'{field}:{value}'
                 if document_id in visited:
                     continue
@@ -131,7 +131,7 @@ class CybrexCli:
             )
             references = []
             for chunk in chunks:
-                index_alias, field, value = chunk['document_id'].split(':', 2)
+                field, value = chunk['document_id'].split(':', 1)
                 document_id = f'{field}:{value}'
                 references.append(f' - {document_id}: {chunk["title"]}\n   {chunk["text"]}')
             references = '\n'.join(references)

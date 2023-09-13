@@ -5,7 +5,10 @@ import json
 import logging
 import os.path
 import sys
-from typing import Optional
+from typing import (
+    List,
+    Optional,
+)
 
 import fire
 import humanfriendly
@@ -59,7 +62,7 @@ class StcGeckCli:
             print(f"{colored('INFO', 'green')}: Using existent instance on {self.geck.grpc_api_endpoint}", file=sys.stderr)
 
     @exception_handler
-    async def documents(self):
+    async def documents(self, query_filter: Optional[dict] = None, fields: Optional[List[str]] = None):
         """
         Stream all STC chunks.
 
@@ -67,7 +70,11 @@ class StcGeckCli:
         """
         self.prompt()
         async with self.geck as geck:
-            async for document in geck.get_summa_client().documents(self.index_alias):
+            async for document in geck.get_summa_client().documents(
+                self.index_alias,
+                query_filter=query_filter,
+                fields=fields,
+            ):
                 print(document)
 
     @exception_handler

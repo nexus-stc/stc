@@ -68,6 +68,10 @@ class DownloadTask(LongTask):
         super().__init__(application, request_context, document_holder)
         self.download_link = download_link
 
+    @property
+    def task_id(self):
+        return self.task_id_for(self.download_link["cid"])
+
     async def long_task(self, request_context: RequestContext):
         throttle_secs = 3.0
 
@@ -286,7 +290,7 @@ class DownloadHandler(BaseCallbackQueryHandler):
             if link['cid'] == cid:
                 download_link = link
 
-        if self.application.user_manager.has_task(request_context.chat['chat_id'], DownloadTask.task_id_for(document_holder)):
+        if self.application.user_manager.has_task(request_context.chat['chat_id'], DownloadTask.task_id_for(download_link['cid'])):
             async with safe_execution(is_logging_enabled=False):
                 await event.answer(
                     f'{t("ALREADY_DOWNLOADING", request_context.chat["language"])}',

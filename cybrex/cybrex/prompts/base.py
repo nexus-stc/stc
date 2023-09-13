@@ -56,7 +56,7 @@ ASSISTANT:'''.format(summary=self.generate_summary(chunks))
         for document_id, texts in chunk_summaries_grouped.items():
             texts = ' <..> '.join(texts)
             if document_id:
-                index_alias, field, value = document_id.split(':', 2)
+                field, value = document_id.split(':', 1)
                 chunk_summaries.append(f'{field.upper()}: {value}\nCONTENT: {texts}')
             else:
                 chunk_summaries.append(f'CONTENT: {texts}')

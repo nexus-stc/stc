@@ -52,12 +52,12 @@ class LongTask:
         self.task = None
 
     @classmethod
-    def task_id_for(cls, holder):
-        return f'{cls.__name__}_{holder.get_internal_id()}'
+    def task_id_for(cls, id_):
+        return f'{cls.__name__}_{id_}'
 
     @property
     def task_id(self):
-        return self.task_id_for(self.document_holder)
+        return self.task_id_for(self.document_holder.get_internal_id())
 
     def schedule(self):
         self.application.long_tasks.add(self)

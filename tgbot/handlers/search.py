@@ -142,7 +142,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                         if self.application.is_read_only():
                             text = f'{t("READ_ONLY_WARNING")}\n\n{text}'
                         return text, buttons, False
-                    if self.application.user_manager.has_task(request_context.chat['chat_id'], RetrieveTask.task_id_for(holder)):
+                    if self.application.user_manager.has_task(request_context.chat['chat_id'], RetrieveTask.task_id_for(holder.get_internal_id())):
                         return t("ALREADY_DOWNLOADING", request_context.chat["language"]), [close_button()], False
                     if self.application.user_manager.hit_limits(request_context.chat['chat_id']):
                         return t("TOO_MANY_DOWNLOADS", request_context.chat["language"]), [close_button()], False

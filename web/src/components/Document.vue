@@ -57,7 +57,6 @@ export default defineComponent({
     }
   },
   async created () {
-    console.log(this.document)
     this.find_references()
   },
   methods: {

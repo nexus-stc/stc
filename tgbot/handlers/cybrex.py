@@ -92,7 +92,7 @@ class CybrexHandler(BaseHandler):
         references = []
         visited = set()
         for chunk in chunks[:3]:
-            index_alias, field, value = chunk['document_id'].split(':', 2)
+            field, value = chunk['document_id'].split(':', 2)
             document_id = f'{field}:{value}'
             reference = f' - **{chunk["title"]}** - `{document_id}`'
             if show_texts:

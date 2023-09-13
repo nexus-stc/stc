@@ -180,14 +180,15 @@ class BaseViewBuilder:
         snippet = self.document_holder.snippets.get('abstract')
         text = None
         is_snippet = snippet and snippet.highlights
+
         if is_snippet:
             text = snippet
             text = highlight_html_snippet(text)
-            text = bleach.clean(text, tags=['highlight'], strip=True, strip_comments=True)
+            text = bleach.clean(text, tags=['abstract', 'highlight'], strip=True, strip_comments=True)
         elif abstract := self.document_holder.abstract:
             text = abstract
             text = replace_broken_tags(text)
-            text = bleach.clean(text, strip=True, strip_comments=True)
+            text = bleach.clean(text, tags=['abstract'], strip=True, strip_comments=True)
 
         if not text:
             return self
@@ -387,7 +388,7 @@ class BaseViewBuilder:
         )
 
     def add_view(self, bot_name):
-        return (
+        view = (
             self.add_icon(with_cover=True)
                 .add_title()
                 .limits(400, with_dots=True)
@@ -403,6 +404,7 @@ class BaseViewBuilder:
                 .add_tags(bot_name=bot_name)
                 .limits(3000)
         )
+        return view
 
     def add_isbns(self, on_newline=False, label=False, end_newline=False):
         if isbns := self.document_holder.isbns or self.document_holder.parent_isbns:
@@ -422,6 +424,8 @@ class BaseViewBuilder:
 
     def add_edition(self, with_brackets=True, bold=False):
         edition = self.document_holder.edition
+        if edition == '1':
+            return self
         if edition:
             if edition.isdigit():
                 if edition[-1] == '1':
@@ -454,17 +458,18 @@ class BaseViewBuilder:
         if self.document_holder.container_title:
             self.add('in')
             self.add(self.document_holder.container_title, bold=bold, italic=italic)
+        self.add_volume(bold=bold, italic=italic)
         return self
 
-    def add_volume(self):
+    def add_volume(self, bold=False, italic=False):
         if self.document_holder.volume:
             if self.document_holder.issue:
-                self.add(f'vol. {self.document_holder.volume}({self.document_holder.issue})')
+                self.add(f'vol. {self.document_holder.volume}({self.document_holder.issue})', bold=bold, italic=italic)
             else:
                 if safe_int(self.document_holder.volume):
-                    self.add(f'vol. {self.document_holder.volume}')
+                    self.add(f'vol. {self.document_holder.volume}', bold=bold, italic=italic)
                 else:
-                    self.add(self.document_holder.volume)
+                    self.add(self.document_holder.volume, bold=bold, italic=italic)
         return self
 
     def add_title(self, bold=True):
@@ -484,8 +489,8 @@ class BaseViewBuilder:
         return (
             self.add_authors(first_n_authors=first_n_authors, bot_name=bot_name)
                 .add_container(italic=markup)
-                .add_formatted_datetime()
                 .add_pages()
+                .add_formatted_datetime()
         )
 
     def add_filedata(self, show_filesize=False, with_leading_pipe=False):
@@ -498,7 +503,16 @@ class BaseViewBuilder:
 
     def add_abstract(self):
         if self.document_holder.abstract:
-            soup = BeautifulSoup(replace_broken_tags(despace_abstract(self.document_holder.abstract or '')), 'html.parser')
+            text = replace_broken_tags(despace_abstract(self.document_holder.abstract or ''))
+            soup = BeautifulSoup(text, 'html.parser')
+            for tag in soup.find_all('i'):
+                i_tag = soup.new_tag('i')
+                i_tag.append(tag.get_text())
+                tag.replace_with(i_tag)
+            for tag in soup.find_all('b'):
+                b_tag = soup.new_tag('b')
+                b_tag.append(tag.get_text())
+                tag.replace_with(b_tag)
             abstract = escape_format(unescape(md_converter.convert_soup(soup)), escape_font=False)
             self.add(abstract.strip(), escaped=True)
         return self
