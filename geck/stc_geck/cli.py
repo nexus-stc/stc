@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
 import functools
-import json
 import logging
 import os.path
 import sys
@@ -41,7 +40,6 @@ class StcGeckCli:
         grpc_api_endpoint: str,
         index_alias: str,
         timeout: int,
-        profile: str,
     ):
         self.geck = StcGeck(
             ipfs_http_base_url=ipfs_http_base_url,
@@ -50,7 +48,6 @@ class StcGeckCli:
             grpc_api_endpoint=grpc_api_endpoint,
             index_alias=index_alias,
             timeout=timeout,
-            profile=profile,
         )
         self.grpc_api_endpoint = grpc_api_endpoint
         self.index_alias = index_alias
@@ -130,26 +127,28 @@ class StcGeckCli:
         async with self.geck as geck:
             return await geck.random_cids(n=n)
 
-    async def search(self, query: str, limit: int = 1):
+    async def search(self, query: str, limit: int = 1, offset: int = 0):
         """
         Searches in STC using default Summa match queries.
         Examples: `doi:10.1234/abc, isbns:9781234567890, "fetal hemoglobin"`
 
         :param query: query in Summa match format
         :param limit: how many results to return, higher values incurs LARGE performance penalty.
+        :param offset:
 
         :return: metadata records
         """
         self.prompt()
         async with self.geck as geck:
             print(f"{colored('INFO', 'green')}: Searching {query}...", file=sys.stderr)
-            query_processor = geck.get_query_processor()
-            processed_query = query_processor.process(query, limit=limit)
-            logging.getLogger('statbox').info({'action': 'search', 'processed_query': processed_query})
+            logging.getLogger('statbox').info({'action': 'search', 'query': query})
             summa_client = geck.get_summa_client()
-            response = await summa_client.search(processed_query)
-            documents = list(map(lambda x: json.loads(x.document), response.collector_outputs[0].documents.scored_documents))
-            return documents
+            query = {
+                'index_alias': self.index_alias,
+                'query': {'match': {'value': query.lower()}},
+                'collectors': [{'top_docs': {'limit': limit, 'offset': offset}}],
+            }
+            return await summa_client.search_documents(query)
 
     async def serve(self):
         """
@@ -185,7 +184,6 @@ async def stc_geck_cli(
     ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
     grpc_api_endpoint: str = '127.0.0.1:10082',
     index_alias: str = 'nexus_science',
-    profile: str = 'light',
     timeout: int = 120,
     debug: bool = False,
 ):
@@ -195,7 +193,6 @@ async def stc_geck_cli(
     :param ipfs_data_directory: path to the directory with index
     :param grpc_api_endpoint: port used for Summa
     :param index_alias: default index alias
-    :param profile: query processor profile
     :param timeout: timeout for requests to IPFS
     :param debug: add debugging output
     :return:
@@ -208,7 +205,6 @@ async def stc_geck_cli(
         grpc_api_endpoint=grpc_api_endpoint,
         index_alias=index_alias,
         timeout=timeout,
-        profile=profile,
     )
     return {
         'create-ipfs-directory': stc_geck_client.create_ipfs_directory,

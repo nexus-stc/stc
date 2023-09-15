@@ -20,8 +20,8 @@ from izihawa_ipfs_api import (
 )
 from izihawa_utils.random import reservoir_sampling_async
 
+from .advices import get_light_query_parser_config
 from .exceptions import IpfsConnectionError
-from .query_processor import QueryProcessor
 from .utils import (
     create_car,
     is_endpoint_listening,
@@ -96,7 +96,6 @@ class StcGeck(AioThing):
         ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
         grpc_api_endpoint: str = '127.0.0.1:10082',
         index_alias: str = 'nexus_science',
-        profile: Optional[str] = None,
         timeout: int = 300,
     ):
         """
@@ -124,7 +123,6 @@ class StcGeck(AioThing):
         self.is_embed = not is_endpoint_listening(self.grpc_api_endpoint)
         self.summa_embed_server = None
 
-        self.query_processor = QueryProcessor(self.index_alias, profile or ('light' if self.is_embed else 'full'))
         self.summa_client = SummaClient(
             endpoint=self.grpc_api_endpoint,
             max_message_length=2 * 1024 * 1024 * 1024 - 1,
@@ -138,9 +136,7 @@ class StcGeck(AioThing):
             server_config['api']['grpc_endpoint'] = self.grpc_api_endpoint
             server_config['data_path'] = self.temp_dir.name
             server_config['log_path'] = self.temp_dir.name
-            query_parser_config = {
-                'default_fields': ['abstract', 'content', 'title']
-            }
+            query_parser_config = get_light_query_parser_config()
             full_path = self.ipfs_http_base_url + self.ipfs_data_directory
             headers_template = {'range': 'bytes={start}-{end}'}
             remote_index_config = {'remote': {
@@ -179,13 +175,6 @@ class StcGeck(AioThing):
         :return: Summa client
         """
         return self.summa_client
-
-    def get_query_processor(self) -> QueryProcessor:
-        """
-        Returns the instance of QueryProcessor according to embedding mode
-        :return: query processor
-        """
-        return self.query_processor
 
     async def download(self, cid: str):
         """
