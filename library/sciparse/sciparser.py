@@ -10,8 +10,8 @@ from bs4 import (
     BeautifulSoup,
     NavigableString,
 )
+from stc_geck.advices import LinksWrapper
 
-from library.document import LinksWrapper
 from library.pdftools import is_pdf
 
 SECTIONS_MAPS = {

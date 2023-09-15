@@ -3,7 +3,6 @@ import time
 
 from telethon import events
 
-from library.sciparse.language_detect import detect_language
 from library.telegram.base import RequestContext
 from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 
@@ -19,24 +18,22 @@ class RollHandler(BaseHandler):
 
         session_id = self.generate_session_id()
         request_context.add_default_fields(mode='roll', session_id=session_id)
-        query = event.pattern_match.group(1).strip()
-        query_language = detect_language(query)
-        language = query_language or request_context.chat['language']
+        string_query = event.pattern_match.group(1).strip()
 
-        response = await self.application.summa_client.search(
-            self.application.geck.get_query_processor().process(
-                query,
-                collector='reservoir_sampling',
-                limit=1,
-            )
+        query, query_traits = self.application.search_request_builder.process(
+            string_query,
+            is_fieldnorms_scoring_enabled=False,
+            collector='reservoir_sampling',
+            limit=1,
+            default_query_language=request_context.chat['language'],
         )
-        documents = response.collector_outputs[0].documents.scored_documents
+        documents = await self.application.summa_client.search_documents(query)
 
         if documents:
-            holder = BaseTelegramDocumentHolder.create(documents[0])
-            promo = self.application.promotioner.choose_promotion(language)
-            view = holder.view_builder(language).add_view(bot_name=request_context.bot_name).add_new_line(2).add(promo, escaped=True).build()
-            buttons_builder = holder.buttons_builder(language)
+            holder = BaseTelegramDocumentHolder(documents[0])
+            promo = self.application.promotioner.choose_promotion(query_traits.query_language)
+            view = holder.view_builder(query_traits.query_language).add_view(bot_name=request_context.bot_name).add_new_line(2).add(promo, escaped=True).build()
+            buttons_builder = holder.buttons_builder(query_traits.query_language)
 
             if request_context.is_group_mode():
                 buttons_builder.add_remote_download_button(bot_name=request_context.bot_name)

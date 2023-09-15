@@ -1,10 +1,20 @@
 import dataclasses
-from typing import Optional, Dict, Union, List, Tuple
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from multidict import MultiDict
-from stc_geck.query_processor import IndexQueryBuilder
+from stc_geck.advices import (
+    default_term_field_mapper_configs,
+    get_default_scorer,
+    get_query_parser_config,
+)
 
-from geck.stc_geck.advices import get_query_parser_config
+from library.sciparse.language_detect import detect_language
 
 languages = {
     '🇪🇹': 'am',
@@ -34,11 +44,7 @@ def build_inverse_dict(d: dict):
     for k, v in d.items():
         inverse.add(v, k)
     for k in inverse:
-        allvalues = inverse.getall(k)
-        if len(allvalues) > 1:
-            r[k] = '(' + ' '.join(inverse.getall(k)) + ')'
-        else:
-            r[k] = allvalues[0]
+        r[k] = inverse.getall(k)
     return r
 
 
@@ -78,48 +84,52 @@ class ExtraQueryTraits:
     skip_doi_isbn_term_field_mapper: bool = False
     skip_telegram_cache: bool = False
     order_by_date: bool = False
+    query_language: Optional[str] = None
 
 
-class TelegramQueryPreprocessor:
+class TelegramSearchRequestBuilder:
     def __init__(self, index_alias: str, profile: str):
         self.index_alias = index_alias
         self.profile = profile
+        self.default_is_fieldnorms_scoring_enabled = profile == 'full'
 
-    def extract_traits(self, query) -> Tuple[str, ExtraQueryTraits]:
+    def extract_traits(self, string_query: str) -> Tuple[str, ExtraQueryTraits]:
         extra_query_traits = ExtraQueryTraits(
             languages=[],
             types=[],
         )
+        extra_query_traits.query_language = detect_language(string_query)
 
-        for term in query.split():
+        for term in string_query.split():
             if term in inversed_type_icons:
-                extra_query_traits.types.append(inversed_type_icons[term])
-                query = query.replace(term, '').strip()
+                extra_query_traits.types.extend(inversed_type_icons[term])
+                string_query = string_query.replace(term, '').strip()
             if term in languages:
                 extra_query_traits.languages.append(languages[term])
-                query = query.replace(term, '').strip()
+                string_query = string_query.replace(term, '').strip()
 
-        if '!:333' in query:
-            query = query.replace('!:333', '').strip()
+        if '!:333' in string_query:
+            string_query = string_query.replace('!:333', '').strip()
             extra_query_traits.is_upstream = True
             extra_query_traits.skip_ipfs = True
             extra_query_traits.skip_telegram_cache = True
-        if '!:33' in query:
-            query = query.replace('!:33', '').strip()
+        if '!:33' in string_query:
+            string_query = string_query.replace('!:33', '').strip()
             extra_query_traits.skip_ipfs = True
             extra_query_traits.skip_telegram_cache = True
-        if '!:3' in query:
-            query = query.replace('!:33', '').strip()
+        if '!:3' in string_query:
+            string_query = string_query.replace('!:33', '').strip()
             extra_query_traits.skip_telegram_cache = True
 
-        if '#r' in query:
-            query = query.replace('#r', '').strip()
+        if '#r' in string_query:
+            string_query = string_query.replace('#r', '').strip()
             extra_query_traits.skip_doi_isbn_term_field_mapper = True
-        if 'order_by:date' in query:
-            query = query.replace('order_by:date', '').strip()
+
+        if 'order_by:date' in string_query:
+            string_query = string_query.replace('order_by:date', '').strip()
             extra_query_traits.order_by_date = True
 
-        return query, extra_query_traits
+        return string_query, extra_query_traits
 
     def process(
         self,
@@ -130,22 +140,27 @@ class TelegramQueryPreprocessor:
         collector: str = 'top_docs',
         extra_filter: Optional[Dict] = None,
         fields: Optional[Union[List[str]]] = None,
-        skip_doi_isbn_term_field_mapper: bool = False,
-        query_language: str = 'en',
+        default_query_language: Optional[str] = None
     ):
         string_query, query_traits = self.extract_traits(string_query)
+
         if string_query:
-            query = {'match': {'value': string_query.lower()}}
+            query_parser_config = get_query_parser_config(self.profile, query_traits.query_language or default_query_language)
+            term_field_mapper_configs = default_term_field_mapper_configs
+            if query_traits.skip_doi_isbn_term_field_mapper and 'doi_isbn' in term_field_mapper_configs:
+                term_field_mapper_configs = dict(term_field_mapper_configs)
+                term_field_mapper_configs.pop('doi_isbn', None)
+            query_parser_config['term_field_mapper_configs'] = term_field_mapper_configs
+            query = {'match': {'value': string_query.lower(), 'query_parser_config': query_parser_config}}
         else:
             query = {'all': {}}
         all_extra_filters = []
         if extra_filter:
             all_extra_filters.append(extra_filter)
-        for language in query_traits.languages:
-            all_extra_filters.append({'boolean': {'subqueries': [{'occur': 'should', 'query': {'term': {'field': 'languages', 'value': language}}}]}})
-        for type_ in query_traits.types:
-            all_extra_filters.append({'boolean': {
-                'subqueries': [{'occur': 'should', 'query': {'term': {'field': 'type', 'value': type_}}}]}})
+        if query_traits.languages:
+            all_extra_filters.append({'boolean': {'subqueries': [{'occur': 'should', 'query': {'term': {'field': 'languages', 'value': language}}} for language in query_traits.languages]}})
+        if query_traits.types:
+            all_extra_filters.append({'boolean': {'subqueries': [{'occur': 'should', 'query': {'term': {'field': 'type', 'value': type_}}} for type_ in query_traits.types]}})
         if all_extra_filters:
             subqueries = [{
                 'query': query,
@@ -156,23 +171,18 @@ class TelegramQueryPreprocessor:
                 'subqueries': subqueries
             }}
 
-        query_parser_config = get_query_parser_config(self.profile, query_language)
-
-        if self.term_field_mapper_configs:
-            term_field_mapper_configs = self.term_field_mapper_configs
-            if skip_doi_isbn_term_field_mapper and 'doi_isbn' in self.term_field_mapper_configs:
-                term_field_mapper_configs = dict(term_field_mapper_configs)
-                term_field_mapper_configs.pop('doi_isbn', None)
-            query_parser_config['term_field_mapper_configs'] = term_field_mapper_configs
-        query_struct['match']['query_parser_config'] = query_parser_config
         collector_struct = {
             'limit': limit,
         }
         if collector == 'top_docs':
-            if scorer := self.scorer_function:
+            if query_traits.order_by_date:
+                collector_struct['scorer'] = {'eval_expr': 'issued_at'}
+            elif scorer := get_default_scorer(self.profile):
                 collector_struct['scorer'] = scorer
-            if snippet_configs:
-                collector_struct['snippet_configs'] = self.snippet_configs
+            collector_struct['snippet_configs'] = {
+                'title': 1024,
+                'abstract': 140,
+            }
             if offset:
                 collector_struct['offset'] = offset
         if fields:
@@ -187,18 +197,6 @@ class TelegramQueryPreprocessor:
             'is_fieldnorms_scoring_enabled': (
                 is_fieldnorms_scoring_enabled
                 if is_fieldnorms_scoring_enabled is not None
-                else self.is_fieldnorms_scoring_enabled
+                else self.default_is_fieldnorms_scoring_enabled
             ),
-        }
-
-
-        return self.query_builder.build(
-            query,
-            limit,
-            offset,
-            is_fieldnorms_scoring_enabled=is_fieldnorms_scoring_enabled,
-            collector=collector,
-            fields=fields,
-            skip_doi_isbn_term_field_mapper=skip_doi_isbn_term_field_mapper,
-            query_language=query_language,
-        )
+        }, query_traits

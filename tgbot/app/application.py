@@ -2,14 +2,13 @@ import asyncio
 import logging
 import os
 from concurrent.futures import ProcessPoolExecutor
+from pydoc import locate
 
 from aiobaseclient import BaseClient
 from aiokit import AioRootThing
 from izihawa_ipfs_api import IpfsHttpClient
-from izihawa_utils.importlib import import_object
 from stc_geck.client import StcGeck
 
-from cybrex import cybrex_ai
 from library.sciparse.sciparser import (
     ClientPool,
     SciParser,
@@ -19,6 +18,7 @@ from library.telegram.promotioner import Promotioner
 from library.user_manager import UserManager
 from tgbot.app.database import Database
 from tgbot.promotions import get_promotions
+from tgbot.search_request_builder import TelegramSearchRequestBuilder
 
 
 class TelegramApplication(AioRootThing):
@@ -59,14 +59,22 @@ class TelegramApplication(AioRootThing):
         )
         self.starts.append(self.geck)
 
+        self.search_request_builder = TelegramSearchRequestBuilder('nexus_science', 'light' if self.geck.is_embed else 'full')
+
         self.summa_client = self.geck.get_summa_client()
         self.starts.append(self.summa_client)
 
-        self.cybrex_ai = cybrex_ai.CybrexAI(
-            home_path='/usr/lib/stc-tgbot/cybrex',
-            geck=self.geck,
-        )
-        self.starts.append(self.cybrex_ai)
+        self.cybrex = None
+        if (
+            'cybrex' in self.config
+            and self.config['cybrex'].get('enabled', True)
+        ):
+            from cybrex import cybrex_ai
+            self.cybrex_ai = cybrex_ai.CybrexAI(
+                home_path=self.config['cybrex']['home_path'],
+                geck=self.geck,
+            )
+            self.starts.append(self.cybrex_ai)
 
         self.ipfs_http_client = IpfsHttpClient(base_url=config['ipfs']['http']['base_url'], retry_delay=5.0)
         self.starts.append(self.ipfs_http_client)
@@ -158,7 +166,7 @@ class TelegramApplication(AioRootThing):
             + (extra_handlers or [])
             + self.config['telegram']['search_handlers']
         ):
-            import_object(handler)(
+            locate(handler)(
                 self,
                 bot_config=bot_config,
                 extra_warning=extra_warning,

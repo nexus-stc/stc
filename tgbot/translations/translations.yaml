@@ -300,6 +300,7 @@ en:
   SEND_YOUR_LOCATION: Send your location (through the left attach button)
   SETUP_AUTOMATICALLY: Setup automatically
   SETUP_MANUALLY: Setup manually
+  SIMILAR: Similar
   SOMEONE_UPLOADED_FILE: '⚡️ Someone uploaded `{document}` on your request.'
   SOURCES_UNAVAILABLE: '`{document}` is unavailable right now. I will text you if someone will upload this article.'
   SUBSCRIBE_TO_CHANNEL: Subscribe to @{related_channel} to continue using this bot.
@@ -609,6 +610,7 @@ ru:
   SEND_YOUR_LOCATION: Отправьте вашу геопозицию (кнопка прикрепления файла слева)
   SETUP_AUTOMATICALLY: Установить автоматически
   SETUP_MANUALLY: Установить вручную
+  SIMILAR: Похожие
   SOMEONE_UPLOADED_FILE: '⚡️ Кто-то загрузил `{document}` для вас. Попробуйте поискать сейчас.'
   SOURCES_UNAVAILABLE: 'Прямо сейчас `{document}` недоступен. Если кто-то загрузит статью для вас в бота, я напишу вам об этом.'
   SUBSCRIBE_TO_CHANNEL: Подпишитесь на @{related_channel}, чтобы использовать этот бот.

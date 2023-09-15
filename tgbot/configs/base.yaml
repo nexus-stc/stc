@@ -8,7 +8,7 @@ application:
   bypass_maintenance: []
   data_directory: /usr/lib/stc-tgbot
   # Debugging mode
-  debug: false
+  debug: true
   # URL of picture to show in error message
   error_picture_url:
   eth_donate_address: '0x199bECe965e4e1e2fE3065d3F551Ebe8520AC555'
@@ -16,7 +16,7 @@ application:
   # All users (except `bypass_maintenance` ones) will get UPGRADE_MAINTENANCE message in response
   is_maintenance_mode: false
   # Set to true for restricting writing operations (such as submitting files or requesting new ones)
-  is_read_only: false
+  is_read_only: true
   # Default page size for SERP
   page_size: 5
   # Length of generated Request-ID used for tracking requests across all backends
@@ -40,7 +40,7 @@ ipfs:
   # Base URL for IPFS Gateway. You can choose any public gateway, such as https://dweb.link/ or https://ipfs.io/
   # or setup your own gateway locally and set it with http://127.0.0.1:8080
   http:
-    base_url: http://0.0.0.0:8080/
+    base_url: http://ipfs:8080
 # Configure Librarian service for uploading files. Cannot be used in light mode
 librarian:
   # Credentials of admin account for managing Aaron's groups
@@ -90,6 +90,7 @@ telegram:
     - tgbot.handlers.shortlink.ShortlinkHandler
     - tgbot.handlers.start.StartHandler
     - tgbot.handlers.stop.StopHandler
+    - tgbot.handlers.mlt.MltHandler
     - tgbot.handlers.view.ViewHandler
     - tgbot.handlers.noop.NoopHandler
   # Channel that will be shown in /help, /howtohelp and in promotions
@@ -100,7 +101,7 @@ telegram:
     - tgbot.handlers.search.SearchPagingHandler
     - tgbot.handlers.search.InlineSearchHandler
 summa:
-  endpoint: summa-server:10082
+  endpoint: 127.0.0.0:10082
   embed:
     enabled: true
     ipfs_data_directory: /ipns/standard-template-construct.org/data/

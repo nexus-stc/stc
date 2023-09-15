@@ -41,13 +41,10 @@ class ViewHandler(BaseHandler):
 
         try:
             prefetch_message = await event.reply(t("SEARCHING", request_context.chat['language']))
-            scored_document = await self.get_scored_document(
-                'cid',
-                cid,
-            )
-            if not scored_document:
+            document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'links.cid', cid)
+            if not document:
                 return await event.reply(t("OUTDATED_VIEW_LINK", language))
-            holder = BaseTelegramDocumentHolder.create(scored_document)
+            holder = BaseTelegramDocumentHolder(document)
             promo = self.application.promotioner.choose_promotion(language)
             view_builder = holder.view_builder(language).add_view(bot_name=request_context.bot_name).add_new_line(2).add(promo, escaped=True)
             buttons = holder.buttons_builder(language).add_default_layout(

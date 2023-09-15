@@ -130,13 +130,10 @@ class StcGeck(AioThing):
 
     async def start(self):
         if self.is_embed:
-            logging.getLogger('info').info({'action': 'launching_embedded'})
-
             server_config = get_config()
             server_config['api']['grpc_endpoint'] = self.grpc_api_endpoint
             server_config['data_path'] = self.temp_dir.name
             server_config['log_path'] = self.temp_dir.name
-            query_parser_config = get_light_query_parser_config()
             full_path = self.ipfs_http_base_url + self.ipfs_data_directory
             headers_template = {'range': 'bytes={start}-{end}'}
             remote_index_config = {'remote': {
@@ -145,13 +142,14 @@ class StcGeck(AioThing):
                 'headers_template': headers_template,
                 'cache_config': {'cache_size': 536870912},
             }}
+            logging.getLogger('info').info({'action': 'launching_embedded', 'remote_index_config': remote_index_config})
             try:
                 if host_header := await detect_host_header(full_path):
                     headers_template['host'] = host_header
             except (aiohttp.client_exceptions.ClientConnectorError, ConnectionRefusedError) as e:
                 raise IpfsConnectionError(base_error=e)
             server_config['core']['indices'][self.index_alias] = {
-                'query_parser_config': query_parser_config,
+                'query_parser_config': get_light_query_parser_config(),
                 'config': remote_index_config,
                 'field_triggers': {},
             }
@@ -239,6 +237,7 @@ class StcGeck(AioThing):
                         {'occur': 'must', 'query': {'match': {'value': query}}},
                         {'occur': 'must', 'query': {'exists': {'field': 'cid'}}},
                     ]}},
+                    'is_fieldnorms_scoring_enabled': False,
                 })),
                 limit=limit,
                 name_template=name_template,

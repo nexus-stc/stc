@@ -27,7 +27,6 @@ class Database(AioThing):
                 is_reload_required boolean,
                 is_deleted boolean default 0,
                 created_at integer,
-                index_aliases text,
                 app_id text,
                 app_hash text,
                 owner_id bigint,
@@ -131,13 +130,12 @@ class Database(AioThing):
         await self.bots_db_wrapper.db.execute("""
             insert into
             user_bots(bot_name, bot_token, owner_id, created_at, is_deleted)
-            values (?, ?, ?, ?, ?, ?)
+            values (?, ?, ?, ?, ?)
             on conflict(bot_name) do update
             set bot_token = EXCLUDED.bot_token,
             is_deleted = true,
             is_reload_required = true,
-            owner_id = EXCLUDED.owner_id,
-            index_aliases = EXCLUDED.index_aliases
+            owner_id = EXCLUDED.owner_id
         """, (
             bot_name,
             bot_token,

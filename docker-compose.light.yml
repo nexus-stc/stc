@@ -3,6 +3,10 @@ services:
     image: ipfs/kubo:latest
     environment:
       IPFS_PROFILE: server
+    ports:
+      - 8080:8080
+    volumes:
+      - /Users/pasha/data-ipfs:/data/ipfs
   tgbot:
     build:
       context: .
@@ -13,3 +17,5 @@ services:
     env_file:
       - .env.light
     restart: always
+    volumes:
+      - /Users/pasha/tmp:/usr/lib/stc-tgbot

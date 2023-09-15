@@ -5,10 +5,10 @@ import tempfile
 from urllib.parse import quote
 
 import ipfs_hamt_directory_py
+from stc_geck.advices import LinksWrapper
 from telethon import events
 from telethon.tl.types import DocumentAttributeFilename
 
-from library.document import LinksWrapper
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.telegram.utils import safe_execution
@@ -42,7 +42,7 @@ def create_car(documents, name_template) -> (str, bytes):
                     f.write(b' ')
                     f.write(str(link.get('filesize') or 0).encode())
                     f.write(b'\n')
-                if link := links.epub_link:
+                if link := links.get_link_with_extension('epub'):
                     item_name = name_template.format(
                         doi=document_holder.doi,
                         md5=document_holder.md5,
@@ -99,9 +99,9 @@ class SeedHandler(BaseHandler):
                 request_context.chat['chat_id'],
                 t("REQUESTED_TOO_MUCH", request_context.chat['language']).format(page_size=max_page_size),
             )
-        query = event.pattern_match.group(5)
+        string_query = event.pattern_match.group(5)
 
-        if not query and not string_page_size and not string_page:
+        if not string_query and not string_page_size and not string_page:
             request_context.statbox(action='help')
             return await event.reply(t('SEED_HELP', language=request_context.chat['language']), buttons=[close_button()])
 
@@ -110,12 +110,12 @@ class SeedHandler(BaseHandler):
             action='request',
             offset=page * page_size,
             limit=page_size,
-            query=query,
+            query=string_query,
         )
 
         if random_seed:
-            query = self.application.geck.get_query_processor().process(
-                query.strip(),
+            query, query_traits = self.application.search_request_builder.process(
+                string_query.strip(),
                 is_fieldnorms_scoring_enabled=False,
                 extra_filter={'term': {'field': 'links.extension', 'value': 'pdf'}},
                 fields={
@@ -129,13 +129,11 @@ class SeedHandler(BaseHandler):
             documents = response.collector_outputs[0].documents.scored_documents
             count = response.collector_outputs[1].count.count
         else:
-            query = self.application.geck.get_query_processor().process(
-                query.strip(),
+            query, query_traits = self.application.search_request_builder.process(
+                string_query.strip(),
                 is_fieldnorms_scoring_enabled=False,
                 extra_filter={'term': {'field': 'links.extension', 'value': 'pdf'}},
-                fields={
-                    'nexus_science': ['links', 'id', 'title', 'authors', 'issued_at', 'metadata'],
-                },
+                fields=['links', 'id', 'title', 'authors', 'issued_at', 'metadata'],
                 offset=page * page_size,
                 limit=page_size,
             )
@@ -154,7 +152,7 @@ class SeedHandler(BaseHandler):
                     t("COULD_NOT_FIND_ANYTHING", request_context.chat['language']),
                 )
 
-        casted_query = cast_string_to_single_string(query) if query else None
+        casted_query = cast_string_to_single_string(string_query) if string_query else None
         if not casted_query:
             casted_query = 'cids'
         filename = f'{casted_query[:16]}-{page}-{string_page_size}-{count}.car'

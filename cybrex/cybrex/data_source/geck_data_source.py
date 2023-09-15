@@ -3,7 +3,7 @@ from typing import (
     Optional,
 )
 
-import orjson
+from stc_geck.advices import BaseDocumentHolder
 from stc_geck.client import StcGeck
 
 from .base import (
@@ -22,26 +22,17 @@ class GeckDataSource(BaseDataSource):
         limit: int = 5,
         sources: Optional[List[str]] = None
     ) -> List[SourceDocument]:
-        query = self.geck.get_query_processor().process(query, limit=limit)
-        response = await self.geck.get_summa_client().search(query)
+        documents = await self.geck.get_summa_client().search_documents({
+            'index_alias': self.geck.index_alias,
+            'query': {'match': {'value': query.lower()}},
+            'collectors': [{'top_docs': {'limit': limit}}],
+            'is_fieldnorms_scoring_enabled': False,
+        })
         source_documents = []
-        for scored_document in response.collector_outputs[0].documents.scored_documents:
-            document = orjson.loads(scored_document.document)
-            if 'dois' in document['id']:
-                document_id = f'id.dois:{document["id"]["dois"][0]}'
-            elif 'nexus_id' in document['id']:
-                document_id = f'id.nexus_id:{document["id"]["nexus_id"]}'
-            elif 'internal_iso' in document['id']:
-                document_id = f'id.internal_iso:{document["id"]["internal_iso"]}'
-            elif 'internal_bs' in document['id']:
-                document_id = f'id.internal_bs:{document["id"]["internal_bs"]}'
-            elif 'arc_ids' in document['id']:
-                document_id = f'id.arc_ids:{document["id"]["arc_ids"][0]}'
-            elif 'libgen_ids' in document['id']:
-                document_id = f'id.libgen_ids:{document["id"]["libgen_ids"][0]}'
-            elif 'zlibrary_ids' in document['id']:
-                document_id = f'id.zlibrary_ids:{document["id"]["zlibrary_ids"][0]}'
-            else:
+        for document in documents:
+            document_holder = BaseDocumentHolder(document)
+            document_id = document_holder.get_internal_id()
+            if not document_id:
                 continue
             source_documents.append(SourceDocument(
                 document=document,

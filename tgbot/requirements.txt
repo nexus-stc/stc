@@ -10,10 +10,10 @@ aiobaseclient
 aiocrossref
 aiokit>=1.2.3
 aiosqlite
-aiosumma>=2.46.3
+aiosumma>=2.46.6
 bleach
-cybrex>=1.7.5
 base36
+cybrex
 dateparser
 emoji
 isbnlib>=3.10.13
@@ -25,6 +25,6 @@ izihawa_utils
 lru-dict
 markdownify
 sqlalchemy
-stc-geck>=1.7.8
+stc-geck>=1.8.4
 
-telethon==1.29.3
+telethon==1.30.3

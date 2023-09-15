@@ -8,12 +8,11 @@ from datetime import (
     datetime,
     timedelta,
 )
+from pydoc import locate
 
 from aiokit import AioThing
-from izihawa_utils.importlib import import_object
-from stc_geck.utils import get_type_icon
+from stc_geck.advices import LinksWrapper
 
-from library.document import LinksWrapper
 from library.pdftools.cleaner import clean_metadata
 from library.pdftools.exceptions import (
     PdfProcessingError,
@@ -22,6 +21,7 @@ from library.pdftools.exceptions import (
 from library.telegram.base import BaseTelegramClient
 from library.telegram.utils import safe_execution
 from library.textutils import DOI_REGEX
+from tgbot.search_request_builder import get_type_icon
 from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 from tgbot.views.telegram.common import vote_button
 
@@ -116,9 +116,9 @@ class LibrarianService(AioThing):
             'mode': 'librarian_service',
             'group_name': self.group_name,
         })
-        submit_handler_cls = import_object('tgbot.handlers.submit.SubmitHandler')
-        vote_handler_cls = import_object('tgbot.handlers.vote.VoteHandler')
-        librarian_text_handler_cls = import_object('tgbot.handlers.librarian.LibrarianTextHandler')
+        submit_handler_cls = locate('tgbot.handlers.submit.SubmitHandler')
+        vote_handler_cls = locate('tgbot.handlers.vote.VoteHandler')
+        librarian_text_handler_cls = locate('tgbot.handlers.librarian.LibrarianTextHandler')
 
         submit_handler_cls(self.application, {}).register_for(self.bot_telegram_client, self.librarian_bot_name)
         vote_handler_cls(self.application, {}).register_for(self.bot_telegram_client, self.librarian_bot_name)
@@ -285,7 +285,7 @@ class LibrarianService(AioThing):
         pdf_file = await event.message.download_media(file=bytes)
         await event.delete()
 
-        holder = BaseTelegramDocumentHolder.create(document)
+        holder = BaseTelegramDocumentHolder(document)
         short_abstract = (
             holder.view_builder(request_context.chat['language'])
             .add_short_description()

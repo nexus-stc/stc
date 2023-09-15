@@ -37,7 +37,7 @@ class ReportHandler(BaseCallbackQueryHandler):
         async with safe_execution():
             return await asyncio.gather(
                 event.reply(
-                    f'Thank you for reporting `{document["doi"]}`. '
+                    f'Thank you for reporting `{document["id"]["dois"][0]}`. '
                     f'Be careful, too many misreports will cause a ban',
                 ),
                 event.delete(),

@@ -76,7 +76,7 @@ class BaseSearchHandler(BaseHandler, ABC):
     async def setup_widget(
         self,
         request_context: RequestContext,
-        query: str,
+        string_query: str,
         is_shortpath_enabled: bool = False,
     ) -> Tuple[str, List, bool]:
         request_context.add_default_fields(
@@ -87,14 +87,12 @@ class BaseSearchHandler(BaseHandler, ABC):
         language = request_context.chat['language']
         librarian_service_id = None
 
-        preprocessed_query = self.application.geck.get_query_processor().preprocess_query(query)
-
         try:
             search_widget = await SearchWidget.create(
                 application=self.application,
                 request_context=request_context,
                 chat=request_context.chat,
-                preprocessed_query=preprocessed_query,
+                string_query=string_query,
                 is_group_mode=request_context.is_group_mode(),
             )
         except InvalidSearchError:
@@ -112,7 +110,7 @@ class BaseSearchHandler(BaseHandler, ABC):
         request_context.statbox(
             action='documents_retrieved',
             duration=time.time() - start_time,
-            query=preprocessed_query.query,
+            query=string_query,
             page=0,
             scored_documents=len(search_widget.scored_documents),
         )
@@ -122,13 +120,13 @@ class BaseSearchHandler(BaseHandler, ABC):
                 text, buttons = await search_widget.render(request_context=request_context)
                 return text, buttons, False
 
-            doi = is_doi_query(preprocessed_query.query)
+            doi = is_doi_query(string_query)
             if doi and await self.application.metadata_retriever.try_to_download_metadata({'doi': doi}):
                 search_widget = await SearchWidget.create(
                     application=self.application,
                     request_context=request_context,
                     chat=request_context.chat,
-                    preprocessed_query=preprocessed_query,
+                    string_query=string_query,
                     is_group_mode=request_context.is_group_mode(),
                 )
 
@@ -136,7 +134,7 @@ class BaseSearchHandler(BaseHandler, ABC):
             holder = BaseTelegramDocumentHolder.create(search_widget.scored_documents[0])
 
             if isinstance(holder, BaseDocumentHolder):
-                if holder.has_field('dois') and not holder.has_field('links') or preprocessed_query.skip_ipfs or preprocessed_query.is_upstream:
+                if holder.has_field('dois') and not holder.has_field('links') or search_widget.query_traits.skip_ipfs or search_widget.query_traits.is_upstream:
                     if self.application.is_read_only() or not self.application.started:
                         text, buttons = await search_widget.render(request_context=request_context)
                         if self.application.is_read_only():
@@ -153,7 +151,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                         self.application,
                         request_context,
                         holder,
-                        is_upstream=preprocessed_query.is_upstream,
+                        is_upstream=search_widget.query_traits.is_upstream,
                         ignore_clean_errors=True,
                     ).schedule():
                         if old_primary_link:
@@ -162,7 +160,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                             application=self.application,
                             request_context=request_context,
                             chat=request_context.chat,
-                            preprocessed_query=preprocessed_query,
+                            string_query=string_query,
                             is_group_mode=request_context.is_group_mode(),
                         )
                         holder = BaseTelegramDocumentHolder.create(search_widget.scored_documents[0])
@@ -175,7 +173,7 @@ class BaseSearchHandler(BaseHandler, ABC):
                     elif self.application.librarian_service:
                         librarian_service_id = await self.application.librarian_service.request(holder.doi, holder.type)
 
-            if (preprocessed_query.skip_telegram_cache or preprocessed_query.skip_ipfs) and holder.primary_link:
+            if (search_widget.query_traits.skip_telegram_cache or search_widget.query_traits.skip_ipfs) and holder.primary_link:
                 request_context.statbox(**{
                     'action': 'omit_cache',
                     'cid': holder.primary_link['cid'],
@@ -224,12 +222,12 @@ class SearchHandler(BaseSearchHandler):
                     seconds=e.ban_timeout,
                     reason=t('BAN_MESSAGE_TOO_MANY_REQUESTS', language),
                 ))
-        search_prefix, query = self.parse_pattern(event)
+        search_prefix, string_query = self.parse_pattern(event)
 
         if request_context.is_group_mode() and not search_prefix:
             return
         if request_context.is_personal_mode() and search_prefix:
-            query = event.raw_text
+            string_query = event.raw_text
 
         prefetch_message = await event.reply(
             t("SEARCHING", language),
@@ -237,7 +235,7 @@ class SearchHandler(BaseSearchHandler):
         try:
             text, buttons, link_preview = await self.setup_widget(
                 request_context=request_context,
-                query=query,
+                string_query=string_query,
                 is_shortpath_enabled=True,
             )
             if self.extra_warning:
@@ -274,12 +272,11 @@ class InlineSearchHandler(BaseSearchHandler):
                 await event.answer([])
                 raise events.StopPropagation()
 
-            preprocessed_query = self.application.geck.get_query_processor().preprocess_query(event.text)
             inline_search_widget = await InlineSearchWidget.create(
                 application=self.application,
                 request_context=request_context,
                 chat=request_context.chat,
-                preprocessed_query=preprocessed_query,
+                string_query=event.text,
                 is_group_mode=request_context.is_group_mode(),
             )
             items = inline_search_widget.render(builder=builder, request_context=request_context)
@@ -313,21 +310,21 @@ class SearchEditHandler(BaseSearchHandler):
         return search_prefix, query
 
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
-        search_prefix, query = self.parse_pattern(event)
+        search_prefix, string_query = self.parse_pattern(event)
         request_context.add_default_fields(mode='search_edit')
 
         if request_context.is_group_mode() and not search_prefix:
             return
 
         if request_context.is_personal_mode() and search_prefix:
-            query = event.raw_text
+            string_query = event.raw_text
 
         for next_message in await self.get_last_messages_in_chat(event, request_context=request_context):
             if next_message.is_reply and event.id == next_message.reply_to_msg_id:
                 request_context.statbox(action='resolved')
                 text, buttons, link_preview = await self.setup_widget(
                     request_context=request_context,
-                    query=query,
+                    string_query=string_query,
                     is_shortpath_enabled=True,
                 )
                 if self.extra_warning:
@@ -365,15 +362,14 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
                 t('REPLY_MESSAGE_HAS_BEEN_DELETED', request_context.chat['language']),
             )
 
-        query = reply_message.raw_text.replace(f'@{request_context.bot_name}', '').strip()
-        preprocessed_query = self.application.geck.get_query_processor().preprocess_query(query)
+        string_query = reply_message.raw_text.replace(f'@{request_context.bot_name}', '').strip()
 
         try:
             search_widget = await SearchWidget.create(
                 application=self.application,
                 request_context=request_context,
                 chat=request_context.chat,
-                preprocessed_query=preprocessed_query,
+                string_query=string_query,
                 page=page,
             )
         except InvalidSearchError:
@@ -389,7 +385,7 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
 
         request_context.statbox(
             action='documents_retrieved',
-            query=preprocessed_query.query,
+            query=string_query,
             page=page,
             scored_documents=len(search_widget.scored_documents),
         )

@@ -69,11 +69,6 @@ class DynamicBotManager(AioThing):
                 bot_name=self.default_bot['bot_name'],
                 bot_token=self.default_bot['bot_token'],
                 user_id=0,
-                index_aliases=(
-                    self.default_bot['index_aliases']
-                    if isinstance(self.default_bot['index_aliases'], str)
-                    else self.default_bot['index_aliases']
-                ),
             )
             await self.database.set_bot_credentials(
                 bot_name=self.default_bot['bot_name'],
@@ -168,7 +163,7 @@ class DynamicBotManager(AioThing):
             try:
                 target_bots = {}
                 async with self.database.bots_db_wrapper.db.execute("""
-                select bot_name, bot_token, index_aliases,
+                select bot_name, bot_token,
                 is_reload_required, app_id, app_hash, mtproxy, owner_id
                 from user_bots
                 where is_deleted = false

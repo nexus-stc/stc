@@ -147,6 +147,7 @@ class StcGeckCli:
                 'index_alias': self.index_alias,
                 'query': {'match': {'value': query.lower()}},
                 'collectors': [{'top_docs': {'limit': limit, 'offset': offset}}],
+                'is_fieldnorms_scoring_enabled': False,
             }
             return await summa_client.search_documents(query)
 

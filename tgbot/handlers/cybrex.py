@@ -10,7 +10,7 @@ from .base import BaseHandler
 
 
 class CybrexHandler(BaseHandler):
-    filter = events.NewMessage(incoming=True, pattern=re.compile(r'^/cybrex(?:@\w+)?\s+(.*)?$', re.DOTALL))
+    filter = events.NewMessage(incoming=True, pattern=re.compile(r'^/cybrex(?:@\w+)?(?:\s+)?(.*)?$', re.DOTALL))
     is_group_handler = True
 
     def parse_command(self, query):
@@ -47,6 +47,9 @@ class CybrexHandler(BaseHandler):
         )
         if not is_allowed:
             return await event.reply('Only People of Nexus can call me')
+
+        if not self.application.cybrex_ai:
+            return await event.reply('Cybrex is disabled for now')
 
         query = event.pattern_match.group(1).strip()
         if not query:

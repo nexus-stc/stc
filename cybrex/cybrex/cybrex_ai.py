@@ -71,7 +71,6 @@ class CybrexAI(AioThing):
                 ipfs_http_base_url=config['ipfs']['http']['base_url'],
                 grpc_api_endpoint=config['summa']['endpoint'],
                 timeout=600,
-                profile=config['summa']['profile'],
             )
             self.starts.append(self.geck)
 
@@ -131,7 +130,6 @@ class CybrexAI(AioThing):
                 },
                 'summa': {
                     'endpoint': summa_endpoint,
-                    'profile': 'light',
                 },
             }
             with open(config_path, 'w') as f:
@@ -391,6 +389,7 @@ class CybrexAI(AioThing):
                 'index_alias': 'nexus_science',
                 'query': {'match': {'value': f'{field}:"{value}"'}},
                 'collectors': [{'top_docs': {'limit': 1}}],
+                'is_fieldnorms_scoring_enabled': False,
             }
             search_requests.append(self.geck.get_summa_client().search_documents(search_request))
         _summa_documents = await asyncio.gather(*search_requests)

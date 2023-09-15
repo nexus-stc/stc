@@ -184,7 +184,6 @@ Extracted parts:
 
 ### Assistant:'''.format(summary=self.generate_summary(chunks))
 
-
     def general_text_processing(self, request, text):
         return f'''
 ### System:

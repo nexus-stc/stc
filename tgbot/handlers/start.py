@@ -17,25 +17,25 @@ class StartHandler(BaseSearchHandler):
 
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
         raw_query = event.pattern_match.group(1)
-        query = None
+        string_query = None
 
         request_context.statbox(action='start', mode='start')
 
         try:
-            query = decode_deep_query(raw_query)
+            string_query = decode_deep_query(raw_query)
         except DecodeDeepQueryError as e:
             request_context.error_log(e, mode='start', raw_query=raw_query)
 
-        if query:
-            request_context.statbox(action='query', mode='start', query=query)
-            request_message = await self.application.get_telegram_client(request_context.bot_name).send_message(event.chat, query)
+        if string_query:
+            request_context.statbox(action='query', mode='start', query=string_query)
+            request_message = await self.application.get_telegram_client(request_context.bot_name).send_message(event.chat, string_query)
             prefetch_message = await request_message.reply(
                 t("SEARCHING", request_context.chat['language']),
             )
             try:
                 text, buttons, link_preview = await self.setup_widget(
                     request_context=request_context,
-                    query=query,
+                    string_query=string_query,
                     is_shortpath_enabled=True,
                 )
                 edit_action = self.application.get_telegram_client(request_context.bot_name).edit_message(

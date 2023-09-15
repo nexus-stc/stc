@@ -58,7 +58,8 @@ class SubmitHandler(BaseHandler):
         match event.document.mime_type:
             case 'application/pdf':
                 if self.application.librarian_service:
-                    document = await self.get_scored_document(
+                    document = await self.application.summa_client.get_one_by_field_value(
+                        'nexus_science',
                         'id.dois',
                         doi_hint,
                     )

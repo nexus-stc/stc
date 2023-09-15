@@ -109,17 +109,6 @@ class BaseHandler(ABC):
         self.bot_config = bot_config
         self.extra_warning = extra_warning
 
-    async def get_scored_document(self, field: str, value: str):
-        query = self.application.geck.get_query_processor().process(
-            f'{field}:{value}',
-            limit=1,
-            is_fieldnorms_scoring_enabled=False,
-            skip_doi_isbn_term_field_mapper=True,
-        )
-        response = await self.application.summa_client.search(query)
-        if response.collector_outputs[0].documents.scored_documents:
-            return response.collector_outputs[0].documents.scored_documents[0]
-
     def generate_session_id(self) -> str:
         return random_string(self.application.config['application']['session_id_length'])
 

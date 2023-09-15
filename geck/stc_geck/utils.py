@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 import socket
@@ -47,6 +48,10 @@ async def create_car(output_car, documents, limit, name_template) -> str:
 def is_endpoint_listening(endpoint):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ip, port = endpoint.split(':')
-    is_open = sock.connect_ex((ip, int(port))) == 0
-    sock.close()
-    return is_open
+    try:
+        is_open = sock.connect_ex((ip, int(port))) == 0
+        sock.close()
+        return is_open
+    except socket.gaierror as e:
+        logging.getLogger('warning').warning({'action': 'warning', 'error': str(e)})
+        return False

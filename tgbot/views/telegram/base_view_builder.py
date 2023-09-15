@@ -9,7 +9,6 @@ import bleach
 from bs4 import BeautifulSoup
 from izihawa_types.datetime import CustomDatetime
 from izihawa_types.safecast import safe_int
-from stc_geck.utils import get_type_icon
 from telethon import Button
 
 from library.telegram.common import close_button
@@ -23,6 +22,7 @@ from tgbot.markdownifytg import (
 )
 from tgbot.translations import t
 
+from ...search_request_builder import get_type_icon
 from .common import (
     TooLongQueryError,
     add_expand_dot,
@@ -177,8 +177,12 @@ class BaseViewBuilder:
         return self
 
     def add_snippet(self, on_newline=True):
-        snippet = self.document_holder.snippets.get('abstract')
+        snippet = None
         text = None
+
+        if self.document_holder.snippets:
+            snippet = self.document_holder.snippets.get('abstract')
+
         is_snippet = snippet and snippet.highlights
 
         if is_snippet:
@@ -569,6 +573,21 @@ class BaseButtonsBuilder:
                 self.buttons.append([])
         return self
 
+    def add_mlt_button(self):
+        if not self.document_holder.links:
+            return self
+        for link in self.document_holder.links:
+            self.buttons[-1].append(
+                Button.inline(
+                    text=f'🖲️ {t("SIMILAR", language=self.user_language)}',
+                    data=self.document_holder.get_mlt_command(link['cid']),
+                )
+            )
+            if len(self.buttons[-1]) > 5:
+                self.buttons.append([])
+            return self
+        return self
+
     def add_remote_download_button(self, bot_name):
         # ⬇️ is a mark, Find+F over sources before replacing
         if self.document_holder.has_field('dois'):
@@ -640,5 +659,6 @@ class BaseButtonsBuilder:
                     .add_remote_request_button()
                     .add_linked_search_button(bot_name)
                     .add_journal_search(bot_name)
+                    .add_mlt_button()
                     .add_close_button()
             )

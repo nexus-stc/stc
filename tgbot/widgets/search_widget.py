@@ -1,7 +1,5 @@
-from stc_geck.query_processor import PreprocessedQuery
 from telethon import Button
 
-from library.sciparse.language_detect import detect_language
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from tgbot.app.application import TelegramApplication
@@ -25,14 +23,14 @@ class BaseSearchWidget:
         application: TelegramApplication,
         request_context: RequestContext,
         chat: dict,
-        preprocessed_query: PreprocessedQuery,
+        string_query: str,
         page: int = 0,
         is_group_mode: bool = False,
     ):
         self.application = application
         self.request_context = request_context
         self.chat = chat
-        self.preprocessed_query = preprocessed_query
+        self.string_query = string_query
         self.page = page
         self.is_group_mode = is_group_mode
 
@@ -42,7 +40,7 @@ class BaseSearchWidget:
         application: TelegramApplication,
         request_context: RequestContext,
         chat: dict,
-        preprocessed_query: PreprocessedQuery,
+        string_query: str,
         page: int = 0,
         is_group_mode: bool = False,
     ):
@@ -50,7 +48,7 @@ class BaseSearchWidget:
             application=application,
             request_context=request_context,
             chat=chat,
-            preprocessed_query=preprocessed_query,
+            string_query=string_query,
             page=page,
             is_group_mode=is_group_mode,
         )
@@ -58,15 +56,12 @@ class BaseSearchWidget:
         return search_widget_view
 
     async def _acquire_documents(self):
-        query_language = detect_language(self.preprocessed_query.query)
-        query = self.application.geck.get_query_processor().process(
-            query=self.preprocessed_query.query,
+        self.query, self.query_traits = self.application.search_request_builder.process(
+            string_query=self.string_query,
             limit=self.application.config['application']['page_size'],
             offset=self.page * self.application.config['application']['page_size'],
-            skip_doi_isbn_term_field_mapper=self.preprocessed_query.skip_doi_isbn_term_field_mapper,
-            query_language=query_language or 'en',
         )
-        self._search_response = await self.application.summa_client.search(query)
+        self._search_response = await self.application.summa_client.search(self.query)
 
     @property
     def count(self) -> int:
@@ -90,52 +85,24 @@ class SearchWidget(BaseSearchWidget):
 
         for scored_document in self.scored_documents:
             holder = BaseTelegramDocumentHolder.create(scored_document, scored_document.snippets)
-
-            el = (
-                holder
-                .view_builder(self.chat['language'])
-                .add_short_description()
-                .add_snippet()
-                .add_new_line()
+            serp_elements.append(holder.base_render(
+                request_context,
+                with_librarian_service=bool(self.application.librarian_service) and not self.application.is_read_only())
             )
-            need_pipe = False
-            if holder.has_field('links'):
-                if self.is_group_mode:
-                    el = el.add(holder.get_ipfs_gateway_link(), escaped=True)
-                else:
-                    el = el.add(holder.get_view_command())
-                need_pipe = True
-            elif holder.has_field('dois') and not self.is_group_mode:
-                try:
-                    deep_link = encode_query_to_deep_link('#r ' + holder.doi, request_context.bot_name)
-                    if self.application.librarian_service and not self.application.is_read_only():
-                        el = el.add(f'[request]({deep_link})', escaped=True)
-                        need_pipe = True
-                except TooLongQueryError:
-                    pass
-            el = (
-                el
-                .add_external_provider_link(with_leading_pipe=need_pipe)
-                .add_references_counter(bot_name=request_context.bot_name, with_leading_pipe=True)
-                .add_filedata(show_filesize=True, with_leading_pipe=True)
-                .build()
-            )
-
-            serp_elements.append(el)
 
         serp_elements.append(f"__{t('FOUND_N_ITEMS', self.chat['language']).format(count=self.count)}__")
         serp = '\n\n'.join(serp_elements)
 
         if self.is_group_mode:
             try:
-                encoded_query = encode_query_to_deep_link(
-                    self.preprocessed_query.query,
+                encoded_string_query = encode_query_to_deep_link(
+                    self.string_query,
                     request_context.bot_name,
                 )
                 serp = (
                     f"{serp}\n\n**{t('DOWNLOAD_AND_SEARCH_MORE', self.chat['language'])}: **"
                     f'[@{request_context.bot_name}]'
-                    f'({encoded_query})'
+                    f'({encoded_string_query})'
                 )
             except TooLongQueryError:
                 serp = (

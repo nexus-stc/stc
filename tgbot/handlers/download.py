@@ -279,12 +279,12 @@ class DownloadHandler(BaseCallbackQueryHandler):
         cid = self.parse_pattern(event)
         request_context.add_default_fields(mode='download', cid=cid)
         request_context.statbox(action='get')
-        scored_document = await self.get_scored_document('cid', cid)
-        if not scored_document:
+        document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'links.cid', cid)
+        if not document:
             return await event.answer(
                 f'{t("CID_DISAPPEARED", request_context.chat["language"])}',
             )
-        document_holder = BaseTelegramDocumentHolder.create(scored_document)
+        document_holder = BaseTelegramDocumentHolder(document)
         download_link = None
         for link in document_holder.links:
             if link['cid'] == cid:
