@@ -3,8 +3,6 @@ import time
 from izihawa_utils.exceptions import BaseError
 from telethon.errors import MessageIdInvalidError
 
-from library.telegram.common import close_button
-
 
 class ProgressBarLostMessageError(BaseError):
     pass
@@ -98,10 +96,9 @@ class ProgressBar:
                 self.message = await self.telegram_client.send_message(
                     self.request_context.chat['chat_id'],
                     text,
-                    buttons=[close_button()],
                 )
             elif text != self.last_text:
-                r = await self.message.edit(text, buttons=[close_button()])
+                r = await self.message.edit(text)
                 if not r:
                     raise ProgressBarLostMessageError()
         except MessageIdInvalidError:

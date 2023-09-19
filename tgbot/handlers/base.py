@@ -53,14 +53,14 @@ class LongTask:
 
     @classmethod
     def task_id_for(cls, id_):
-        return f'{cls.__name__}_{id_}'
+        raise NotImplementedError()
 
     @property
     def task_id(self):
-        return self.task_id_for(self.document_holder.get_internal_id())
+        raise NotImplementedError()
 
     def schedule(self):
-        self.application.long_tasks.add(self)
+        self.application.long_tasks[(self.request_context.chat['chat_id'], self.task_id)] = self
         self.application.user_manager.add_task(self.request_context.chat['chat_id'], self.task_id)
         self.task = asyncio.create_task(
             self.long_task(
@@ -71,7 +71,7 @@ class LongTask:
         return self.task
 
     def done_callback(self, f):
-        self.application.long_tasks.remove(self)
+        self.application.long_tasks.pop((self.request_context.chat['chat_id'], self.task_id), None)
         self.application.user_manager.remove_task(
             self.request_context.chat['chat_id'],
             self.task_id,
@@ -79,6 +79,10 @@ class LongTask:
 
     async def long_task(self, request_context: RequestContext):
         raise NotImplementedError()
+
+    async def cancel(self):
+        self.request_context.statbox(action='canceled', task_id=self.task_id)
+        self.task.cancel()
 
     async def external_cancel(self):
         self.request_context.statbox(action='externally_canceled', task_id=self.task_id)
@@ -102,6 +106,8 @@ class BaseHandler(ABC):
     stop_propagation = True
     # If set to True then read_only mode will disable handler
     writing_handler = False
+    # Fail messages should be sent as reply or as independent messages
+    fail_as_reply = True
 
     def __init__(self, application: TelegramApplication, bot_config, extra_warning=None):
         self.application = application
@@ -127,12 +133,21 @@ class BaseHandler(ABC):
 
     async def _send_fail_response(self, event: events.ChatAction, request_context: RequestContext):
         try:
-            await event.reply(
-                t('MAINTENANCE', request_context.chat['language']).format(
-                    error_picture_url=self.application.config['application']['error_picture_url'],
-                ),
-                buttons=None if request_context.is_group_mode() else [close_button()]
-            )
+            if self.fail_as_reply:
+                await event.reply(
+                    t('MAINTENANCE', request_context.chat['language']).format(
+                        error_picture_url=self.application.config['application']['error_picture_url'],
+                    ),
+                    buttons=None if request_context.is_group_mode() else [close_button()]
+                )
+            else:
+                await self.application.get_telegram_client(request_context.bot_name).send_message(
+                    event.chat,
+                    t('MAINTENANCE', request_context.chat['language']).format(
+                        error_picture_url=self.application.config['application']['error_picture_url'],
+                    ),
+                    buttons=None if request_context.is_group_mode() else [close_button()]
+                )
         except (ConnectionError, QueryIdInvalidError, ValueError) as e:
             request_context.error_log(e)
 

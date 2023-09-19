@@ -25,7 +25,7 @@ def exception_handler(func):
         except IpfsConnectionError as e:
             print(
                 f"{colored('INFO', 'red')}: Cannot connect to IPFS: {e.info}\n"
-                f"Try to pass working IPFS address with `--ipfs-http-base-url` parameter",
+                f"Hint: Try to pass working IPFS address with `--ipfs-http-base-url` parameter",
                 file=sys.stderr,
             )
     return wrapper_func

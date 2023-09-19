@@ -123,6 +123,7 @@ class SeedHandler(BaseHandler):
                 },
                 collector='reservoir_sampling',
                 limit=page_size,
+                default_query_language=request_context.chat['language'],
             )
 
             response = await self.application.summa_client.search(query)
@@ -136,6 +137,7 @@ class SeedHandler(BaseHandler):
                 fields=['links', 'id', 'title', 'authors', 'issued_at', 'metadata'],
                 offset=page * page_size,
                 limit=page_size,
+                default_query_language=request_context.chat['language'],
             )
 
             response = await self.application.summa_client.search(query)

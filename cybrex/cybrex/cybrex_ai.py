@@ -143,12 +143,9 @@ class CybrexAI(AioThing):
         elif 'links' in document:
             primary_link = document['links'][0]
             file_content = await self.geck.download(document['links'][0]['cid'])
-            match primary_link['extension']:
-                case 'pdf':
-                    pdf_reader = pypdf.PdfReader(io.BytesIO(file_content))
-                    return '\n'.join(page.extract_text() for page in pdf_reader.pages)
-                case _:
-                    pass
+            if primary_link['extension'] == 'pdf':
+                pdf_reader = pypdf.PdfReader(io.BytesIO(file_content))
+                return '\n'.join(page.extract_text() for page in pdf_reader.pages)
 
     async def generate_chunks_from_document(self, document: SourceDocument) -> List[dict]:
         document.document['content'] = await self.resolve_document_content(document)

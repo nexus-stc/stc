@@ -26,7 +26,7 @@ class TelegramApplication(AioRootThing):
         super().__init__()
         self.config = config
         self.reloading_task = None
-        self.long_tasks = set()
+        self.long_tasks = {}
 
         self.database = Database(data_directory=config['application']['data_directory'])
         self.starts.append(self.database)
@@ -179,9 +179,9 @@ class TelegramApplication(AioRootThing):
             'action': 'stopping_long_tasks',
             'tasks': n,
         })
-        for download in set(self.long_tasks):
+        for download in set(self.long_tasks.values()):
             await download.external_cancel()
-        await asyncio.gather(*map(lambda x: x.task, self.long_tasks))
+        await asyncio.gather(*map(lambda x: x.task, self.long_tasks.values()))
         logging.getLogger('debug').debug({
             'action': 'stopped_long_tasks',
             'tasks': n,

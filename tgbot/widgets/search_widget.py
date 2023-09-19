@@ -43,6 +43,8 @@ class BaseSearchWidget:
         string_query: str,
         page: int = 0,
         is_group_mode: bool = False,
+        load_cache: bool = False,
+        store_cache: bool = False,
     ):
         search_widget_view = cls(
             application=application,
@@ -52,15 +54,18 @@ class BaseSearchWidget:
             page=page,
             is_group_mode=is_group_mode,
         )
-        await search_widget_view._acquire_documents()
+        await search_widget_view._acquire_documents(load_cache=load_cache, store_cache=store_cache)
         return search_widget_view
 
-    async def _acquire_documents(self):
+    async def _acquire_documents(self, load_cache: bool, store_cache: bool):
         self.query, self.query_traits = self.application.search_request_builder.process(
             string_query=self.string_query,
             limit=self.application.config['application']['page_size'],
             offset=self.page * self.application.config['application']['page_size'],
+            default_query_language=self.request_context.chat['language'],
         )
+        self.query['load_cache'] = load_cache
+        self.query['store_cache'] = store_cache
         self._search_response = await self.application.summa_client.search(self.query)
 
     @property
@@ -155,9 +160,9 @@ class InlineSearchWidget(BaseSearchWidget):
             buttons = holder.buttons_builder(self.chat['language']).add_remote_download_button(bot_name=request_context.bot_name).build()
             items.append(builder.article(
                 title,
-                id=str(holder.id),
+                id=str(holder.get_internal_id()),
                 text=response_text,
-                abstract=abstract,
+                description=abstract,
                 buttons=buttons,
             ))
 

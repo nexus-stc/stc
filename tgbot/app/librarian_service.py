@@ -4,10 +4,12 @@ import os
 import re
 import time
 import traceback
+from concurrent.futures import ProcessPoolExecutor
 from datetime import (
     datetime,
     timedelta,
 )
+from functools import partial
 from pydoc import locate
 
 from aiokit import AioThing
@@ -71,6 +73,7 @@ class LibrarianService(AioThing):
         self.librarian_bot_name = config['bot']['bot_name']
         self.requests = {}
         self.cleanup_task = None
+        self.pool = ProcessPoolExecutor(8)
 
     async def cleanup(self, collect_task):
         try:
@@ -203,8 +206,8 @@ class LibrarianService(AioThing):
                     try:
                         data = await asyncio.wait_for(
                             asyncio.get_running_loop().run_in_executor(
-                                None,
-                                lambda: clean_metadata(data, doi=doi)
+                                self.pool,
+                                partial(clean_metadata, data, doi=doi)
                             ),
                             timeout=600.0,
                         )
@@ -296,8 +299,8 @@ class LibrarianService(AioThing):
         try:
             pdf_file = await asyncio.wait_for(
                 asyncio.get_running_loop().run_in_executor(
-                    None,
-                    lambda: clean_metadata(pdf_file, doi=holder.doi)
+                    self.pool,
+                    partial(clean_metadata, pdf_file, doi=holder.doi)
                 ),
                 timeout=600.0,
             )

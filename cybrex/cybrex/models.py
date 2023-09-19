@@ -58,73 +58,75 @@ class CybrexModel:
     def standard_llms(cls, name):
         return {
             'llama-2-7b': {
-                'max_prompt_chars': int(4096 * 2.5),
                 'config': {
                     'context_length': 4096,
                     'max_new_tokens': 512,
                     'model_path_or_repo_id': 'TheBloke/Llama-2-7B-Chat-GGML',
                     'model_file': 'llama-2-7b-chat.ggmlv3.q4_K_S.bin',
                 },
+                'max_prompt_chars': int(4096 * 2.5),
                 'model_type': 'llama',
                 'prompter': {
                     'type': 'llama-7b'
                 }
             },
             'llama-2-7b-uncensored': {
-                'max_prompt_chars': int(4096 * 2.5),
                 'config': {
                     'context_length': 4096,
                     'max_new_tokens': 512,
                     'model_path_or_repo_id': 'TheBloke/Luna-AI-Llama2-Uncensored-GGML',
                     'model_file': 'luna-ai-llama2-uncensored.ggmlv3.q4_K_S.bin',
                 },
+                'max_prompt_chars': int(4096 * 2.5),
                 'model_type': 'llama',
                 'prompter': {
                     'type': 'default'
                 },
             },
             'llama-2-13b': {
-                'max_prompt_chars': int(4096 * 2.5),
                 'config': {
                     'context_length': 4096,
                     'max_new_tokens': 512,
                     'model_file': 'llama-2-13b-chat.ggmlv3.q4_K_S.bin',
                     'model_path_or_repo_id': 'TheBloke/Llama-2-13B-chat-GGML',
                 },
+                'max_prompt_chars': int(4096 * 2.5),
                 'model_type': 'llama',
                 'prompter': {
                     'type': 'llama-7b'
                 },
             },
             'petals-llama-2-70b': {
-                'max_prompt_chars': int(8192 * 2.5),
                 'config': {
                     'max_new_tokens': 512,
                     'model_name': 'meta-llama/Llama-2-7b-chat-hf',
                     'torch_dtype': 'float32',
                 },
+                'max_prompt_chars': int(8192 * 2.5),
                 'model_type': 'petals',
                 'prompter': {
                     'type': 'llama-7b'
                 },
             },
             'petals-stable-beluga': {
-                'max_prompt_chars': int(8192 * 2.5),
                 'config': {
                     'max_new_tokens': 512,
                     'model_name': 'stabilityai/StableBeluga2',
                     'torch_dtype': 'float32',
                 },
+                'max_prompt_chars': int(8192 * 2.5),
                 'model_type': 'petals',
                 'prompter': {
                     'type': 'beluga'
                 },
             },
             'openai': {
+                'config': {},
                 'max_prompt_chars': int(4096 * 3.5),
-                'config': {
-                    'context_length': 4096,
-                }
+                'model_type': 'openai',
+                'prompter': {
+                    'type': 'default'
+                },
             },
         }[name]
 

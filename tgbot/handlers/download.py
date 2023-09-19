@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import time
 
 import aiohttp
@@ -71,6 +72,10 @@ class DownloadTask(LongTask):
     @property
     def task_id(self):
         return self.task_id_for(self.download_link["cid"])
+
+    @classmethod
+    def task_id_for(cls, id_):
+        return f'd_{id_}'
 
     async def long_task(self, request_context: RequestContext):
         throttle_secs = 3.0

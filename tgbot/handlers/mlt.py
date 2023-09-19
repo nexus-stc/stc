@@ -19,6 +19,7 @@ from .base import BaseHandler
 
 class MltHandler(BaseHandler):
     filter = events.CallbackQuery(pattern='^/m_([A-Za-z0-9_-]+)')
+    fail_as_reply = False
 
     def parse_pattern(self, event: events.ChatAction):
         cid = recode_base64_to_base36(event.pattern_match.group(1).decode())
@@ -30,7 +31,11 @@ class MltHandler(BaseHandler):
         request_context.add_default_fields(mode='mlt', cid=cid)
         request_context.statbox(action='view')
 
-        prefetch_message = await event.reply(t("SEARCHING", request_context.chat['language']))
+        prefetch_message = await self.application.get_telegram_client(request_context.bot_name).send_message(
+            event.chat,
+            t("SEARCHING", request_context.chat['language'])
+        )
+
         source_document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'links.cid', cid)
 
         if not source_document:
@@ -47,21 +52,38 @@ class MltHandler(BaseHandler):
         if source_document['type'] == 'journal-article':
             requested_type += ' type:journal-article'
 
+        subqueries = [{
+            'occur': 'should',
+            'query': {'more_like_this': {
+                'min_term_frequency': 1,
+                'min_doc_frequency': 1,
+                'document': json.dumps(document_dump)
+            }}
+        }]
+
+        if content := source_document.get('content'):
+            subqueries.append({
+                'occur': 'should',
+                'query': {
+                    'boost': {
+                        'query': {
+                            'more_like_this': {
+                                'min_term_frequency': 3,
+                                'min_doc_frequency': 1,
+                                'document': json.dumps({'content': content})
+                            }
+                        },
+                        'score': '0.35',
+                    }
+                }
+            })
+
         documents = await self.application.summa_client.search_documents({
             'index_alias': 'nexus_science',
-            'query': {'boolean': {'subqueries': [{
-                'occur': 'must',
-                'query': {'more_like_this': {
-                    'min_term_frequency': 1,
-                    'min_doc_frequency': 1,
-                    'document': json.dumps(document_dump)
-                }}
-            }, {
-                'occur': 'must',
-                'query': {'match': {
-                    'value': requested_type,
-                }}
-            }]}},
+            'query': {'boolean': {'subqueries': [
+                {'occur': 'must', 'query': {'boolean': {'subqueries': subqueries}}},
+                {'occur': 'must', 'query': {'match': {'value': requested_type}}}
+            ]}},
             'collectors': [{'top_docs': {'limit': 5}}],
         })
 

@@ -5,7 +5,7 @@ RUN apt-get update \
 && apt-get install gcc g++ git golang -y \
 && apt-get clean
 WORKDIR /app
-COPY tgbot/requirements.txt tgbot/requirements.txt
+ADD tgbot/requirements.txt tgbot/requirements.txt
 RUN python3 -m venv venv
 RUN venv/bin/pip3 install -r tgbot/requirements.txt
 COPY fabrica fabrica

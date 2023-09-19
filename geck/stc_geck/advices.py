@@ -103,17 +103,21 @@ def get_light_query_parser_config(query_language: Optional[str] = None):
 
 
 def get_query_parser_config(profile: str, query_language: Optional[str] = None):
-    match profile:
-        case 'full': return get_full_query_parser_config(query_language)
-        case 'light': return get_light_query_parser_config(query_language)
-        case _: raise ValueError("Unknown profile")
+    if profile == 'full':
+        return get_full_query_parser_config(query_language)
+    elif profile == 'light':
+        return get_light_query_parser_config(query_language)
+    else:
+        raise ValueError("Unknown profile")
 
 
 def get_default_scorer(profile: str):
-    match profile:
-        case 'full': return {'eval_expr': PR_TEMPORAL_RANKING_FORMULA}
-        case 'light': return None
-        case _: raise ValueError("Unknown profile")
+    if profile == 'full':
+        return {'eval_expr': PR_TEMPORAL_RANKING_FORMULA}
+    elif profile == 'light':
+        return None
+    else:
+        raise ValueError("Unknown profile")
 
 
 class BaseDocumentHolder:

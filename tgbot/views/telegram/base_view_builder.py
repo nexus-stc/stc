@@ -590,14 +590,15 @@ class BaseButtonsBuilder:
 
     def add_remote_download_button(self, bot_name):
         # ⬇️ is a mark, Find+F over sources before replacing
-        if self.document_holder.has_field('dois'):
-            try:
-                encoded_query = encode_query_to_deep_link(f'doi:{self.document_holder.cid}', bot_name)
-                self.buttons[-1].append(
-                    Button.url('⬇', encoded_query)
-                )
-            except TooLongQueryError:
-                pass
+        if not self.document_holder.links:
+            return self
+        try:
+            internal_id = self.document_holder.get_internal_id()
+            internal_id = internal_id.replace('id.dois', 'doi')
+            encoded_query = encode_query_to_deep_link(internal_id, bot_name)
+            self.buttons[-1].append(Button.url('⬇', encoded_query))
+        except TooLongQueryError:
+            pass
         return self
 
     def add_remote_request_button(self):

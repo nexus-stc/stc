@@ -12,8 +12,15 @@ More technical description:
 
 You should have [installed IPFS](http://standard-template-construct.org/#/help/install-ipfs)
 
+Then, you should install cybrex package
 ```bash
 pip install cybrex
+```
+
+and launch qdrant database for storing vectors:
+
+```bash 
+docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant 
 ```
 
 Upon its initial launch, `cybrex` will create a `~/.cybrex` directory containing a `config.yaml` file and a `chroma` directory.
@@ -25,19 +32,19 @@ You can edit the config file to point to different IPFS addresses.
 STC contains metadata for the most of the items, but `links` or `content` fields may be absent.
 
 ```console
-# Set your OpenAI key
-export OPENAI_API_KEY=...
-
 # (Optional) Launch Summa search engine, then you will not have to wait bootstrapping every time.
 # It will take a time!
 # If you decided to launch it, switch to another Terminal window
-geck --ipfs-http-base-url 127.0.0.1:8080 --index-names='["nexus_free","nexus_science"]' - serve
+geck --ipfs-http-base-url 127.0.0.1:8080 - serve
 ```
 
 Now we should initialize Cybrex and choose which models will be used:
 
 ``` console
 cybrex - write-config --force
+# or if you want to use OpenAI model, export keys and you should set appropriate models in config:
+export OPENAI_API_KEY=...
+cybrex - write-config -l openai --force
 
 # Summarize a document
 cybrex - sum-doc doi:10.1155/2022/7138756

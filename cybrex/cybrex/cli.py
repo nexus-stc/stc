@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 import re
@@ -9,6 +10,21 @@ import fire
 from termcolor import colored
 
 from .cybrex_ai import CybrexAI
+from .exceptions import QdrantStorageNotAvailableError
+
+
+def exception_handler(func):
+    @functools.wraps(func)
+    async def wrapper_func(*args, **kwargs):
+        try:
+            await func(*args, **kwargs)
+        except QdrantStorageNotAvailableError as e:
+            print(
+                f"{colored('INFO', 'red')}: Cannot connect to Qdrant: {e.info}\n"
+                f"Hint: Launch qdrant using `docker run -p 6333:6333 -p 6334:6334` qdrant/qdrant",
+                file=sys.stderr,
+            )
+    return wrapper_func
 
 
 class CybrexCli:
@@ -21,6 +37,7 @@ class CybrexCli:
                 document = json.loads(document)
                 await self.cybrex.upsert_documents([document])
 
+    @exception_handler
     async def export_chunks(self, query: str, output_path: str, n_documents: int = 10):
         """
         Store STC text chunks in ZIP archive
@@ -37,6 +54,7 @@ class CybrexCli:
                 n_documents=n_documents
             )
 
+    @exception_handler
     async def chat_doc(self, document_query: str, query: str, n_chunks: int = 5, minimum_score: float = 0.5):
         """
         Ask a question about content of document identified by DOI.
@@ -57,6 +75,7 @@ class CybrexCli:
             )
             print(f"{colored('A', 'green')}: {answer}")
 
+    @exception_handler
     async def chat_sci(
         self,
         query: str,
@@ -95,6 +114,7 @@ class CybrexCli:
             print(f"{colored('A', 'green')}: {answer}")
             print(f"{colored('References', 'green')}:\n{textwrap.indent(references, ' - ')}")
 
+    @exception_handler
     async def sum_doc(self, document_query: str):
         """
         Summarization of the document
@@ -106,6 +126,7 @@ class CybrexCli:
             answer, _ = await cybrex.summarize_document(document_query)
             print(f"{colored('Summarization', 'green')}: {answer}")
 
+    @exception_handler
     async def semantic_search(
         self,
         query: str,

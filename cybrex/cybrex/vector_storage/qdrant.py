@@ -1,6 +1,7 @@
 import uuid
 from typing import List
 
+import grpc
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -12,6 +13,7 @@ from qdrant_client.models import (
     VectorParams,
 )
 
+from ..exceptions import QdrantStorageNotAvailableError
 from .base import BaseVectorStorage
 
 
@@ -26,7 +28,10 @@ class QdrantVectorStorage(BaseVectorStorage):
     def _exists_collection(self, collection_name):
         if self.is_existing:
             return True
-        collections = self.db.get_collections()
+        try:
+            collections = self.db.get_collections()
+        except grpc.RpcError:
+            raise QdrantStorageNotAvailableError()
         for collection in collections.collections:
             if collection.name == collection_name:
                 self.is_existing = True

@@ -63,6 +63,14 @@ class RetrieveTask(LongTask):
         self.is_upstream = is_upstream
         self.ignore_clean_errors = ignore_clean_errors
 
+    @property
+    def task_id(self):
+        return self.task_id_for(self.document_holder.get_internal_id())
+
+    @classmethod
+    def task_id_for(cls, id_):
+        return f'r_{id_}'
+
     async def long_task(self, request_context: RequestContext):
         return await self.application.file_flow.try_to_download(
             self.document_holder.document,
@@ -78,6 +86,8 @@ class BaseSearchHandler(BaseHandler, ABC):
         request_context: RequestContext,
         string_query: str,
         is_shortpath_enabled: bool = False,
+        load_cache: bool = False,
+        store_cache: bool = False,
     ) -> Tuple[str, List, bool]:
         request_context.add_default_fields(
             is_group_mode=request_context.is_group_mode(),
@@ -94,6 +104,8 @@ class BaseSearchHandler(BaseHandler, ABC):
                 chat=request_context.chat,
                 string_query=string_query,
                 is_group_mode=request_context.is_group_mode(),
+                load_cache=load_cache,
+                store_cache=store_cache,
             )
         except InvalidSearchError:
             return t('INVALID_SYNTAX_ERROR', language).format(
@@ -128,6 +140,8 @@ class BaseSearchHandler(BaseHandler, ABC):
                     chat=request_context.chat,
                     string_query=string_query,
                     is_group_mode=request_context.is_group_mode(),
+                    load_cache=False,
+                    store_cache=store_cache,
                 )
 
         if len(search_widget.scored_documents) == 1:
@@ -237,6 +251,8 @@ class SearchHandler(BaseSearchHandler):
                 request_context=request_context,
                 string_query=string_query,
                 is_shortpath_enabled=True,
+                load_cache=False,
+                store_cache=True,
             )
             if self.extra_warning:
                 text = self.extra_warning + text
@@ -260,7 +276,7 @@ class InlineSearchHandler(BaseSearchHandler):
     filter = events.InlineQuery()
     stop_propagation = False
 
-    async def handler(self, event, request_context: RequestContext):
+    async def handler(self, event: events.InlineQuery, request_context: RequestContext):
         if event.query.peer_type == InlineQueryPeerTypeSameBotPM():
             await event.answer()
             return
@@ -278,6 +294,7 @@ class InlineSearchHandler(BaseSearchHandler):
                 chat=request_context.chat,
                 string_query=event.text,
                 is_group_mode=request_context.is_group_mode(),
+                load_cache=True,
             )
             items = inline_search_widget.render(builder=builder, request_context=request_context)
             encoded_query = encode_deep_query(event.text)
@@ -326,6 +343,7 @@ class SearchEditHandler(BaseSearchHandler):
                     request_context=request_context,
                     string_query=string_query,
                     is_shortpath_enabled=True,
+                    store_cache=True,
                 )
                 if self.extra_warning:
                     text = self.extra_warning + text
@@ -371,6 +389,8 @@ class SearchPagingHandler(BaseCallbackQueryHandler):
                 chat=request_context.chat,
                 string_query=string_query,
                 page=page,
+                load_cache=True,
+                store_cache=True,
             )
         except InvalidSearchError:
             return await event.answer(

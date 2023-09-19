@@ -158,7 +158,10 @@ class TelegramSearchRequestBuilder:
         if extra_filter:
             all_extra_filters.append(extra_filter)
         if query_traits.languages:
-            all_extra_filters.append({'boolean': {'subqueries': [{'occur': 'should', 'query': {'term': {'field': 'languages', 'value': language}}} for language in query_traits.languages]}})
+            all_extra_filters.append({'boolean': {'subqueries': [
+                {'occur': 'should', 'query': {'term': {'field': 'languages', 'value': language}}}
+                for language in query_traits.languages
+            ]}})
         if query_traits.types:
             all_extra_filters.append({'boolean': {'subqueries': [{'occur': 'should', 'query': {'term': {'field': 'type', 'value': type_}}} for type_ in query_traits.types]}})
         if all_extra_filters:
