@@ -13,17 +13,36 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from lazy import lazy
 from transformers import AutoTokenizer
 
-from .llm import LLMManager
+from .llm_manager import LLMManager
 from .prompts.base import BasePrompter
 
 
 class CybrexModel:
+    """
+    Utility class that manages all nested AI models required for Cybrex to be functional.
+    Mainly consists of configs and models instances.
+    """
+
     def __init__(self, config):
         self.config = config
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.config['text_splitter']['chunk_size'],
             chunk_overlap=self.config['text_splitter']['chunk_overlap'],
         )
+
+    @classmethod
+    def default_config(cls, llm_name: str = 'llama-2-7b-uncensored', embedder_name: str = 'bge-small-en'):
+        return {
+            'text_splitter': {
+                'add_metadata': True,
+                'chunk_size': 1024,
+                'chunk_overlap': 128,
+                'type': 'rcts',
+            },
+            'embedder': cls.standard_embedders(embedder_name),
+            'keyword_extraction': True,
+            'llm': cls.standard_llms(llm_name)
+        }
 
     @classmethod
     def standard_embedders(cls, name):
@@ -130,20 +149,6 @@ class CybrexModel:
             },
         }[name]
 
-    @classmethod
-    def default_config(cls, llm_name: str = 'llama-2-7b-uncensored', embedder_name: str = 'bge-small-en'):
-        return {
-            'text_splitter': {
-                'add_metadata': True,
-                'chunk_size': 1024,
-                'chunk_overlap': 128,
-                'type': 'rcts',
-            },
-            'embedder': cls.standard_embedders(embedder_name),
-            'keyword_extraction': True,
-            'llm': cls.standard_llms(llm_name)
-        }
-
     @lazy
     def keyword_extractor(self):
         if self.config['keyword_extraction']:
@@ -168,7 +173,7 @@ class CybrexModel:
             raise ValueError("Unsupported embedding model")
 
     @lazy
-    def llm(self):
+    def llm_manager(self):
         if self.config['llm']['model_type'] == 'llama':
             return LLMManager(
                 llm=AutoModelForCausalLM.from_pretrained(**self.config['llm']['config']),

@@ -14,7 +14,7 @@ class LLMManager:
         return self.config['context_length']
 
     def process(self, prompt):
-        logging.getLogger('statbox').info({'action': 'process', 'mode': 'llm', 'prompt': prompt})
+        logging.getLogger('statbox').info({'action': 'process', 'mode': 'llm_manager', 'prompt': prompt})
         if self.tokenizer:
             input_ids = self.tokenizer(prompt, return_tensors="pt")["input_ids"]
             outputs = self.llm.generate(

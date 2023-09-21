@@ -18,6 +18,7 @@ from aiokit import AioThing
 from izihawa_configurator import Configurator
 from izihawa_utils.exceptions import BaseError
 from izihawa_utils.file import mkdir_p
+from stc_geck.advices import BaseDocumentHolder
 from stc_geck.client import StcGeck
 
 from .chains.map_reduce import (
@@ -27,7 +28,7 @@ from .chains.map_reduce import (
 from .data_source.base import SourceDocument
 from .data_source.geck_data_source import GeckDataSource
 from .document_chunker import DocumentChunker
-from .models import CybrexModel
+from .model import CybrexModel
 from .vector_storage.qdrant import QdrantVectorStorage
 
 
@@ -137,17 +138,29 @@ class CybrexAI(AioThing):
         return config_path
 
     async def resolve_document_content(self, document: SourceDocument) -> Optional[str]:
+        """
+        Retrieves document content from `content` field or from underlying PDF file.
+
+        :param document:
+        :return:
+        """
         document = document.document
         if 'content' in document:
             return document['content']
-        elif 'links' in document:
-            primary_link = document['links'][0]
-            file_content = await self.geck.download(document['links'][0]['cid'])
-            if primary_link['extension'] == 'pdf':
-                pdf_reader = pypdf.PdfReader(io.BytesIO(file_content))
-                return '\n'.join(page.extract_text() for page in pdf_reader.pages)
+        document_holder = BaseDocumentHolder(document)
+        # ToDo: should also utilize epub links
+        if pdf_link := document_holder.get_links().get_link_with_extension('pdf'):
+            file_content = await self.geck.download(pdf_link['cid'])
+            pdf_reader = pypdf.PdfReader(io.BytesIO(file_content))
+            return '\n'.join(page.extract_text() for page in pdf_reader.pages)
 
     async def generate_chunks_from_document(self, document: SourceDocument) -> List[dict]:
+        """
+        Chunk documents using pre-configured chunker
+
+        :param document:
+        :return:
+        """
         document.document['content'] = await self.resolve_document_content(document)
         return await asyncio.get_running_loop().run_in_executor(
             None,
@@ -185,6 +198,17 @@ class CybrexAI(AioThing):
         return all_chunks
 
     async def upsert_documents(self, documents: List[SourceDocument], skip_downloading_pdf: bool = True):
+        """
+        Upsert documents into vector storage
+
+        :param documents:
+        :param skip_downloading_pdf:
+        :return:
+        """
+
+        # ToDo: need concurrent upserts. For these purposes we may use critical
+        #  locked area on inserting using primary keys
+
         if not documents:
             return
         chunks = await self._get_missing_chunks(documents, skip_downloading_pdf=skip_downloading_pdf)
@@ -205,6 +229,13 @@ class CybrexAI(AioThing):
             })
 
     async def upsert_document_by_query(self, query: str, skip_downloading_pdf: bool = True):
+        """
+        Query documents from data source and upsert them into vector storage
+
+        :param query:
+        :param skip_downloading_pdf:
+        :return:
+        """
         documents = await self.data_source.query_documents(query, limit=1)
         if not documents:
             raise DocumentNotFoundError(id_=query)
@@ -329,7 +360,7 @@ class CybrexAI(AioThing):
             minimum_score=minimum_score,
         )
 
-        chain = QAChain(query=query, llm=self.model.llm)
+        chain = QAChain(query=query, llm_manager=self.model.llm_manager)
         answer = await asyncio.get_running_loop().run_in_executor(
             None,
             lambda: chain.process(chunks),
@@ -345,7 +376,7 @@ class CybrexAI(AioThing):
                 n_documents=n_documents,
                 minimum_score=minimum_score,
             )
-            chain = QAChain(query=query, llm=self.model.llm)
+            chain = QAChain(query=query, llm_manager=self.model.llm_manager)
             answer = await asyncio.get_running_loop().run_in_executor(
                 None,
                 lambda: chain.process(chunks),
@@ -354,14 +385,14 @@ class CybrexAI(AioThing):
         else:
             answer = await asyncio.get_running_loop().run_in_executor(
                 None,
-                lambda: self.model.llm.process(self.model.llm.prompter.question(query)),
+                lambda: self.model.llm_manager.process(self.model.llm_manager.prompter.question(query)),
             )
             return answer.strip(), []
 
     async def summarize_document(self, document_query):
         document_id = await self.upsert_document_by_query(document_query, skip_downloading_pdf=False)
         chunks = self.vector_storage.get_by_field_value('document_id', document_id)
-        chain = SummarizeChain(llm=self.model.llm)
+        chain = SummarizeChain(llm_manager=self.model.llm_manager)
         answer = await asyncio.get_running_loop().run_in_executor(
             None,
             lambda: chain.process(chunks),
@@ -369,29 +400,38 @@ class CybrexAI(AioThing):
         return answer.strip(), chunks
 
     async def general_text_processing(self, request, text):
+        """
+        Process user's request using text
+
+        :param request:
+        :param text:
+        :return:
+        """
         answer = await asyncio.get_running_loop().run_in_executor(
             None,
-            lambda: self.model.llm.process(
-                self.model.llm.prompter.general_text_processing(request=request, text=text)
+            lambda: self.model.llm_manager.process(
+                self.model.llm_manager.prompter.general_text_processing(request=request, text=text)
             ),
         )
         return answer.strip()
 
     async def get_documents_from_chunks(self, chunks):
+        """
+        Return original documents using GECK and identifiers from chunks
+
+        :param chunks:
+        :return:
+        """
         ids = set([chunk['document_id'] for chunk in chunks])
-        search_requests = []
+        subqueries = []
         for id_ in ids:
             field, value = id_.split(':', 1)
-            search_request = {
-                'index_alias': 'nexus_science',
-                'query': {'match': {'value': f'{field}:"{value}"'}},
-                'collectors': [{'top_docs': {'limit': 1}}],
-                'is_fieldnorms_scoring_enabled': False,
-            }
-            search_requests.append(self.geck.get_summa_client().search_documents(search_request))
-        _summa_documents = await asyncio.gather(*search_requests)
-        summa_documents = []
-        for summa_document in _summa_documents:
-            if summa_document:
-                summa_documents.append(summa_document[0])
-        return summa_documents
+            subqueries.append({'query': {'match': {'value': f'{field}:"{value}"'}}, 'occur': 'should'})
+
+        search_request = {
+            'index_alias': 'nexus_science',
+            'query': {'boolean': {'subqueries': subqueries}},
+            'collectors': [{'top_docs': {'limit': len(subqueries)}}],
+            'is_fieldnorms_scoring_enabled': False,
+        }
+        return await self.geck.get_summa_client().search_documents(search_request)

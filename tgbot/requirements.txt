@@ -3,7 +3,7 @@ lxml
 pandas
 fasttext-wheel
 PyCryptodome
-pypdf>=3.16.0
+pypdf>=3.16.1
 seaborn
 
 aiobaseclient

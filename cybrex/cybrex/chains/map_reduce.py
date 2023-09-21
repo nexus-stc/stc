@@ -1,10 +1,15 @@
 import logging
-from typing import List
+from typing import (
+    Iterable,
+    List,
+)
+
+from ..llm_manager import LLMManager
 
 
 class MapReduceChain:
-    def __init__(self, llm, chunk_accumulator):
-        self.llm = llm
+    def __init__(self, llm_manager: LLMManager, chunk_accumulator):
+        self.llm_manager = llm_manager
         self.chunk_accumulator = chunk_accumulator
 
     def input_splitter(self, chunks: List) -> str:
@@ -18,12 +23,12 @@ class MapReduceChain:
     def output_processor(self, llm_output: str) -> dict:
         return {'text': llm_output}
 
-    def process(self, chunks):
+    def process(self, chunks: Iterable):
         while True:
             input_chunks = self.input_splitter(chunks)
             outputs = []
             for input_chunk in input_chunks:
-                llm_output = self.llm.process(input_chunk)
+                llm_output = self.llm_manager.process(input_chunk)
                 logging.getLogger('statbox').info({
                     'action': 'intermediate_map_reduce_step',
                     'output': llm_output,
@@ -73,22 +78,22 @@ class SummarizeChunkAccumulator(ChunkAccumulator):
 
 
 class QAChain(MapReduceChain):
-    def __init__(self, query: str, llm):
+    def __init__(self, query: str, llm_manager):
         super().__init__(
-            llm=llm,
+            llm_manager=llm_manager,
             chunk_accumulator=QAChunkAccumulator(
                 query=query,
-                prompter=llm.prompter,
-                max_chunk_length=llm.max_prompt_chars,
+                prompter=llm_manager.prompter,
+                max_chunk_length=llm_manager.max_prompt_chars,
             ))
 
 
 class SummarizeChain(MapReduceChain):
-    def __init__(self, llm):
+    def __init__(self, llm_manager: LLMManager):
         super().__init__(
-            llm=llm,
+            llm_manager=llm_manager,
             chunk_accumulator=SummarizeChunkAccumulator(
-                prompter=llm.prompter,
-                max_chunk_length=llm.max_prompt_chars,
+                prompter=llm_manager.prompter,
+                max_chunk_length=llm_manager.max_prompt_chars,
             )
         )

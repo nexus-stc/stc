@@ -10,7 +10,10 @@ from bs4 import (
     BeautifulSoup,
     NavigableString,
 )
-from stc_geck.advices import LinksWrapper
+from stc_geck.advices import (
+    BaseDocumentHolder,
+    LinksWrapper,
+)
 
 from library.pdftools import is_pdf
 
@@ -113,8 +116,10 @@ class SciParser(AioThing):
         if 'data' in document:
             data = document['data']
         else:
-            links = LinksWrapper(document['links'])
-            pdf_link = links.get_link_with_extension('pdf')
+            document_holder = BaseDocumentHolder(document)
+            pdf_link = document_holder.get_links().get_link_with_extension('pdf')
+            if not pdf_link:
+                return
             data = await self.ipfs_http_client.get_item(pdf_link["cid"])
             pdf_link['filesize'] = len(data)
             if 'md5' not in pdf_link:
@@ -147,7 +152,7 @@ class SciParser(AioThing):
                 article_dict["doi"] = doi.lower()
             return article_dict
         else:
-            return None
+            return
 
     def parse_date(self, article):
         """
