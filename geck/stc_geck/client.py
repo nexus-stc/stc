@@ -6,7 +6,10 @@ from typing import (
     AsyncIterator,
     Optional,
 )
-from urllib.parse import urlparse
+from urllib.parse import (
+    quote,
+    urlparse,
+)
 
 import aiohttp
 import aiohttp.client_exceptions
@@ -20,7 +23,10 @@ from izihawa_ipfs_api import (
 )
 from izihawa_utils.random import reservoir_sampling_async
 
-from .advices import get_light_query_parser_config
+from .advices import (
+    BaseDocumentHolder,
+    get_light_query_parser_config,
+)
 from .exceptions import IpfsConnectionError
 from .utils import (
     create_car,
@@ -90,13 +96,13 @@ async def detect_host_header(url):
 
 class StcGeck(AioThing):
     def __init__(
-        self,
-        ipfs_http_base_url: str = 'http://127.0.0.1:8080',
-        ipfs_api_base_url: str = 'http://127.0.0.1:5001',
-        ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
-        grpc_api_endpoint: str = '127.0.0.1:10082',
-        index_alias: str = 'nexus_science',
-        timeout: int = 300,
+            self,
+            ipfs_http_base_url: str = 'http://127.0.0.1:8080',
+            ipfs_api_base_url: str = 'http://127.0.0.1:5001',
+            ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
+            grpc_api_endpoint: str = '127.0.0.1:10082',
+            index_alias: str = 'nexus_science',
+            timeout: int = 300,
     ):
         """
         Constructs GECK that may be used to access STC dataset.
@@ -183,6 +189,25 @@ class StcGeck(AioThing):
         """
         return await self.ipfs_http_client.get_item(cid)
 
+    async def download_document(self, document: dict, file_name: Optional[str] = None):
+        """
+        Download document
+
+        :param document: JSON document from STC
+        :param file_name: Filename for storing file
+        :return: True if file has been successfully written
+        """
+        document_holder = BaseDocumentHolder(document)
+        link = document_holder.get_links().get_first_link()
+        if link:
+            if not file_name:
+                file_name = quote(document_holder.get_internal_id(), safe='') + '.' + link['extension']
+            with open(file_name, 'wb') as f:
+                pdf_file = await self.download(link['cid'])
+                f.write(pdf_file)
+            return True
+        return False
+
     async def random_cids(self, n: int = 1000):
         """
         Returns random CIDs from STC dataset. May be helpful for pinning random subsets of STC.
@@ -210,11 +235,11 @@ class StcGeck(AioThing):
         return cids
 
     async def create_ipfs_directory(
-        self,
-        output_car: str,
-        query: Optional[str] = None,
-        limit: int = 100,
-        name_template: str = '{id}.{extension}',
+            self,
+            output_car: str,
+            query: Optional[str] = None,
+            limit: int = 100,
+            name_template: str = '{id}.{extension}',
     ) -> str:
         """
         Creates an importable CAR file with items from STC.

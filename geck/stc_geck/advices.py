@@ -120,6 +120,21 @@ def get_default_scorer(profile: str):
         raise ValueError("Unknown profile")
 
 
+def format_document(document: dict):
+    parts = []
+    if title := document.get('title'):
+        parts.append(f'Title: {title}')
+    if authors := document.get('authors'):
+        parts.append(f'Authors: {authors}')
+    if id_ := document.get('id'):
+        parts.append(f'ID: {id_}')
+    if links := document.get('links'):
+        parts.append(f'Links: {links}')
+    if abstract := document.get('abstract'):
+        parts.append(f'Abstract: {abstract[:200]}')
+    return '\n'.join(parts)
+
+
 class BaseDocumentHolder:
     def __init__(self, document):
         self.document = document
@@ -237,7 +252,7 @@ class LinksWrapper:
                 self.add(link)
         return found_link
 
-    def get_link_with_extension(self, extension, from_end=False):
+    def get_link_with_extension(self, extension, from_end: bool = False):
         links = self.links
         if from_end:
             links = reversed(self.links)
@@ -245,3 +260,7 @@ class LinksWrapper:
             full_link = self.stored_cids[cid]
             if full_link['extension'] == extension:
                 return full_link
+
+    def get_first_link(self):
+        if self.links:
+            return self.stored_cids[self.links[0]]
