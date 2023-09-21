@@ -62,7 +62,7 @@ def replace_broken_tags(abstract):
 
 
 def despace_abstract(abstract):
-    return abstract.replace('>\n<', '><')
+    return re.sub(r'\n*(</?[^>]+/?>)\n*', r'\g<1>', abstract)
 
 
 def plain_author(author, bot_name=None):

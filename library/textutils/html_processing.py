@@ -22,6 +22,8 @@ def process_tags(soup):
             el.unwrap()
         elif el.name == 'em':
             el.name = 'i'
+        elif el.name == 'italic':
+            el.name = 'i'
         elif el.name == 'strong':
             el.name = 'b'
         elif el.name == 'sec':

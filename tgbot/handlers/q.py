@@ -7,8 +7,8 @@ from library.telegram.base import RequestContext
 from library.telegram.common import close_button
 from library.textutils.utils import remove_markdown
 
-from .base import BaseHandler
 from ..translations import t
+from .base import BaseHandler
 
 
 class QHandler(BaseHandler):

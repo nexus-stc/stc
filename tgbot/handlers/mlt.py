@@ -1,9 +1,7 @@
 import json
 
 from izihawa_utils.common import filter_none
-from telethon import (
-    events,
-)
+from telethon import events
 
 from library.telegram.base import RequestContext
 from library.telegram.common import close_button
