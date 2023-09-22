@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cybrex"
-version = "1.8.0"
+version = "1.8.1"
 authors = [{ name = "Interdimensional Walker" }]
 description = "Researching AI"
 readme = "README.md"
@@ -19,6 +19,9 @@ cybrex = "cybrex.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/nexus-stc/stc"
+
+[project.optional-dependencies]
+petals = ["petals>=2.0.0"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

@@ -104,7 +104,8 @@ class CybrexAI(AioThing):
         qdrant_base_url: str = 'http://127.0.0.1',
         llm_name: Literal['llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b'] = 'llama-2-7b-uncensored',
         embedder_name: Literal['instructor-xl', 'openai', 'bge-small-en'] = 'bge-small-en',
-        gpu_layers: Optional[int] = None,
+        device: str = 'cpu',
+        gpu_layers: int = 0,
         force: bool = False,
     ):
         """
@@ -114,6 +115,7 @@ class CybrexAI(AioThing):
         :param qdrant_base_url:
         :param llm_name: 'llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b'
         :param embedder_name: 'instructor-xl', 'openai', 'bge-small-en''
+        :param device: 'cpu' or 'cuda'
         :param gpu_layers: number of layers to enabled offloading part of calculations to GPU
         :param force: overwrite even if config already exists
         :return:
@@ -126,7 +128,12 @@ class CybrexAI(AioThing):
                         'base_url': ipfs_http_base_url,
                     }
                 },
-                'model': CybrexModel.default_config(llm_name=llm_name, embedder_name=embedder_name, gpu_layers=gpu_layers),
+                'model': CybrexModel.default_config(
+                    llm_name=llm_name,
+                    embedder_name=embedder_name,
+                    device=device,
+                    gpu_layers=gpu_layers,
+                ),
                 'qdrant': {
                     'url': qdrant_base_url,
                     'prefer_grpc': True,
