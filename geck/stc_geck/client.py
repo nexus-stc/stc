@@ -103,6 +103,7 @@ class StcGeck(AioThing):
             grpc_api_endpoint: str = '127.0.0.1:10082',
             index_alias: str = 'nexus_science',
             timeout: int = 300,
+            default_cache_size: int = 300,
     ):
         """
         Constructs GECK that may be used to access STC dataset.
@@ -114,6 +115,7 @@ class StcGeck(AioThing):
             endpoint for setting up Summa. If there is Summa listening on the port before launching, then
             GECK uses existing instance otherwise launches its own one
         :param timeout: timeout for requests sent to IPFS
+        :param default_cache_size: the CachingDirectory size in bytes
         """
         super().__init__()
         self.ipfs_http_base_url = canonoize_base_url(ipfs_http_base_url)
@@ -124,6 +126,7 @@ class StcGeck(AioThing):
         self.ipfs_data_directory = '/' + ipfs_data_directory.strip('/') + '/'
         self.grpc_api_endpoint = grpc_api_endpoint
         self.index_alias = index_alias
+        self.default_cache_size = default_cache_size
         self.temp_dir = tempfile.TemporaryDirectory()
 
         self.is_embed = not is_endpoint_listening(self.grpc_api_endpoint)
@@ -146,7 +149,7 @@ class StcGeck(AioThing):
                 'method': 'GET',
                 'url_template': f'{full_path}{{file_name}}',
                 'headers_template': headers_template,
-                'cache_config': {'cache_size': 536870912},
+                'cache_config': {'cache_size': self.default_cache_size},
             }}
             logging.getLogger('info').info({'action': 'launching_embedded', 'remote_index_config': remote_index_config})
             try:

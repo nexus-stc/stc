@@ -14,13 +14,13 @@ You should have [installed IPFS](http://standard-template-construct.org/#/help/i
 
 Then, you should install cybrex package
 ```bash
-pip install cybrex
+ultranymous@nevermore:~ pip install cybrex
 ```
 
 and launch qdrant database for storing vectors:
 
 ```bash 
-docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant 
+ultranymous@nevermore:~ docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant 
 ```
 
 Upon its initial launch, `cybrex` will create a `~/.cybrex` directory containing a `config.yaml` file and a `chroma` directory.
@@ -33,23 +33,23 @@ STC contains metadata for the most of the items, but `links` or `content` fields
 
 ```console
 # (Optional) Launch Summa search engine, then you will not have to wait bootstrapping every time.
-# It will take a time!
+# It will take a time! Wait until the text `Serving on ...` appears
 # If you decided to launch it, switch to another Terminal window
-geck --ipfs-http-base-url 127.0.0.1:8080 - serve
+ultranymous@nevermore:~ geck --ipfs-http-base-url 127.0.0.1:8080 - serve
 ```
 
 Now we should initialize Cybrex and choose which models will be used:
 
-``` console
-cybrex - write-config --force
+```console
+ultranymous@nevermore:~ cybrex - write-config --force
 # or if you want to use OpenAI model, export keys and you should set appropriate models in config:
-export OPENAI_API_KEY=...
-cybrex - write-config -l openai --force
+ultranymous@nevermore:~ export OPENAI_API_KEY=...
+ultranymous@nevermore:~ cybrex - write-config -l openai --force
 # or if you want to use GPU:
-cybrex - write-config --device cuda --force
+ultranymous@nevermore:~ cybrex - write-config --device cuda --force
 
 # Summarize a document
-cybrex - sum-doc doi:10.1155/2022/7138756
+ultranymous@nevermore:~ cybrex - sum-doc doi:10.1155/2022/7138756
 
 Document: doi:10.1155/2022/7138756
 Summarization: Resveratrol is a natural compound found in various plants and has been studied for 
@@ -64,7 +64,7 @@ to activate the host's immune defences, affect the TLRs/NF-κB signalling pathwa
 viral gene expression.
 
 # Question a document
-cybrex - chat-doc doi:10.1155/2022/7138756 \
+ultranymous@nevermore:~ cybrex - chat-doc doi:10.1155/2022/7138756 \
   --query "What is the antivirus effect of resveratrol?"
 
 Q: What is the antivirus effect of resveratrol?
@@ -78,7 +78,7 @@ syncytial virus (RSV) and to stimulate the secretion of higher levels of TNF-α,
 and RSV clearance.
 
 # Question enitre science
-cybrex - chat-sci "What is the antivirus effect of resveratrol?" --n-chunks 4 --n-documents 10
+ultranymous@nevermore:~ cybrex - chat-sci "What is the antivirus effect of resveratrol?" --n-chunks 4 --n-documents 10
 
 Q: What is the antivirus effect of resveratrol?
 A: Resveratrol has been found to possess antiviral activity against a variety of viruses, including herpes simplex virus, human immunodeficiency virus, and hepatitis C virus. It has been shown to inhibit the replication of several viruses, including HIV, herpes simplex virus, and influenza virus, and to regulate TLR3 expression, thus affecting the recruitment of downstream related factors and finally affecting the regulation process of related signal pathways. It has also been studied for its antiviral activity against Reoviridae, and for its potential to inhibit Zika virus cytopathy effect. It has been active against Epstein virus, rotavirus, and vesicular stomatitis virus, and has been reported to alleviate virus-induced reproductive failure and to promote RSV clearance in the body more quickly.

@@ -25,7 +25,11 @@ def exception_handler(func):
         except IpfsConnectionError as e:
             print(
                 f"{colored('ERROR', 'red')}: Cannot connect to IPFS: {e.info}\n"
-                f"{colored('HINT', 'yellow')}: Try to pass working IPFS address with `--ipfs-http-base-url` parameter",
+                f"{colored('HINT', 'yellow')}: Install IPFS to your computer: "
+                f"https://docs.ipfs.tech/install/ipfs-desktop/\n"
+                f"{colored('HINT', 'yellow')}: Also, ensure IPFS is launched\n"
+                f"{colored('HINT', 'yellow')}: Otherwise, you can pass IPFS address of the working instance with "
+                f"`--ipfs-http-base-url` parameter: `geck --ipfs-http-base-url http://127.0.0.1:8080 - serve`",
                 file=sys.stderr,
             )
         finally:
@@ -129,6 +133,7 @@ class StcGeckCli:
         async with self.geck as geck:
             return await geck.random_cids(n=n)
 
+    @exception_handler
     async def search(self, query: str, limit: int = 1, offset: int = 0):
         """
         Searches in STC using default Summa match queries.
@@ -153,6 +158,7 @@ class StcGeckCli:
             }
             return await summa_client.search_documents(query)
 
+    @exception_handler
     async def serve(self):
         """
         Start serving Summa
