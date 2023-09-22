@@ -36,9 +36,9 @@ default_term_field_mapper_configs = {
 
 
 default_field_boosts = {
-    'authors': 2.0,
-    'extra': 0.3,
-    'title': 2.0,
+    'authors': 1.7,
+    'extra': 1.7,
+    'title': 1.7,
 }
 
 

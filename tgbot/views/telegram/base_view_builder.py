@@ -474,6 +474,8 @@ class BaseViewBuilder:
                     self.add(f'vol. {self.document_holder.volume}', bold=bold, italic=italic)
                 else:
                     self.add(self.document_holder.volume, bold=bold, italic=italic)
+        elif self.document_holder.periodical:
+            self.add(self.document_holder.periodical, bold=bold, italic=italic)
         return self
 
     def add_title(self, bold=True):

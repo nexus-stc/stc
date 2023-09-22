@@ -39,7 +39,7 @@ class CybrexModel:
         gpu_layers: int = 50,
     ):
         llm_config = cls.standard_llms(llm_name)
-        if device == 'gpu':
+        if device == 'gpu' or 'cuda' in device:
             llm_config['config']['gpu_layers'] = gpu_layers
         return {
             'text_splitter': {

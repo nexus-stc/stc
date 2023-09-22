@@ -25,6 +25,6 @@ izihawa_utils
 lru-dict
 markdownify
 sqlalchemy
-stc-geck>=1.8.4
+stc-geck>=1.8.10
 
 telethon==1.30.3

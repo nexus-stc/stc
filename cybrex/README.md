@@ -6,7 +6,7 @@ More technical description:
 - IPFS is utilized to access the Standard Template Construct (STC).
 - STC provides the raw documents for Cybrex.
 - Embedding Model constructs embeddings for these documents and Cybrex stores these embeddings in the vector database.
-- These embeddings are then used to retrieve relevant documents and then they are sent to LLM for Q&A and summarization.
+- These embeddings are then used to retrieve relevant documents, and then they are sent to LLM for Q&A and summarization.
 
 ## Install
 
@@ -45,6 +45,8 @@ cybrex - write-config --force
 # or if you want to use OpenAI model, export keys and you should set appropriate models in config:
 export OPENAI_API_KEY=...
 cybrex - write-config -l openai --force
+# or if you want to use GPU:
+cybrex - write-config --device cuda --force
 
 # Summarize a document
 cybrex - sum-doc doi:10.1155/2022/7138756
