@@ -21,7 +21,7 @@ def exception_handler(func):
         except QdrantStorageNotAvailableError as e:
             print(
                 f"{colored('INFO', 'red')}: Cannot connect to Qdrant: {e.info}\n"
-                f"Hint: Launch qdrant using `docker run -p 6333:6333 -p 6334:6334` qdrant/qdrant",
+                f"{colored('HINT', 'yellow')}: Launch qdrant using `docker run -p 6333:6333 -p 6334:6334` qdrant/qdrant",
                 file=sys.stderr,
             )
     return wrapper_func

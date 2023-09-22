@@ -31,7 +31,16 @@ class CybrexModel:
         )
 
     @classmethod
-    def default_config(cls, llm_name: str = 'llama-2-7b-uncensored', embedder_name: str = 'bge-small-en'):
+    def default_config(
+        cls,
+        llm_name: str = 'llama-2-7b-uncensored',
+        embedder_name: str = 'bge-small-en',
+        device: str = 'cpu',
+        gpu_layers: int = 50,
+    ):
+        llm_config = cls.standard_llms(llm_name)
+        if device == 'gpu':
+            llm_config['config']['gpu_layers'] = gpu_layers
         return {
             'text_splitter': {
                 'add_metadata': True,
@@ -39,32 +48,37 @@ class CybrexModel:
                 'chunk_overlap': 128,
                 'type': 'rcts',
             },
-            'embedder': cls.standard_embedders(embedder_name),
+            'embedder': cls.standard_embedders(embedder_name, device=device),
             'keyword_extraction': True,
-            'llm': cls.standard_llms(llm_name)
+            'llm': llm_config
         }
 
     @classmethod
-    def standard_embedders(cls, name):
+    def standard_embedders(cls, name, device: str = 'cpu'):
         return {
             'instructor-xl': {
                 'model_name': 'hkunlp/instructor-xl',
+                'model_kwargs': {'device': device},
                 'model_type': 'instructor',
             },
             'instructor-large': {
                 'model_name': 'hkunlp/instructor-large',
+                'model_kwargs': {'device': device},
                 'model_type': 'instructor',
             },
             'bge-small-en': {
                 'model_name': 'BAAI/bge-small-en',
+                'model_kwargs': {'device': device},
                 'model_type': 'bge',
             },
             'bge-base-en': {
                 'model_name': 'BAAI/bge-base-en',
+                'model_kwargs': {'device': device},
                 'model_type': 'bge',
             },
             'bge-large-en': {
                 'model_name': 'BAAI/bge-large-en',
+                'model_kwargs': {'device': device},
                 'model_type': 'bge',
             },
             'openai': {
@@ -159,12 +173,14 @@ class CybrexModel:
         if self.config['embedder']['model_type'] == 'instructor':
             return HuggingFaceInstructEmbeddings(
                 model_name=self.config['embedder']['model_name'],
+                model_kwargs=self.config['embedder'].get('model_kwargs', {}),
                 embed_instruction="Represent science paragraph for retrieval",
                 query_instruction="Represent science question for retrieval",
             )
         if self.config['embedder']['model_type'] == 'bge':
             return HuggingFaceBgeEmbeddings(
                 model_name=self.config['embedder']['model_name'],
+                model_kwargs=self.config['embedder'].get('model_kwargs', {}),
                 encode_kwargs={'normalize_embeddings': True},
             )
         elif self.config['embedder']['model_type'] == 'openai':
@@ -195,7 +211,7 @@ class CybrexModel:
                     self.config['llm']['config']['model_name'],
                     torch_dtype=getattr(torch, self.config['llm']['config']['torch_dtype']),
                     low_cpu_mem_usage=True,
-                ).cpu(),
+                ),
                 prompter=BasePrompter.prompter_from_type(self.config['llm']['prompter']['type']),
                 config=self.config['llm']['config'],
                 max_prompt_chars=self.config['llm']['max_prompt_chars'],

@@ -19,15 +19,17 @@ from .exceptions import IpfsConnectionError
 
 def exception_handler(func):
     @functools.wraps(func)
-    async def wrapper_func(*args, **kwargs):
+    async def wrapper_func(self, *args, **kwargs):
         try:
-            await func(*args, **kwargs)
+            await func(self, *args, **kwargs)
         except IpfsConnectionError as e:
             print(
-                f"{colored('INFO', 'red')}: Cannot connect to IPFS: {e.info}\n"
-                f"Hint: Try to pass working IPFS address with `--ipfs-http-base-url` parameter",
+                f"{colored('ERROR', 'red')}: Cannot connect to IPFS: {e.info}\n"
+                f"{colored('HINT', 'yellow')}: Try to pass working IPFS address with `--ipfs-http-base-url` parameter",
                 file=sys.stderr,
             )
+        finally:
+            await self.geck.stop()
     return wrapper_func
 
 

@@ -11,7 +11,7 @@ lazy>=1.5
 lxml>=4.9.3
 openai>=0.27.8
 orjson
-petals
+petals[petals]>=2.0.0
 pypdf>=3.12.0
 pyyaml>=6.0
 qdrant_client>=1.5.2
