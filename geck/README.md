@@ -1,12 +1,13 @@
 # GECK (Garden of Eden Creation Kit)
 
-GECK is a Python library and Bash tool for deploy andaccess STC - the large corpus of scholarly texts.
+GECK is a Python library and Bash tool to deploy and access STC - the large corpus of scholarly texts.
 GECK includes embedded search engine [Summa](https://github.com/izihawa/summa), helps to feed it with a prepared IPFS-based database of scholarly texts, do search queries over the database and iterate over all documents if you need.
 
 ## Install
 
-You should have [installed IPFS](http://standard-template-construct.org/#/help/install-ipfs)
-Pre-built wheels available for Python 3.8, 3.9, 3.10 and 3.11
+Firstly, You should have [installed IPFS](http://standard-template-construct.org/#/help/install-ipfs)
+
+Pre-built wheels of `stc-geck` are available for Python 3.8, 3.9, 3.10 and 3.11
 
 ```bash
 pip install stc-geck
