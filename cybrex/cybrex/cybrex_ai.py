@@ -105,7 +105,7 @@ class CybrexAI(AioThing):
         llm_name: Literal['llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b'] = 'llama-2-7b-uncensored',
         embedder_name: Literal['instructor-xl', 'openai', 'bge-small-en'] = 'bge-small-en',
         device: str = 'cpu',
-        gpu_layers: int = 0,
+        gpu_layers: int = 50,
         force: bool = False,
     ):
         """
