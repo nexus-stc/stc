@@ -1,0 +1,290 @@
+---
+# yamllint disable rule:key-ordering
+blocksize: 131072
+compression: Zstd22
+index_attributes:
+  conflict_strategy: OVERWRITE_ALWAYS
+  description: Books, publications and standards
+  mapped_fields:
+    - source_field: abstract
+      target_field: concepts
+    - source_field: authors.name
+      target_field: extra
+    - source_field: authors.family
+      target_field: extra
+    - source_field: content
+      target_field: concepts
+    - source_field: links.extension
+      target_field: extra
+    - source_field: metadata.bs_id
+      target_field: extra
+    - source_field: metadata.isbns
+      target_field: extra
+    - source_field: metadata.iso_id
+      target_field: extra
+    - source_field: metadata.container_title
+      target_field: extra
+    - source_field: metadata.event.name
+      target_field: extra
+    - source_field: metadata.publisher
+      target_field: extra
+    - source_field: metadata.series
+      target_field: extra
+    - source_field: tags
+      target_field: extra
+    - source_field: title
+      target_field: concepts
+    - source_field: reference_texts
+      target_field: extra
+  multi_fields: ["authors", "concepts", "extra", "languages", "links", "navigational_facets", "references", "reference_texts", "tags"]
+  unique_fields: [
+     "id.ark_ids",
+     "id.dois",
+     "id.internal_bs",
+     "id.internal_iso",
+     "id.libgen_ids",
+     "id.nexus_id",
+     "id.pubmed_id",
+     "id.zlibrary_ids",
+  ]
+index_engine:
+  file: {}
+index_name: nexus_science_20230902
+merge_policy:
+  log:
+    is_frozen: false
+query_parser_config:
+  default_fields: ["abstract", "extra", "content", "concepts", "title"]
+  field_aliases:
+    author: authors.family
+    authors: authors.family
+    cid: links.cid
+    doi: id.dois
+    ev: metadata.event.name
+    extension: links.extension
+    format: links.extension
+    isbn: metadata.isbns
+    isbns: metadata.isbns
+    issn: metadata.issns
+    issns: metadata.issns
+    lang: languages
+    pmid: id.pubmed_id
+    pub: metadata.publisher
+    pubmed_id: id.pubmed_id
+    rd: references.doi
+    ser: metadata.series
+  field_boosts:
+    title: 1.7
+  morphology_configs:
+    abstract:
+      derive_tenses_coefficient: 0.3
+    title:
+      derive_tenses_coefficient: 0.3
+  term_limit: 16
+schema:
+  # Brief description of the content
+  - name: abstract
+    type: text
+    options:
+      indexing:
+        fieldnorms: true
+        record: position
+        tokenizer: summa_html
+      stored: true
+  # Authors of the papers. Contains `.given` and `.family` for persons and `.name` for organizational and unparsed authors
+  - name: authors
+    type: json_object
+    options:
+      expand_dots_enabled: true
+      fast: false
+      indexing:
+        fieldnorms: false
+        record: position
+        tokenizer: summa_without_stop_words
+      stored: true
+  # Concept contains recognized and mapped concepts by Summa. Full list can be found at https://github.com/izihawa/summa/blob/master/summa-core/resources/drugs.csv
+  - name: concepts
+    type: text
+    options:
+      indexing:
+        fieldnorms: true
+        record: position
+        tokenizer: summa_dict
+      stored: false
+  # Content of the paper. Should be considered as a HTML markup, possibly without root element.
+  # In practice, it is either EPUB content or GROBID output with applied canonicalization processing
+  - name: content
+    type: text
+    options:
+      indexing:
+        fieldnorms: true
+        record: position
+        tokenizer: summa_html
+      stored: true
+  # Vector field with embeddings
+  - name: embeddings
+    type: bytes
+    options:
+      fast: true
+      indexed: false
+      stored: true
+  # Extra field contains mapped values from other fields for indexing purposes
+  - name: extra
+    type: text
+    options:
+      fast: false
+      indexing:
+        fieldnorms: true
+        record: position
+        tokenizer: summa
+      stored: false
+  # Click-through rate of items. Used internally, always equals to 0.1 in exported datasets
+  - name: ctr
+    type: f64
+    options:
+      fast: true
+      indexed: false
+      stored: true
+  # Multiplier for using in scoring function. Used for deletion or penalizing unwanted items (for example, book-chapters)
+  - name: custom_score
+    type: f64
+    options:
+      fast: true
+      indexed: false
+      stored: true
+  # Field for record identifiers. STC collapsed duplicates and this field is used for tracking records origin.
+  # Inspect `unique_field` in this config for learning possible sub-fields.
+  - name: id
+    type: json_object
+    options:
+      expand_dots_enabled: true
+      fast: false
+      indexing:
+        fieldnorms: false
+        record: basic
+        tokenizer: raw
+      stored: true
+  # Issuing time of the item described by record
+  - name: issued_at
+    type: i64
+    options:
+      fast: true
+      indexed: false
+      stored: true
+  # List of used languages. Almost always contains a single two-letter language code, but sometimes there could be a list of detected languages.
+  - name: languages
+    type: text
+    options:
+      indexing:
+        fieldnorms: false
+        record: basic
+        tokenizer: raw
+      stored: true
+  # List of CIDs
+  - name: links
+    type: json_object
+    options:
+      expand_dots_enabled: true
+      fast: false
+      indexing:
+        fieldnorms: false
+        record: basic
+        tokenizer: raw
+      stored: true
+  # Additional metadata of the record. Publishers, series, issues, periodical, non-unique identifiers.
+  - name: metadata
+    type: json_object
+    options:
+      expand_dots_enabled: true
+      fast: false
+      indexing:
+        fieldnorms: false
+        record: basic
+        tokenizer: raw
+      stored: true
+  # Used for navigation and may contain classification labels
+  - name: navigational_facets
+    type: facet
+    options:
+      stored: true
+  # Calculated page rank of the item.
+  - name: page_rank
+    type: f64
+    options:
+      fast: false
+      indexed: false
+      stored: true
+  # Auto-field, quantized version of `page_rank` for reducing load in Web-version
+  - name: quantized_page_rank
+    type: u64
+    options:
+      fast: true
+      indexed: false
+      stored: false
+  # Number of references to the paper
+  - name: referenced_by_count
+    type: u64
+    options:
+      fast: false
+      indexed: false
+      stored: true
+  # List of references
+  - name: references
+    type: json_object
+    options:
+      expand_dots_enabled: true
+      fast: false
+      indexing:
+        fieldnorms: false
+        record: basic
+        tokenizer: raw
+      stored: true
+  # Unused
+  - name: reference_texts
+    type: text
+    options:
+      fast: false
+      indexed: false
+      stored: true
+  # Unused
+  - name: signature
+    type: json_object
+    options:
+      fast: false
+      indexed: false
+      stored: true
+  # List of tags, field by record provider
+  - name: tags
+    type: text
+    options:
+      indexing:
+        fieldnorms: true
+        record: position
+        tokenizer: summa
+      stored: true
+  - name: title
+    type: text
+    options:
+      indexing:
+        fieldnorms: true
+        record: position
+        tokenizer: summa_html
+      stored: true
+  # Type, used CrossRef API list of values: https://crossref.gitlab.io/knowledge_base/docs/topics/content-types/
+  - name: type
+    type: text
+    options:
+      fast: true
+      indexing:
+        fieldnorms: false
+        record: basic
+        tokenizer: raw
+      stored: true
+  # Auto-field, the time of last record update
+  - name: updated_at
+    type: i64
+    options:
+      fast: true
+      indexed: false
+      stored: true
+sort_by_field: ['issued_at', 'desc']
