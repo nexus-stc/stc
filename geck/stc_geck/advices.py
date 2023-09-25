@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import (
     List,
     Optional,
@@ -161,7 +162,7 @@ class BaseDocumentHolder:
         pdf_link = None
         epub_link = None
         other_links = []
-        for link in links.links:
+        for link in links.links.values():
             if link['extension'] == 'pdf' and not pdf_link:
                 pdf_link = link
             elif link['extension'] == 'pdf' and not epub_link:
@@ -207,60 +208,45 @@ class BaseDocumentHolder:
 
 class LinksWrapper:
     def __init__(self, links):
-        self.links = []
-        self.stored_cids = {}
+        self.links = OrderedDict()
         for link in links:
             self.add(link)
 
     def reset(self):
-        self.links = []
-        self.stored_cids = {}
+        self.links = OrderedDict()
 
     def to_list(self):
-        links = []
-        visited = set()
-        for other_link in self.links:
-            if other_link not in visited:
-                links.append(self.stored_cids[other_link])
-            visited.add(other_link)
-        return links
+        return list(self.links.values())
 
     def add(self, link):
-        if link['cid'] in self.stored_cids:
-            old_link = self.stored_cids[link['cid']]
-            self.stored_cids[link['cid']] = link
-            return old_link
-        self.stored_cids[link['cid']] = link
-        self.links.append(link['cid'])
+        old_link = self.links.pop(link['cid'], None)
+        self.links[link['cid']] = link
+        return old_link
 
     def prepend(self, link):
-        if link['cid'] in self.stored_cids:
-            self.stored_cids[link['cid']] = link
-            self.links.remove(link['cid'])
-        else:
-            self.stored_cids[link['cid']] = link
-        self.links = [link['cid']] + self.links
+        old_link = self.add(link)
+        self.links.move_to_end(link['cid'], False)
+        return old_link
+
+    def delete_links_with_extension(self, extension):
+        for cid in list(self.links.keys()):
+            if self.links[cid]['extension'] == extension:
+                del self.links[cid]
+
+    def override_link_with_extension(self, new_link):
+        self.delete_links_with_extension(new_link['extension'])
+        return self.prepend(new_link)
 
     def remove_cid(self, cid):
-        found_link = None
-        old_links = self.to_list()
-        self.reset()
-        for link in old_links:
-            if link['cid'] == cid:
-                found_link = link
-            else:
-                self.add(link)
-        return found_link
+        return self.links.pop(cid, None)
 
-    def get_link_with_extension(self, extension, from_end: bool = False):
+    def get_link_with_extension(self, extension: Optional[str] = None, from_end: bool = False):
+        return self.get_first_link(extension=extension, from_end=from_end)
+
+    def get_first_link(self, extension: Optional[str] = None, from_end: bool = False):
         links = self.links
         if from_end:
             links = reversed(self.links)
-        for cid in links:
-            full_link = self.stored_cids[cid]
-            if full_link['extension'] == extension:
-                return full_link
-
-    def get_first_link(self):
-        if self.links:
-            return self.stored_cids[self.links[0]]
+        for link in links.values():
+            if extension is None or link['extension'] == extension:
+                return link

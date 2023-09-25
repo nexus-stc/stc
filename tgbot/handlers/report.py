@@ -1,5 +1,6 @@
 import asyncio
 
+from stc_geck.advices import BaseDocumentHolder
 from telethon import events
 
 from library.telegram.base import RequestContext
@@ -22,16 +23,12 @@ class ReportHandler(BaseCallbackQueryHandler):
         request_context.statbox(action='report')
 
         document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'cid', cid)
+        document_holder = BaseDocumentHolder(document)
 
-        if not document or 'dois' not in document['id']:
-            return await asyncio.gather(
-                event.reply('Only those items that have DOI can be reported'),
-                event.delete(),
-            )
         await self.application.database.add_vote_broken_file(
             bot_name=self.bot_config['bot_name'],
             user_id=request_context.chat['chat_id'],
-            doi=document['id']['dois'][0],
+            internal_id=document_holder.get_internal_id(),
             cid=cid,
         )
         async with safe_execution():

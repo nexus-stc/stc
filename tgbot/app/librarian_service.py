@@ -11,9 +11,12 @@ from datetime import (
 )
 from functools import partial
 from pydoc import locate
+from urllib.parse import (
+    quote,
+    unquote,
+)
 
 from aiokit import AioThing
-from stc_geck.advices import LinksWrapper
 
 from library.pdftools.cleaner import clean_metadata
 from library.pdftools.exceptions import (
@@ -26,6 +29,13 @@ from library.textutils import DOI_REGEX
 from tgbot.search_request_builder import get_type_icon
 from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 from tgbot.views.telegram.common import vote_button
+
+INTERNAL_ID_REGEX = re.compile(r'\[.*]\(https://standard-template-construct\.org/#/nexus_science/(id\.[^)]*)\)')
+
+
+def extract_internal_id(text):
+    if internal_id_regex := re.search(INTERNAL_ID_REGEX, text):
+        return unquote(internal_id_regex.group(1))
 
 
 async def add_publisher_links(request_text, doi, crossref_client=None):
@@ -90,15 +100,16 @@ class LibrarianService(AioThing):
                     'mode': 'librarian_service',
                     'n': len(self.requests),
                 })
-                for doi in list(self.requests.keys()):
+                for internal_id in list(self.requests.keys()):
+                    field, value = internal_id.split(':', 1)
                     if document := await self.application.summa_client.get_one_by_field_value(
                         'nexus_science',
-                        'id.dois',
-                        doi.lower()
+                        field,
+                        value
                     ):
-                        if 'links' in document:
-                            if LinksWrapper(document['links']).get_link_with_extension('pdf'):
-                                await self.delete_request(doi)
+                        document_holder = BaseTelegramDocumentHolder(document)
+                        if document_holder.get_links().get_link_with_extension('pdf'):
+                            await self.delete_request(internal_id)
                 await asyncio.sleep(3600)
         except asyncio.CancelledError:
             logging.getLogger('debug').debug({
@@ -147,16 +158,17 @@ class LibrarianService(AioThing):
             self.cleanup_task = None
 
     def is_request(self, message):
-        if message.raw_text and message.raw_text.startswith('#request'):
-            doi_regex = re.search(DOI_REGEX, message.raw_text)
-            if doi_regex:
-                return doi_regex.group(1) + '/' + doi_regex.group(2)
+        return message.text and message.text.startswith('#request')
 
     def is_file(self, message):
-        if message.raw_text:
-            doi_regex = re.search(DOI_REGEX, message.raw_text)
-            if doi_regex:
-                return doi_regex.group(1) + '/' + doi_regex.group(2)
+        return bool(message.media)
+
+    def is_related_message(self, message):
+        if message.text:
+            if internal_id := extract_internal_id(message.text):
+                return internal_id
+            elif doi_regex := re.search(DOI_REGEX, message.raw_text):
+                return f'id.dois:{doi_regex.group(1) + "/" + doi_regex.group(2)}'
 
     def try_download_media(self, message):
         return message.download_media(file=bytes)
@@ -168,9 +180,25 @@ class LibrarianService(AioThing):
             'is_sciparser_enabled': bool(self.application.sciparser),
         })
         async for message in self.admin_telegram_client.iter_messages(self.group_name):
-            if doi := self.is_request(message):
-                self.requests[doi] = message.id
-            if self.application.sciparser:
+            internal_id = self.is_related_message(message)
+            is_request = self.is_request(message)
+            is_file = self.is_file(message)
+
+            if not internal_id or (not is_request and not is_file):
+                continue
+
+            if is_request:
+                logging.getLogger('debug').debug({
+                    'action': 'add_existing',
+                    'mode': 'librarian_service',
+                    'internal_id': internal_id,
+                })
+                if internal_id in self.requests:
+                    await self.admin_telegram_client.delete_messages(self.group_name, [self.requests[internal_id]])
+                self.requests[internal_id] = message.id
+
+            field, value = internal_id.split(':', 1)
+            if self.application.sciparser and field in ('doi', 'id.dois') and is_file:
                 if data := await self.try_download_media(message):
                     logging.getLogger('debug').debug({
                         'action': 'found_media',
@@ -185,21 +213,20 @@ class LibrarianService(AioThing):
                         logging.getLogger('warning').warning({
                             'action': 'failed_to_recognize',
                             'mode': 'librarian_service',
-                            'doi': doi,
+                            'internal_id': internal_id,
                             'filesize': len(data),
                             'error': str(e)
                         })
                         continue
                     doi = processed_document['doi'].lower().strip()
-                    if doi_hint := self.is_file(message):
-                        if doi_hint != doi:
-                            logging.getLogger('debug').debug({
-                                'action': 'doi_hint_mismatch',
-                                'mode': 'librarian_service',
-                                'doi': doi,
-                                'doi_hint': doi_hint,
-                            })
-                            continue
+                    if value != doi:
+                        logging.getLogger('debug').debug({
+                            'action': 'doi_hint_mismatch',
+                            'mode': 'librarian_service',
+                            'doi': doi,
+                            'doi_hint': value,
+                        })
+                        continue
                     document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'id.dois', doi)
                     if not document:
                         continue
@@ -220,7 +247,7 @@ class LibrarianService(AioThing):
                     await self.application.file_flow.pin_add(document, data)
                     try:
                         await self.admin_telegram_client.delete_messages(self.group_name, [message.id])
-                        await self.delete_request(doi)
+                        await self.delete_request(internal_id)
                     except Exception as e:
                         logging.getLogger('error').error({
                             'action': 'fail_to_delete',
@@ -229,36 +256,57 @@ class LibrarianService(AioThing):
                             'error': str(e)
                         })
         logging.getLogger('debug').debug({
-            'action': 'collect',
+            'action': 'collected',
             'mode': 'librarian_service',
             'requests': len(self.requests)
         })
 
-    async def request(self, doi: str, type_):
-        if doi not in self.requests:
+    async def add_coordinates(self, document_holder, internal_id):
+        field, value = internal_id.split(':', 1)
+
+        if field == 'doi' or field == 'id.dois':
+            prefix = value.split('/')[0].split('.', 1)[1].replace('.', '_')
+            tail = f'#p_{prefix} [{value}](https://doi.org/{quote(value)})'
+            tail = await add_publisher_links(tail, value, self.application.metadata_retriever.crossref_client)
+            return tail
+        elif field == 'id.internal_iso':
+            link = (
+                document_holder.view_builder('en')
+                .add_external_provider_link(label=False, on_newline=True, text=document_holder.iso_id.upper())
+                .build()
+            )
+            tail = f'#iso {link}'
+            return tail
+        else:
+            raise ValueError("Unsupported internal id")
+
+    async def request(self, document_holder):
+        internal_id = document_holder.get_internal_id()
+        type_ = document_holder.type
+
+        if internal_id not in self.requests:
             logging.getLogger('statbox').info({
                 'action': 'send_request',
                 'mode': 'librarian_service',
-                'doi': doi,
+                'internal_id': internal_id,
                 'type': type_,
             })
-            prefix = doi.split('/')[0].split('.', 1)[1].replace('.', '_')
-            request_text = f'#request #p_{prefix} {get_type_icon(type_)} https://doi.org/{doi}'
-            request_text = await add_publisher_links(request_text, doi, self.application.metadata_retriever.crossref_client)
+            coordinates = await self.add_coordinates(document_holder, internal_id)
+            request_text = f'#request [{get_type_icon(type_)}](https://standard-template-construct.org/#/nexus_science/{quote(internal_id)}) {coordinates}'
             message = await self.bot_telegram_client.send_message(
                 self.group_name,
                 request_text,
                 link_preview=False,
             )
-            self.requests[doi] = message.id
-        return self.requests[doi]
+            self.requests[internal_id] = message.id
+        return self.requests[internal_id]
 
-    async def delete_request(self, doi: str):
-        message_id = self.requests.pop(doi, None)
+    async def delete_request(self, internal_id: str):
+        message_id = self.requests.pop(internal_id, None)
         logging.getLogger('statbox').info({
             'action': 'delete_request',
             'mode': 'librarian_service',
-            'doi': doi,
+            'internal_id': internal_id,
             'message_id': message_id,
         })
         if message_id:
@@ -273,8 +321,9 @@ class LibrarianService(AioThing):
                 and (not document_only or message.document)
                 and not message.pinned
             ):
-                if doi := self.is_request(message):
-                    self.requests.pop(doi, None)
+                internal_id = self.is_related_message(message)
+                if internal_id and self.is_request(message):
+                    self.requests.pop(internal_id, None)
                 messages.append(message)
         async with safe_execution():
             await self.admin_telegram_client.delete_messages(self.group_name, messages)
@@ -285,35 +334,36 @@ class LibrarianService(AioThing):
         if reply_message:
             reply_to = reply_message.id
 
-        pdf_file = await event.message.download_media(file=bytes)
+        file = await event.message.download_media(file=bytes)
         await event.delete()
 
         holder = BaseTelegramDocumentHolder(document)
         short_abstract = (
             holder.view_builder(request_context.chat['language'])
-            .add_short_description()
-            .add_external_provider_link(label=True, on_newline=True, text=holder.doi)
+            .add_short_description(with_hidden_id=True)
+            .add_external_provider_link(label=True, on_newline=True)
             .build()
         )
         caption = f"{short_abstract}\n\n#voting"
-        try:
-            pdf_file = await asyncio.wait_for(
-                asyncio.get_running_loop().run_in_executor(
-                    self.pool,
-                    partial(clean_metadata, pdf_file, doi=holder.doi)
-                ),
-                timeout=600.0,
-            )
-        except PyPdfError:
-            caption += '\n\n**File is possibly corrupted, check manually**'
-        except (PdfProcessingError, RecursionError) as e:
-            logging.error({
-                'action': 'cleanup failed',
-                'error': str(e),
-            })
-            caption += '\n\n**File cannot be cleaned out of metadata, check manually**'
-        except asyncio.TimeoutError:
-            caption += '\n\n**Cleaning timeouted, check manually**'
+        if holder.doi:
+            try:
+                file = await asyncio.wait_for(
+                    asyncio.get_running_loop().run_in_executor(
+                        self.pool,
+                        partial(clean_metadata, file, doi=holder.doi)
+                    ),
+                    timeout=600.0,
+                )
+            except PyPdfError:
+                caption += '\n\n**File is possibly corrupted, check manually**'
+            except (PdfProcessingError, RecursionError) as e:
+                logging.error({
+                    'action': 'cleanup failed',
+                    'error': str(e),
+                })
+                caption += '\n\n**File cannot be cleaned out of metadata, check manually**'
+            except asyncio.TimeoutError:
+                caption += '\n\n**Cleaning timeouted, check manually**'
         caption += '\n\nCorrect: \nIncorrect: '
 
         return await self.application.librarian_service.bot_telegram_client.send_file(
@@ -325,5 +375,5 @@ class LibrarianService(AioThing):
                 vote_button(request_context.chat['language'], 'correct'),
                 vote_button(request_context.chat['language'], 'incorrect'),
             ],
-            file=pdf_file,
+            file=file,
         )

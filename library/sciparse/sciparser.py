@@ -10,10 +10,7 @@ from bs4 import (
     BeautifulSoup,
     NavigableString,
 )
-from stc_geck.advices import (
-    BaseDocumentHolder,
-    LinksWrapper,
-)
+from stc_geck.advices import BaseDocumentHolder
 
 from library.pdftools import is_pdf
 

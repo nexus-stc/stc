@@ -3,7 +3,7 @@ lxml
 pandas
 fasttext-wheel
 PyCryptodome
-pypdf>=3.16.1
+pypdf>=3.16.2
 seaborn
 
 aiobaseclient
@@ -25,6 +25,6 @@ izihawa_utils
 lru-dict
 markdownify
 sqlalchemy
-stc-geck>=1.8.10
+stc-geck>=1.8.17
 
 telethon==1.30.3

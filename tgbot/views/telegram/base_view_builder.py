@@ -282,9 +282,11 @@ class BaseViewBuilder:
             self.last_limit_part = None
         return self
 
-    def add_icon(self, with_cover=False):
+    def add_icon(self, with_cover=False, with_hidden_id=False):
         icon = get_type_icon(self.document_holder.type)
-        if with_cover and self.document_holder.isbns:
+        if with_hidden_id:
+            icon = f'[{icon}](https://standard-template-construct.org/#/nexus_science/{quote(self.document_holder.get_internal_id())})'
+        elif with_cover and self.document_holder.isbns:
             icon = f'[{icon}](https://covers.openlibrary.org/b/isbn/{self.document_holder.isbns[0]}-L.jpg)'
         return self.add(icon, escaped=True)
 
@@ -324,7 +326,7 @@ class BaseViewBuilder:
             self.add(text, escaped=True)
         return self
 
-    def add_external_provider_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, end_newline=False):
+    def add_external_provider_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, short_text=False, end_newline=False):
         if self.document_holder.doi or (self.document_holder.iso_id and self.document_holder.internal_iso):
             if on_newline:
                 self.add_new_line()
@@ -333,19 +335,31 @@ class BaseViewBuilder:
 
         if self.document_holder.doi:
             if label:
-                self.add('DOI:', bold=True)
+                if isinstance(label, str):
+                    self.add(label, bold=True)
+                else:
+                    self.add('DOI:', bold=True)
             escaped_doi = escape_format(self.document_holder.doi)
             if text is None:
-                text = 'doi.org'
+                if short_text:
+                    text = 'doi.org'
+                else:
+                    text = self.document_holder.doi
             self.add(f'[{text}](https://doi.org/{quote(escaped_doi)})', escaped=True)
 
             if end_newline:
                 self.add_new_line()
         elif self.document_holder.iso_id and self.document_holder.internal_iso:
             if label:
-                self.add('ISO:', bold=True)
+                if isinstance(label, str):
+                    self.add(label, bold=True)
+                else:
+                    self.add('ISO:', bold=True)
             if text is None:
-                text = 'iso.org'
+                if short_text:
+                    text = 'iso.org'
+                else:
+                    text = self.document_holder.iso_id.upper()
             self.add(f'[{text}](https://iso.org/standard/{self.document_holder.internal_iso.split(":")[0]}.html)', escaped=True)
 
             if end_newline:
@@ -353,9 +367,12 @@ class BaseViewBuilder:
         return self
 
     def add_links(self):
+        on_newline = False
         if remote_links := self.document_holder.generate_remote_links():
             self.add_label("LINKS")
             self.add(" - ".join(remote_links), escaped=True)
+            on_newline = True
+        self.add_external_provider_link(label=True, on_newline=on_newline)
         return self
 
     def add_tags(self, bot_name):
@@ -383,9 +400,9 @@ class BaseViewBuilder:
         self.add('; '.join(authors[:first_n_authors]) + (' et al' if len(authors) > first_n_authors and et_al else ''), escaped=True)
         return self
 
-    def add_short_description(self):
+    def add_short_description(self, with_hidden_id: bool = False):
         return (
-            self.add_icon()
+            self.add_icon(with_hidden_id=with_hidden_id)
                 .add_title()
                 .limits(250, with_dots=True)
                 .add_locator()
@@ -479,11 +496,16 @@ class BaseViewBuilder:
         return self
 
     def add_title(self, bold=True):
-        title = BeautifulSoup(self.document_holder.title or '', 'lxml').get_text(separator='')
+        text_title = BeautifulSoup(self.document_holder.title or '', 'lxml').get_text(separator='')
+        title = text_title
         if self.document_holder.iso_id:
-            title = f'{self.document_holder.iso_id.upper()} - {title}'
+            title = f'{self.document_holder.iso_id.upper()}'
+            if text_title:
+                title += f' - {text_title}'
         elif self.document_holder.bs_id:
-            title = f'{self.document_holder.bs_id.upper()} - {title}'
+            title = f'{self.document_holder.bs_id.upper()}'
+            if text_title:
+                title += f' - {text_title}'
         if not title and self.document_holder.doi:
             title = self.document_holder.doi
         self.add(title, bold=bold)

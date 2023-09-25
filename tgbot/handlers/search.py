@@ -146,21 +146,19 @@ class BaseSearchHandler(BaseHandler, ABC):
 
         if len(search_widget.scored_documents) == 1:
             holder = BaseTelegramDocumentHolder.create(search_widget.scored_documents[0])
+            if not holder.has_field('links') or search_widget.query_traits.skip_ipfs or search_widget.query_traits.is_upstream:
+                if self.application.is_read_only() or not self.application.started:
+                    text, buttons = await search_widget.render(request_context=request_context)
+                    if self.application.is_read_only():
+                        text = f'{t("READ_ONLY_WARNING")}\n\n{text}'
+                    return text, buttons, False
+                if self.application.user_manager.has_task(request_context.chat['chat_id'], RetrieveTask.task_id_for(holder.get_internal_id())):
+                    return t("ALREADY_DOWNLOADING", request_context.chat["language"]), [close_button()], False
+                if self.application.user_manager.hit_limits(request_context.chat['chat_id']):
+                    return t("TOO_MANY_DOWNLOADS", request_context.chat["language"]), [close_button()], False
 
-            if isinstance(holder, BaseDocumentHolder):
-                if holder.has_field('dois') and not holder.has_field('links') or search_widget.query_traits.skip_ipfs or search_widget.query_traits.is_upstream:
-                    if self.application.is_read_only() or not self.application.started:
-                        text, buttons = await search_widget.render(request_context=request_context)
-                        if self.application.is_read_only():
-                            text = f'{t("READ_ONLY_WARNING")}\n\n{text}'
-                        return text, buttons, False
-                    if self.application.user_manager.has_task(request_context.chat['chat_id'], RetrieveTask.task_id_for(holder.get_internal_id())):
-                        return t("ALREADY_DOWNLOADING", request_context.chat["language"]), [close_button()], False
-                    if self.application.user_manager.hit_limits(request_context.chat['chat_id']):
-                        return t("TOO_MANY_DOWNLOADS", request_context.chat["language"]), [close_button()], False
-
+                if holder.has_field('dois'):
                     old_primary_link = holder.primary_link
-
                     if file := await RetrieveTask(
                         self.application,
                         request_context,
@@ -183,9 +181,11 @@ class BaseSearchHandler(BaseHandler, ABC):
                             cache_key=holder.cid,
                         )
                         if self.application.librarian_service:
-                            await self.application.librarian_service.delete_request(holder.doi)
+                            await self.application.librarian_service.delete_request(holder.get_internal_id())
                     elif self.application.librarian_service:
-                        librarian_service_id = await self.application.librarian_service.request(holder.doi, holder.type)
+                        librarian_service_id = await self.application.librarian_service.request(holder)
+                elif holder.has_field('internal_iso'):
+                    librarian_service_id = await self.application.librarian_service.request(holder)
 
             if (search_widget.query_traits.skip_telegram_cache or search_widget.query_traits.skip_ipfs) and holder.primary_link:
                 request_context.statbox(**{

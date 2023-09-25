@@ -108,10 +108,10 @@ class Database(AioThing):
         """, (cid,))
         await self.bots_db_wrapper.db.commit()
 
-    async def add_upload(self, user_id, message_id, doi):
+    async def add_upload(self, user_id, message_id, internal_id):
         await self.users_db_wrapper.db.execute("""
         INSERT OR IGNORE into uploads(user_id, message_id, doi) VALUES (?, ?, ?)
-        """, (user_id, message_id, doi))
+        """, (user_id, message_id, internal_id))
         await self.users_db_wrapper.db.commit()
 
     async def add_approve(self, message_id, decision):
@@ -120,10 +120,10 @@ class Database(AioThing):
         """, (message_id, decision))
         await self.users_db_wrapper.db.commit()
 
-    async def add_vote_broken_file(self, bot_name, user_id, doi, cid):
+    async def add_vote_broken_file(self, bot_name, user_id, internal_id, cid):
         await self.users_db_wrapper.db.execute("""
         INSERT OR IGNORE into file_votes(bot_name, user_id, doi, cid, vote) VALUES (?, ?, ?, ?, ?)
-        """, (bot_name, user_id, doi, cid, -1))
+        """, (bot_name, user_id, internal_id, cid, -1))
         await self.users_db_wrapper.db.commit()
 
     async def add_new_bot(self, bot_name, bot_token, user_id: int):

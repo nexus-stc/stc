@@ -65,7 +65,7 @@
                   i.bi.bi-radioactive
                   span.ms-2 Doomsday Guide
         li.nav-item
-          button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#links-collapse")
+          button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#cids-collapse")
             i.bi.bi-caret-down
             span.ms-2 Links
           .collapse.ms-3.show(id="links-collapse")

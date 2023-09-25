@@ -1,5 +1,6 @@
 import asyncio
 import re
+from urllib.parse import unquote
 
 from telethon import events
 
@@ -9,6 +10,7 @@ from library.textutils import DOI_REGEX
 from tgbot.app.exceptions import UnknownFileFormatError
 from tgbot.translations import t
 
+from ..app.librarian_service import extract_internal_id
 from .base import BaseHandler
 
 
@@ -27,17 +29,19 @@ class SubmitHandler(BaseHandler):
     is_group_handler = True
     writing_handler = True
 
-    def get_doi_hint(self, message, reply_message) -> str:
-        doi_hint = None
-        if message.raw_text:
-            doi_regex = re.search(DOI_REGEX, message.raw_text)
-            if doi_regex:
-                doi_hint = doi_regex.group(1) + '/' + doi_regex.group(2)
-        if not doi_hint and reply_message:
-            doi_regex = re.search(DOI_REGEX, reply_message.raw_text)
-            if doi_regex:
-                doi_hint = doi_regex.group(1) + '/' + doi_regex.group(2)
-        return doi_hint
+    def get_internal_id_hint(self, message, reply_message) -> str:
+        internal_id_hint = None
+        if message.text:
+            if internal_id := extract_internal_id(message.text):
+                return internal_id
+            elif doi_regex := re.search(DOI_REGEX, message.raw_text):
+                internal_id_hint = 'id.dois:' + doi_regex.group(1) + '/' + doi_regex.group(2)
+        if not internal_id_hint and reply_message:
+            if internal_id := extract_internal_id(reply_message.text):
+                return internal_id
+            elif doi_regex := re.search(DOI_REGEX, reply_message.raw_text):
+                internal_id_hint = 'id.dois:' + doi_regex.group(1) + '/' + doi_regex.group(2)
+        return internal_id_hint
 
     async def handler(self, event, request_context: RequestContext):
         session_id = self.generate_session_id()
@@ -46,29 +50,30 @@ class SubmitHandler(BaseHandler):
         request_context.statbox(action='show', mode='submit', mime_type=event.document.mime_type)
 
         reply_message = await event.get_reply_message()
-        doi_hint = self.get_doi_hint(message=event, reply_message=reply_message)
-        request_context.statbox(action='doi_hint', doi_hint=doi_hint)
+        internal_id_hint = self.get_internal_id_hint(message=event, reply_message=reply_message)
+        request_context.statbox(action='doi_hint', internal_id_hint=internal_id_hint)
 
-        if not doi_hint:
+        if not internal_id_hint:
             return await event.reply(
                 t('NO_DOI_HINT', request_context.chat['language']),
                 buttons=None if request_context.is_group_mode() else [close_button()],
             )
+        field, value = internal_id_hint.split(':', 1)
 
         match event.document.mime_type:
             case 'application/pdf':
                 if self.application.librarian_service:
                     document = await self.application.summa_client.get_one_by_field_value(
                         'nexus_science',
-                        'id.dois',
-                        doi_hint,
+                        field,
+                        value,
                     )
                     uploaded_message = await self.application.librarian_service.process_file(
                         event,
                         request_context,
                         document,
                     )
-                    await self.application.database.add_upload(event.sender_id, uploaded_message.id, doi_hint)
+                    await self.application.database.add_upload(event.sender_id, uploaded_message.id, internal_id_hint)
             case _:
                 request_context.statbox(action='unknown_file_format')
                 request_context.error_log(UnknownFileFormatError(format=event.document.mime_type))

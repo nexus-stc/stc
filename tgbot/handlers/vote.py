@@ -6,6 +6,7 @@ from telethon import events
 
 from library.telegram.base import RequestContext
 
+from ..app.librarian_service import extract_internal_id
 from .base import BaseCallbackQueryHandler
 
 
@@ -39,15 +40,16 @@ class VoteHandler(BaseCallbackQueryHandler):
         vote = self.parse_pattern(event)
 
         request_context.add_default_fields(mode='vote')
-        request_context.statbox(
-            action='vote',
-            vote=vote,
-        )
 
         message = await event.get_message()
         text = message.text
         current_votes = self.votes_regexp.search(text)
         librarian_hash = hashlib.md5(f"{user_id}-{self.salt}".encode()).hexdigest()[-8:]
+
+        request_context.statbox(
+            action='vote',
+            vote=vote,
+        )
 
         sep = ', '
         correct_votes = []
@@ -76,11 +78,23 @@ class VoteHandler(BaseCallbackQueryHandler):
             or user_id in self.application.config['librarian']['super_moderators'] and vote == 'c'
         ):
             await message.edit(text, buttons=None)
-            pdf_file = await message.download_media(file=bytes)
-            doi = self.doi_regexp.search(text).group('doi').strip().lower()
-            document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'id.dois', doi)
-            await self.application.file_flow.pin_add(document, pdf_file, with_commit=True)
+            if internal_id := extract_internal_id(text):
+                pass
+            elif doi_re := self.doi_regexp.search(text):
+                internal_id = f'id.dois:{doi_re.group("doi").strip().lower()}'
+            else:
+                raise ValueError()
+            field, value = internal_id.split(':', 1)
+            document = await self.application.summa_client.get_one_by_field_value('nexus_science', field, value)
+            file = await message.download_media(file=bytes)
 
+            request_context.statbox(
+                action='pinning',
+                internal_id=internal_id,
+                filesize=len(file),
+            )
+
+            await self.application.file_flow.pin_add(document, file, with_commit=True)
             await self.application.database.add_approve(message.id, 1)
             reply_message = await message.get_reply_message()
             if reply_message:

@@ -44,17 +44,22 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
             else:
                 el = el.add(self.get_view_command())
             need_pipe = True
-        elif self.has_field('dois') and not self.is_group_mode:
+        elif not self.is_group_mode and with_librarian_service:
             try:
-                deep_link = encode_query_to_deep_link('#r ' + self.doi, request_context.bot_name)
-                if with_librarian_service:
+                if self.has_field('dois'):
+                    deep_link = encode_query_to_deep_link('#r ' + self.doi, request_context.bot_name)
+                elif self.has_field('internal_iso'):
+                    deep_link = encode_query_to_deep_link(f'#r id.internal_iso:"{self.internal_iso}"', request_context.bot_name)
+                else:
+                    deep_link = None
+                if deep_link:
                     el = el.add(f'[request]({deep_link})', escaped=True)
                     need_pipe = True
             except TooLongQueryError:
                 pass
         el = (
             el
-            .add_external_provider_link(with_leading_pipe=need_pipe)
+            .add_external_provider_link(with_leading_pipe=need_pipe, short_text=True)
             .add_references_counter(bot_name=request_context.bot_name, with_leading_pipe=True)
             .add_filedata(show_filesize=True, with_leading_pipe=True)
             .build()
@@ -110,10 +115,6 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
         remote_links = []
         if self.links:
             remote_links.append(self.get_ipfs_gateway_link())
-        if self.doi:
-            remote_links.append(self.get_doi_link())
-        if self.internal_iso:
-            remote_links.append(f'[ISO.org](https://iso.org/standard/{self.internal_iso.split(":")[0]}.html)')
         return remote_links
 
     def buttons_builder(self, user_language, remote_request_link=None):
