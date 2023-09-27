@@ -186,6 +186,8 @@ class BaseSearchHandler(BaseHandler, ABC):
                         librarian_service_id = await self.application.librarian_service.request(holder)
                 elif holder.has_field('internal_iso'):
                     librarian_service_id = await self.application.librarian_service.request(holder)
+                elif holder.has_field('pubmed_id'):
+                    librarian_service_id = await self.application.librarian_service.request(holder)
 
             if (search_widget.query_traits.skip_telegram_cache or search_widget.query_traits.skip_ipfs) and holder.primary_link:
                 request_context.statbox(**{

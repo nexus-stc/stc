@@ -326,14 +326,13 @@ class BaseViewBuilder:
             self.add(text, escaped=True)
         return self
 
-    def add_external_provider_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, short_text=False, end_newline=False):
-        if self.document_holder.doi or (self.document_holder.iso_id and self.document_holder.internal_iso):
+    def add_doi_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, is_short_text=False):
+        if self.document_holder.doi:
             if on_newline:
                 self.add_new_line()
             if with_leading_pipe:
                 self.add('|')
 
-        if self.document_holder.doi:
             if label:
                 if isinstance(label, str):
                     self.add(label, bold=True)
@@ -341,29 +340,61 @@ class BaseViewBuilder:
                     self.add('DOI:', bold=True)
             escaped_doi = escape_format(self.document_holder.doi)
             if text is None:
-                if short_text:
+                if is_short_text:
                     text = 'doi.org'
                 else:
                     text = self.document_holder.doi
             self.add(f'[{text}](https://doi.org/{quote(escaped_doi)})', escaped=True)
+            return True
 
-            if end_newline:
+    def add_iso_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, is_short_text=False):
+        if self.document_holder.iso_id and self.document_holder.internal_iso:
+            if on_newline:
                 self.add_new_line()
-        elif self.document_holder.iso_id and self.document_holder.internal_iso:
+            if with_leading_pipe:
+                self.add('|')
+
             if label:
                 if isinstance(label, str):
                     self.add(label, bold=True)
                 else:
                     self.add('ISO:', bold=True)
             if text is None:
-                if short_text:
+                if is_short_text:
                     text = 'iso.org'
                 else:
                     text = self.document_holder.iso_id.upper()
             self.add(f'[{text}](https://iso.org/standard/{self.document_holder.internal_iso.split(":")[0]}.html)', escaped=True)
+            return True
 
-            if end_newline:
+    def add_pubmed_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, is_short_text=False):
+        if self.document_holder.pubmed_id:
+            if on_newline:
                 self.add_new_line()
+            if with_leading_pipe:
+                self.add('|')
+
+            if label:
+                if isinstance(label, str):
+                    self.add(label, bold=True)
+                else:
+                    self.add('PubMed:', bold=True)
+            if text is None:
+                if is_short_text:
+                    text = 'pubmed'
+                else:
+                    text = f'PMID:{self.document_holder.pubmed_id}'
+            self.add(f'[{text}](https://pubmed.ncbi.nlm.nih.gov/{self.document_holder.pubmed_id}/)', escaped=True)
+            return True
+
+    def add_external_provider_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, is_short_text=False, end_newline=False):
+        has_link = (
+            self.add_doi_link(with_leading_pipe=with_leading_pipe, on_newline=on_newline, label=label, text=text, is_short_text=is_short_text)
+            or self.add_iso_link(with_leading_pipe=with_leading_pipe, on_newline=on_newline, label=label, text=text, is_short_text=is_short_text)
+            or self.add_pubmed_link(with_leading_pipe=with_leading_pipe, on_newline=on_newline, label=label, text=text, is_short_text=is_short_text)
+        )
+        if end_newline and has_link:
+            self.add_new_line()
         return self
 
     def add_links(self):
@@ -598,18 +629,16 @@ class BaseButtonsBuilder:
         return self
 
     def add_mlt_button(self):
-        if not self.document_holder.links:
-            return self
-        for link in self.document_holder.links:
+        mlt_command = self.document_holder.get_mlt_command()
+        if mlt_command:
             self.buttons[-1].append(
                 Button.inline(
                     text=f'🖲️ {t("SIMILAR", language=self.user_language)}',
-                    data=self.document_holder.get_mlt_command(link['cid']),
+                    data=mlt_command,
                 )
             )
             if len(self.buttons[-1]) > 5:
                 self.buttons.append([])
-            return self
         return self
 
     def add_remote_download_button(self, bot_name):

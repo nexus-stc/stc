@@ -1,10 +1,12 @@
 from collections import OrderedDict
 from typing import List
 
+from ..document_chunker import Chunk
+
 
 class BasePrompter:
     @staticmethod
-    def prompter_from_type(type_):
+    def prompter_from_type(type_) -> 'BasePrompter':
         return {
             'beluga': BelugaPrompter(),
             'default': BasePrompter(),
@@ -12,7 +14,7 @@ class BasePrompter:
             'openai': OpenAIPrompter()
         }[type_]
 
-    def qa_prompt(self, question, chunks: List[dict]):
+    def qa_prompt(self, question, chunks: List[Chunk]) -> str:
         if len(chunks) >= 1:
             return '''
 SYSTEM: You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
@@ -35,7 +37,7 @@ Question:
 {question}
 ASSISTANT:'''.format(question=question)
 
-    def summarize_prompt(self, chunks: List[dict]):
+    def summarize_prompt(self, chunks: List[Chunk]) -> str:
         return '''
 SYSTEM: You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
 
@@ -45,14 +47,14 @@ Extracted parts:
 
 ASSISTANT:'''.format(summary=self.generate_summary(chunks))
 
-    def generate_summary(self, chunks: List[dict]):
+    def generate_summary(self, chunks: List[Chunk]) -> str:
         chunk_summaries = []
         chunk_summaries_grouped = OrderedDict()
         for chunk in chunks:
-            document_id = chunk.get("document_id")
+            document_id = chunk.document_id
             if document_id not in chunk_summaries_grouped:
                 chunk_summaries_grouped[document_id] = []
-            chunk_summaries_grouped[document_id].append(chunk['text'])
+            chunk_summaries_grouped[document_id].append(chunk.text)
         for document_id, texts in chunk_summaries_grouped.items():
             texts = ' <..> '.join(texts)
             if document_id:
@@ -64,7 +66,7 @@ ASSISTANT:'''.format(summary=self.generate_summary(chunks))
 
 
 class Llama27bPrompter(BasePrompter):
-    def qa_prompt(self, question: str, chunks: List[dict]):
+    def qa_prompt(self, question: str, chunks: List[Chunk]) -> str:
         if len(chunks) >= 1:
             return '''
 <<SYS>>
@@ -89,7 +91,7 @@ Question:
 {question}
 [/INST]'''.format(question=question)
 
-    def summarize_prompt(self, chunks: List[dict]):
+    def summarize_prompt(self, chunks: List[Chunk]) -> str:
         return '''
 <<SYS>>
 You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
@@ -101,7 +103,7 @@ Extracted parts:
 
 
 class OpenAIPrompter(BasePrompter):
-    def qa_prompt(self, question: str, chunks: List[dict]):
+    def qa_prompt(self, question: str, chunks: List[Chunk]) -> str:
         return """Given the following extracted parts of a long document and a question, create a final answer with references ("DOIs").
 If you don't know the answer, just say that you don't know. Don't try to make up an answer.
 ALWAYS return a "DOIs" part in your answer.
@@ -137,7 +139,7 @@ QUESTION: {question}
 =========
 FINAL ANSWER:""".format(question=question, summary=self.generate_summary(chunks))
 
-    def summarize_prompt(self, chunks: List[dict]):
+    def summarize_prompt(self, chunks: List[Chunk]) -> str:
         return '''
 Given the following extracted parts of a long document, summarize its content
 
@@ -147,7 +149,7 @@ Extracted parts:
 
 
 class BelugaPrompter(BasePrompter):
-    def qa_prompt(self, question: str, chunks: List[dict]):
+    def qa_prompt(self, question: str, chunks: List[Chunk]) -> str:
         if len(chunks) >= 1:
             return '''
 ### System:
@@ -173,7 +175,7 @@ Question:
 
 ### Assistant:'''.format(question=question)
 
-    def summarize_prompt(self, chunks: List[dict]):
+    def summarize_prompt(self, chunks: List[Chunk]) -> str:
         return '''
 ### System:
 You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
@@ -184,7 +186,7 @@ Extracted parts:
 
 ### Assistant:'''.format(summary=self.generate_summary(chunks))
 
-    def general_text_processing(self, request, text):
+    def general_text_processing(self, request: str, text: str) -> str:
         return f'''
 ### System:
 You are Cybrex AI created by People of Nexus. Execute the following user's request about the text.
@@ -197,7 +199,7 @@ Request:
 {request}
 ### Assistant:'''
 
-    def question(self, question):
+    def question(self, question: str) -> str:
         return f'''
 ### System:
 You are Cybrex AI created by People of Nexus. Answer the user's question

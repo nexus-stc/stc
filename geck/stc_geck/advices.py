@@ -11,6 +11,8 @@ PR_TEMPORAL_RANKING_FORMULA = f"{TEMPORAL_RANKING_FORMULA} * 1.96 * fastsigm(iqp
 
 
 default_field_aliases = {
+    'ark_id': 'id.ark_ids',
+    'ark_ids': 'id.ark_ids',
     'author': 'authors.family',
     'authors': 'authors.family',
     'cid': 'links.cid',
@@ -23,7 +25,10 @@ default_field_aliases = {
     'issn': 'metadata.issns',
     'issns': 'metadata.issns',
     'lang': 'languages',
+    'nexus_id': 'id.nexus_id',
+    'pmid': 'id.pubmed_id',
     'pub': 'metadata.publisher',
+    'pubmed_id': 'id.pubmed_id',
     'rd': 'references.doi',
     'ser': 'metadata.series',
 }
@@ -190,18 +195,20 @@ class BaseDocumentHolder:
     def get_internal_id(self):
         if self.doi:
             return f'id.dois:{self.doi}'
-        elif self.nexus_id:
-            return f'id.nexus_id:{self.nexus_id}'
         elif self.internal_iso:
             return f'id.internal_iso:{self.internal_iso}'
         elif self.internal_bs:
             return f'id.internal_bs:{self.internal_bs}'
-        elif self.arc_ids:
-            return f'id.arc_ids:{self.arc_ids[-1]}'
+        elif self.pubmed_id:
+            return f'id.pubmed_id:{self.pubmed_id}'
+        elif self.ark_ids:
+            return f'id.ark_ids:{self.ark_ids[-1]}'
         elif self.libgen_ids:
             return f'id.libgen_ids:{self.libgen_ids[-1]}'
         elif self.zlibrary_ids:
             return f'id.zlibrary_ids:{self.zlibrary_ids[-1]}'
+        elif self.nexus_id:
+            return f'id.nexus_id:{self.nexus_id}'
         else:
             return None
 

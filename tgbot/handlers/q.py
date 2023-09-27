@@ -35,10 +35,10 @@ class QHandler(BaseHandler):
 
             references = []
             for chunk in chunks[:3]:
-                field, value = chunk['document_id'].split(':', 2)
+                field, value = chunk.document_id.split(':', 2)
                 document_id = f'{field}:{value}'
-                reference = f' - **{chunk["title"]}** - `{document_id}`'
-                reference += f'\n**Text:** {remove_markdown(chunk["text"])}'
+                reference = f' - **{chunk.title}** - `{document_id}`'
+                reference += f'\n**Text:** {remove_markdown(chunk.text)}'
                 references.append(reference)
 
             references = '\n\n'.join(references)

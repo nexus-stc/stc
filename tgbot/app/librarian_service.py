@@ -277,6 +277,14 @@ class LibrarianService(AioThing):
             )
             tail = f'#iso {link}'
             return tail
+        elif field == 'id.pubmed_id':
+            link = (
+                document_holder.view_builder('en')
+                .add_external_provider_link(label=False, on_newline=True, text=f'PMID:{document_holder.pubmed_id}')
+                .build()
+            )
+            tail = f'#pubmed {link}'
+            return tail
         else:
             raise ValueError("Unsupported internal id")
 
@@ -345,8 +353,8 @@ class LibrarianService(AioThing):
             .build()
         )
         caption = f"{short_abstract}\n\n#voting"
-        if holder.doi:
-            try:
+        try:
+            if holder.doi:
                 file = await asyncio.wait_for(
                     asyncio.get_running_loop().run_in_executor(
                         self.pool,
@@ -354,16 +362,24 @@ class LibrarianService(AioThing):
                     ),
                     timeout=600.0,
                 )
-            except PyPdfError:
-                caption += '\n\n**File is possibly corrupted, check manually**'
-            except (PdfProcessingError, RecursionError) as e:
-                logging.error({
-                    'action': 'cleanup failed',
-                    'error': str(e),
-                })
-                caption += '\n\n**File cannot be cleaned out of metadata, check manually**'
-            except asyncio.TimeoutError:
-                caption += '\n\n**Cleaning timeouted, check manually**'
+            if holder.iso_id and 'ieee' in holder.iso_id:
+                file = await asyncio.wait_for(
+                    asyncio.get_running_loop().run_in_executor(
+                        self.pool,
+                        partial(clean_metadata, file, doi='10.1109/std')
+                    ),
+                    timeout=600.0,
+                )
+        except PyPdfError:
+            caption += '\n\n**File is possibly corrupted, check manually**'
+        except (PdfProcessingError, RecursionError) as e:
+            logging.error({
+                'action': 'cleanup failed',
+                'error': str(e),
+            })
+            caption += '\n\n**File cannot be cleaned out of metadata, check manually**'
+        except asyncio.TimeoutError:
+            caption += '\n\n**Cleaning timeouted, check manually**'
         caption += '\n\nCorrect: \nIncorrect: '
 
         return await self.application.librarian_service.bot_telegram_client.send_file(

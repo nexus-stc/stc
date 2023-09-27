@@ -88,7 +88,7 @@ class TrendsBaseHandler(BaseHandler):
 
         series = {}
         for query in queries:
-            aggregation = await self.application.summa_client.search({
+            aggregation = await self.application.summa_client.get_documents({
                 'index_alias': 'nexus_science',
                 'query': {'match': {'value': query.lower()}},
                 'collectors': [{

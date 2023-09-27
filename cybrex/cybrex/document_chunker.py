@@ -1,10 +1,27 @@
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import (
+    List,
+    Optional,
+)
 
 from bs4 import BeautifulSoup
 
 from .data_source.base import SourceDocument
+
+
+@dataclass
+class Chunk:
+    document_id: str
+    chunk_id: int
+    title: str
+    length: int
+    # What should be stored in the database
+    text: Optional[str] = None
+    # What should be embedded, defaults to `text` if None
+    real_text: Optional[str] = None
+    embedding: Optional[bytes] = None
 
 
 class DocumentChunker:
@@ -13,7 +30,7 @@ class DocumentChunker:
         self.minimal_chunk_size = minimal_chunk_size
         self.add_metadata = add_metadata
 
-    def to_chunks(self, source_document: SourceDocument) -> List[dict]:
+    def to_chunks(self, source_document: SourceDocument) -> List[Chunk]:
         logging.getLogger('statbox').info({
             'action': 'chunking',
             'document_id': source_document.document_id,
@@ -58,12 +75,12 @@ class DocumentChunker:
                     parts.append(f'TAGS: {tags}')
             parts.append(chunk)
             text = '\n'.join(parts)
-            chunks.append({
-                'real_text': text,
-                'text': chunk,
-                'document_id': source_document.document_id,
-                'length': len(text),
-                'chunk_id': chunk_id,
-                'title': document["title"],
-            })
+            chunks.append(Chunk(
+                real_text=text,
+                text=chunk,
+                document_id=source_document.document_id,
+                length=len(text),
+                chunk_id=chunk_id,
+                title=document['title']
+            ))
         return chunks

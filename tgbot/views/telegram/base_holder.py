@@ -50,6 +50,8 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
                     deep_link = encode_query_to_deep_link('#r ' + self.doi, request_context.bot_name)
                 elif self.has_field('internal_iso'):
                     deep_link = encode_query_to_deep_link(f'#r id.internal_iso:"{self.internal_iso}"', request_context.bot_name)
+                elif self.has_field('pubmed_id'):
+                    deep_link = encode_query_to_deep_link(f'#r id.pubmed_id:{self.pubmed_id}', request_context.bot_name)
                 else:
                     deep_link = None
                 if deep_link:
@@ -59,7 +61,7 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
                 pass
         el = (
             el
-            .add_external_provider_link(with_leading_pipe=need_pipe, short_text=True)
+            .add_external_provider_link(with_leading_pipe=need_pipe, is_short_text=True)
             .add_references_counter(bot_name=request_context.bot_name, with_leading_pipe=True)
             .add_filedata(show_filesize=True, with_leading_pipe=True)
             .build()
@@ -96,8 +98,12 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
     def get_download_command(self, cid) -> bytes:
         return b'/d_' + recode_base36_to_base64(cid)
 
-    def get_mlt_command(self, cid) -> bytes:
-        return b'/m_' + recode_base36_to_base64(cid)
+    def get_mlt_command(self) -> bytes:
+        try_internal_id = self.get_internal_id().encode()
+        if len(try_internal_id) < 62:
+            return b'/n_' + try_internal_id
+        for link in self.get_links():
+            return b'/m_' + recode_base36_to_base64(link['cid'])
 
     def generate_tags_links(self, bot_name):
         if self.tags:

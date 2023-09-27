@@ -66,7 +66,7 @@ class BaseSearchWidget:
         )
         self.query['load_cache'] = load_cache
         self.query['store_cache'] = store_cache
-        self._search_response = await self.application.summa_client.search(self.query)
+        self._search_response = await self.application.summa_client.get_documents(self.query)
 
     @property
     def count(self) -> int:

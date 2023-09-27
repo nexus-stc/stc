@@ -38,23 +38,6 @@ class CybrexCli:
                 await self.cybrex.upsert_documents([document])
 
     @exception_handler
-    async def export_chunks(self, query: str, output_path: str, n_documents: int = 10):
-        """
-        Store STC text chunks in ZIP archive
-
-        :param query: query to STC
-        :param output_path: where to store result
-        :param n_documents: the number of chunks to extract
-        """
-        async with self.cybrex as cybrex:
-            print(f"{colored('Q', 'green')}: {query}")
-            await cybrex.export_chunks(
-                query=query,
-                output_path=output_path,
-                n_documents=n_documents
-            )
-
-    @exception_handler
     async def chat_doc(self, document_query: str, query: str, n_chunks: int = 5, minimum_score: float = 0.5):
         """
         Ask a question about content of document identified by DOI.
@@ -67,13 +50,13 @@ class CybrexCli:
         async with self.cybrex as cybrex:
             print(f"{colored('Document', 'green')}: {document_query}")
             print(f"{colored('Q', 'green')}: {query}")
-            answer, _ = await cybrex.chat_document(
+            cybrex_response = await cybrex.chat_document(
                 document_query,
                 query,
                 n_chunks,
                 minimum_score=minimum_score,
             )
-            print(f"{colored('A', 'green')}: {answer}")
+            print(f"{colored('A', 'green')}: {cybrex_response.answer}")
 
     @exception_handler
     async def chat_sci(
@@ -91,25 +74,26 @@ class CybrexCli:
             more means more tokens to use and more precision in answer
         :param n_documents: the number of chunks to extract
             more means more tokens to use and more precision in answer
+        :param minimum_score:
         """
         async with self.cybrex as cybrex:
             print(f"{colored('Q', 'green')}: {query}")
-            answer, chunks = await cybrex.chat_science(
+            cybrex_response = await cybrex.chat_science(
                 query=query,
                 n_chunks=n_chunks,
                 n_documents=n_documents,
                 minimum_score=minimum_score,
             )
-            answer = re.sub(r'\(DOI:\s*([^)]+)\)', r'(https://doi.org/\g<1>)', answer)
+            answer = re.sub(r'\(DOI:\s*([^)]+)\)', r'(https://doi.org/\g<1>)', cybrex_response.answer)
             references = []
             visited = set()
-            for chunk in chunks:
-                field, value = chunk['document_id'].split(':', 1)
+            for chunk in cybrex_response.chunks:
+                field, value = chunk.document_id.split(':', 1)
                 document_id = f'{field}:{value}'
                 if document_id in visited:
                     continue
                 visited.add(document_id)
-                references.append(f'{document_id}: {chunk["title"]}')
+                references.append(f'{document_id}: {chunk.title}')
             references = '\n'.join(references)
             print(f"{colored('A', 'green')}: {answer}")
             print(f"{colored('References', 'green')}:\n{textwrap.indent(references, ' - ')}")
@@ -123,8 +107,8 @@ class CybrexCli:
         """
         async with self.cybrex as cybrex:
             print(f"{colored('Document', 'green')}: {document_query}")
-            answer, _ = await cybrex.summarize_document(document_query)
-            print(f"{colored('Summarization', 'green')}: {answer}")
+            cybrex_response = await cybrex.summarize_document(document_query)
+            print(f"{colored('Summarization', 'green')}: {cybrex_response.answer}")
 
     @exception_handler
     async def semantic_search(
@@ -144,17 +128,17 @@ class CybrexCli:
         """
         async with self.cybrex as cybrex:
             print(f"{colored('Q', 'green')}: {query}")
-            chunks = await cybrex.semantic_search(
+            scored_chunks = await cybrex.semantic_search(
                 query=query,
                 n_chunks=n_chunks,
                 n_documents=n_documents,
                 minimum_score=minimum_score
             )
             references = []
-            for chunk in chunks:
-                field, value = chunk['document_id'].split(':', 1)
+            for scored_chunk in scored_chunks:
+                field, value = scored_chunk.chunk.document_id.split(':', 1)
                 document_id = f'{field}:{value}'
-                references.append(f' - {document_id}: {chunk["title"]}\n   {chunk["text"]}')
+                references.append(f' - {document_id}: {scored_chunk.chunk.title}\n   {scored_chunk.chunk.text}')
             references = '\n'.join(references)
             print(f"{colored('References', 'green')}:\n{references}")
 
@@ -170,8 +154,6 @@ def cybrex_cli(debug: bool = False):
         'add-all-chunks': cybrex.add_all_documents,
         'chat-doc': cybrex.chat_doc,
         'chat-sci': cybrex.chat_sci,
-        'export-chunks': cybrex.export_chunks,
-        'import-chunks': cybrex.cybrex.import_chunks,
         'semantic-search': cybrex.semantic_search,
         'sum-doc': cybrex.sum_doc,
         'write-config': cybrex.cybrex.ensure_config,

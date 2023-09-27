@@ -4,6 +4,7 @@ from typing import (
     List,
 )
 
+from ..document_chunker import Chunk
 from ..llm_manager import LLMManager
 
 
@@ -12,7 +13,7 @@ class MapReduceChain:
         self.llm_manager = llm_manager
         self.chunk_accumulator = chunk_accumulator
 
-    def input_splitter(self, chunks: List) -> str:
+    def input_splitter(self, chunks: List[Chunk]) -> str:
         for chunk in chunks:
             self.chunk_accumulator.accept(chunk)
             if self.chunk_accumulator.is_full():
@@ -23,7 +24,7 @@ class MapReduceChain:
     def output_processor(self, llm_output: str) -> dict:
         return {'text': llm_output}
 
-    def process(self, chunks: Iterable):
+    def process(self, chunks: Iterable[Chunk]):
         while True:
             input_chunks = self.input_splitter(chunks)
             outputs = []
@@ -46,8 +47,8 @@ class ChunkAccumulator:
         self.chunks = []
         self.current_chunk_length = 0
 
-    def accept(self, chunk):
-        self.current_chunk_length += len(chunk['text'])
+    def accept(self, chunk: Chunk):
+        self.current_chunk_length += len(chunk.text)
         self.chunks.append(chunk)
 
     def is_full(self):

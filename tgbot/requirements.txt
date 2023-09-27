@@ -13,7 +13,7 @@ aiosqlite
 aiosumma>=2.46.8
 bleach
 base36
-cybrex
+cybrex[petals]>=1.8.2
 dateparser
 emoji
 isbnlib>=3.10.13
@@ -25,6 +25,6 @@ izihawa_utils
 lru-dict
 markdownify
 sqlalchemy
-stc-geck>=1.8.17
+stc-geck>=1.8.18
 
 telethon==1.30.3

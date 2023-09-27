@@ -1,5 +1,11 @@
+import dataclasses
 import uuid
-from typing import List
+from typing import (
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+)
 
 import grpc
 from qdrant_client import QdrantClient
@@ -13,8 +19,15 @@ from qdrant_client.models import (
     VectorParams,
 )
 
+from ..document_chunker import Chunk
 from ..exceptions import QdrantStorageNotAvailableError
 from .base import BaseVectorStorage
+
+
+@dataclasses.dataclass
+class ScoredChunk:
+    chunk: Chunk
+    score: float
 
 
 class QdrantVectorStorage(BaseVectorStorage):
@@ -59,7 +72,7 @@ class QdrantVectorStorage(BaseVectorStorage):
             field_schema="keyword",
         )
 
-    def get_by_field_value(self, field, value, sort: bool = True) -> List[dict]:
+    def get_by_field_values(self, field_values: Iterable[Tuple[str, str]], sort: bool = True) -> List[Chunk]:
         if not self._exists_collection(self.collection_name):
             return []
         points, _ = self.db.scroll(
@@ -69,14 +82,14 @@ class QdrantVectorStorage(BaseVectorStorage):
                     FieldCondition(
                         key=field,
                         match=MatchValue(value=value)
-                    ),
+                    ) for (field, value) in field_values
                 ],
             ),
             limit=2 ** 31,
         )
-        payloads = [point.payload for point in points]
+        payloads = [Chunk(**point.payload) for point in points]
         if sort:
-            return list(sorted(payloads, key=lambda x: x['chunk_id']))
+            return list(sorted(payloads, key=lambda x: (x.document_id, x.chunk_id)))
         return payloads
 
     def exists_by_field_value(self, field, value) -> bool:
@@ -97,7 +110,7 @@ class QdrantVectorStorage(BaseVectorStorage):
         )
         return len(points) > 0
 
-    def query(self, query_embedding, n_chunks: int, where: dict = None):
+    def query(self, query_embedding, n_chunks: int, field_values: Optional[Iterable[Tuple[str, str]]] = None) -> List[ScoredChunk]:
         self._ensure_collection(
             collection_name=self.collection_name,
             size=len(query_embedding),
@@ -105,39 +118,48 @@ class QdrantVectorStorage(BaseVectorStorage):
         if n_chunks == 0:
             return []
         query_filter = None
-        if where:
-            query_filter = Filter(
-                must=[
-                    FieldCondition(
-                        key=k,  # Condition based on values of `rand_number` field.
+        if field_values:
+            conditions = []
+            for (field, value) in field_values:
+                if isinstance(value, str):
+                    conditions.append(FieldCondition(key=field, match=MatchValue(value=value)))
+                else:
+                    conditions.append(FieldCondition(
+                        key=field,
                         range=Range(
-                            gte=v,
-                            lte=v
+                            gte=value,
+                            lte=value,
                         )
-                    ) for k, v in where.items()
-                ]
-            )
+                    ))
+            query_filter = Filter(should=conditions)
         points = self.db.search(
             collection_name=self.collection_name,
             query_vector=query_embedding,
             query_filter=query_filter,
             limit=n_chunks,
         )
-        return [{**point.payload, 'score': point.score} for point in points]
+        return [ScoredChunk(chunk=Chunk(**point.payload), score=point.score) for point in points]
 
-    def upsert(self, chunks: List[dict]):
+    def upsert(self, chunks: List[Chunk]):
         if not chunks:
             return
-        if 'embedding' in chunks[0]:
-            embeddings = [chunk.pop('embedding') for chunk in chunks]
+        embeddings = []
+        if chunks[0].embedding:
+            embedding_size = len(chunks[0].embedding)
+            for chunk in chunks:
+                embeddings.append(chunk.embedding)
+                chunk.embedding = None
         else:
             embeddings = self.embedding_function([
-                chunk.pop('real_text', None) or chunk['text']
+                chunk.real_text or chunk.text
                 for chunk in chunks
             ])
+            embedding_size = len(embeddings[0])
+            for chunk in chunks:
+                chunk.real_text = None
         self._ensure_collection(
             collection_name=self.collection_name,
-            size=len(embeddings[0]),
+            size=embedding_size,
         )
         return self.db.upsert(
             collection_name=self.collection_name,
@@ -145,7 +167,7 @@ class QdrantVectorStorage(BaseVectorStorage):
                 PointStruct(
                     id=str(uuid.uuid1()),
                     vector=embedding,
-                    payload=chunk
+                    payload=dataclasses.asdict(chunk)
                 )
                 for chunk, embedding in zip(chunks, embeddings)
             ]

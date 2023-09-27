@@ -16,17 +16,22 @@ from .base import BaseHandler
 
 
 class MltHandler(BaseHandler):
-    filter = events.CallbackQuery(pattern='^/m_([A-Za-z0-9_-]+)')
+    filter = events.CallbackQuery(pattern='^/(m|n)_(.*)')
     fail_as_reply = False
 
     def parse_pattern(self, event: events.ChatAction):
-        cid = recode_base64_to_base36(event.pattern_match.group(1).decode())
-        return cid
+        command = event.pattern_match.group(1).decode()
+        if command == 'm':
+            cid = recode_base64_to_base36(event.pattern_match.group(2).decode())
+            return 'links.cid', cid
+        else:
+            internal_id = event.pattern_match.group(2).decode()
+            return internal_id.split(':', 1)
 
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
-        cid = self.parse_pattern(event)
+        field, value = self.parse_pattern(event)
 
-        request_context.add_default_fields(mode='mlt', cid=cid)
+        request_context.add_default_fields(mode='mlt', field=field, value=value)
         request_context.statbox(action='view')
 
         prefetch_message = await self.application.get_telegram_client(request_context.bot_name).send_message(
@@ -34,7 +39,7 @@ class MltHandler(BaseHandler):
             t("SEARCHING", request_context.chat['language'])
         )
 
-        source_document = await self.application.summa_client.get_one_by_field_value('nexus_science', 'links.cid', cid)
+        source_document = await self.application.summa_client.get_one_by_field_value('nexus_science', field, value)
 
         if not source_document:
             return await event.reply(t("OUTDATED_VIEW_LINK", request_context.chat['language']))
