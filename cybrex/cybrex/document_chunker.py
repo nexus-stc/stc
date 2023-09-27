@@ -13,10 +13,10 @@ from .data_source.base import SourceDocument
 
 @dataclass
 class Chunk:
-    document_id: str
-    chunk_id: int
-    title: str
-    length: int
+    document_id: Optional[str]
+    chunk_id: Optional[int]
+    title: Optional[str]
+    length: Optional[int]
     # What should be stored in the database
     text: Optional[str] = None
     # What should be embedded, defaults to `text` if None

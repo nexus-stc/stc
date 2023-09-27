@@ -21,8 +21,14 @@ class MapReduceChain:
         if not self.chunk_accumulator.is_empty():
             yield self.chunk_accumulator.produce()
 
-    def output_processor(self, llm_output: str) -> dict:
-        return {'text': llm_output}
+    def output_processor(self, llm_output: str) -> Chunk:
+        return Chunk(
+            title=None,
+            document_id=None,
+            chunk_id=None,
+            text=llm_output,
+            length=len(llm_output)
+        )
 
     def process(self, chunks: Iterable[Chunk]):
         while True:
