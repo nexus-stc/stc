@@ -283,13 +283,13 @@ class CybrexAI(AioThing):
         :param skip_downloading_pdf:
         :return:
         """
-        documents = await self.data_source.query_documents(query, limit=1)
+        documents = await self.data_source.search_documents(query, limit=1)
         if not documents:
             raise DocumentNotFoundError(id_=query)
         await self.upsert_documents(documents, skip_downloading_pdf=skip_downloading_pdf)
         return documents[0].document_id
 
-    async def get_documents(self, query: str, n_documents: int = 10, use_only_keywords: bool = False) -> List[SourceDocument]:
+    async def search_documents(self, query: str, n_documents: int = 10, use_only_keywords: bool = False) -> List[SourceDocument]:
         if not n_documents:
             return []
 
@@ -316,7 +316,7 @@ class CybrexAI(AioThing):
             'mode': 'cybrex',
             'query': query,
         })
-        documents = await self.data_source.query_documents(query=query, limit=n_documents)
+        documents = await self.data_source.search_documents(query=query, limit=n_documents)
         return documents
 
     async def get_documents_from_chunks(self, chunks):
@@ -367,7 +367,7 @@ class CybrexAI(AioThing):
         :param minimum_score:
         :return:
         """
-        documents = await self.get_documents(query, n_documents, use_only_keywords=True)
+        documents = await self.search_documents(query, n_documents, use_only_keywords=True)
         return await self.semantic_search_in_documents(
             query=query,
             documents=documents,

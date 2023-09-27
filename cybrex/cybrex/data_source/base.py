@@ -12,5 +12,5 @@ class SourceDocument:
 
 
 class BaseDataSource:
-    async def query_documents(self, query: str, limit: int = 5, sources: Optional[List[str]] = None) -> List[SourceDocument]:
+    async def search_documents(self, query: str, limit: int = 5, sources: Optional[List[str]] = None) -> List[SourceDocument]:
         raise NotImplementedError()

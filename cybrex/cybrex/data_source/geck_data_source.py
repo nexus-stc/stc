@@ -16,7 +16,7 @@ class GeckDataSource(BaseDataSource):
     def __init__(self, geck: StcGeck):
         self.geck = geck
 
-    async def query_documents(
+    async def search_documents(
         self,
         query: str,
         limit: int = 5,

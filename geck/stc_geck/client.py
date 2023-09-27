@@ -190,7 +190,10 @@ class StcGeck(AioThing):
         :param cid: IPFS CID to the item required to download
         :return: `bytes` with the file content
         """
-        return await self.ipfs_http_client.get_item(cid)
+        try:
+            return await self.ipfs_http_client.get_item(cid)
+        except (aiohttp.client_exceptions.ClientConnectorError, ConnectionRefusedError) as e:
+            raise IpfsConnectionError(base_error=e)
 
     async def download_document(self, document: dict, file_name: Optional[str] = None):
         """

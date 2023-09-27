@@ -17,13 +17,14 @@ def exception_handler(func):
     @functools.wraps(func)
     async def wrapper_func(*args, **kwargs):
         try:
-            await func(*args, **kwargs)
+            return await func(*args, **kwargs)
         except QdrantStorageNotAvailableError as e:
             print(
                 f"{colored('INFO', 'red')}: Cannot connect to Qdrant: {e.info}\n"
                 f"{colored('HINT', 'yellow')}: Launch qdrant using `docker run -p 6333:6333 -p 6334:6334` qdrant/qdrant",
                 file=sys.stderr,
             )
+            raise
     return wrapper_func
 
 

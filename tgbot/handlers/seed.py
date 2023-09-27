@@ -126,7 +126,7 @@ class SeedHandler(BaseHandler):
                 default_query_language=request_context.chat['language'],
             )
 
-            response = await self.application.summa_client.get_documents(query)
+            response = await self.application.summa_client.search(query)
             documents = response.collector_outputs[0].documents.scored_documents
             count = response.collector_outputs[1].count.count
         else:
@@ -140,7 +140,7 @@ class SeedHandler(BaseHandler):
                 default_query_language=request_context.chat['language'],
             )
 
-            response = await self.application.summa_client.get_documents(query)
+            response = await self.application.summa_client.search(query)
             documents = response.collector_outputs[0].documents.scored_documents
             count = response.collector_outputs[1].count.count
 

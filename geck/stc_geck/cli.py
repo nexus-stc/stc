@@ -11,6 +11,7 @@ from typing import (
 
 import fire
 import humanfriendly
+from stc_geck.advices import BaseDocumentHolder
 from termcolor import colored
 
 from .client import StcGeck
@@ -21,7 +22,7 @@ def exception_handler(func):
     @functools.wraps(func)
     async def wrapper_func(self, *args, **kwargs):
         try:
-            await func(self, *args, **kwargs)
+            return await func(self, *args, **kwargs)
         except IpfsConnectionError as e:
             print(
                 f"{colored('ERROR', 'red')}: Cannot connect to IPFS: {e.info}\n"
@@ -32,8 +33,8 @@ def exception_handler(func):
                 f"`--ipfs-http-base-url` parameter: `geck --ipfs-http-base-url http://127.0.0.1:8080 - serve`",
                 file=sys.stderr,
             )
-        finally:
             await self.geck.stop()
+            raise
     return wrapper_func
 
 
@@ -91,30 +92,35 @@ class StcGeckCli:
 
         :return: file if record has corresponding CID
         """
-        results = await self.search(query)
-        output_path, output_path_ext = os.path.splitext(output_path)
-        output_path_ext = output_path_ext.lstrip('.')
-        if results:
-            print(f"{colored('INFO', 'green')}: Found {query}", file=sys.stderr)
-            if 'cid' in results[0]:
-                print(f"{colored('INFO', 'green')}: Receiving file {query}...", file=sys.stderr)
-                if (real_extension := results[0].get('extension', 'pdf')) != output_path_ext:
-                    print(
-                        f"{colored('WARN', 'yellow')}: Receiving file extension `{real_extension}` "
-                        f"is not matching with your output path extension `{output_path_ext}`. Changed to correct one.",
-                        file=sys.stderr
-                    )
-                    output_path_ext = real_extension
-                data = await self.geck.download(results[0]["cid"])
-                final_file_name = output_path + '.' + output_path_ext
-                with open(final_file_name, 'wb') as f:
-                    f.write(data)
-                    f.close()
-                    print(f"{colored('INFO', 'green')}: File {final_file_name} is written", file=sys.stderr)
+        async with self.geck:
+            results = await self._search(query)
+            output_path, output_path_ext = os.path.splitext(output_path)
+            output_path_ext = output_path_ext.lstrip('.')
+            if results:
+                document_holder = BaseDocumentHolder(results[0])
+                print(f"{colored('INFO', 'green')}: Found {query}", file=sys.stderr)
+                if link := (
+                    document_holder.get_links().get_first_link(output_path_ext)
+                    or document_holder.get_links().get_first_link()
+                ):
+                    print(f"{colored('INFO', 'green')}: Receiving file {query}...", file=sys.stderr)
+                    if (real_extension := link.get('extension', 'pdf')) != output_path_ext:
+                        print(
+                            f"{colored('WARN', 'yellow')}: Receiving file extension `{real_extension}` "
+                            f"is not matching with your output path extension `{output_path_ext}`. Changed to correct one.",
+                            file=sys.stderr
+                        )
+                        output_path_ext = real_extension
+                    data = await self.geck.download(link['cid'])
+                    final_file_name = output_path + '.' + output_path_ext
+                    with open(final_file_name, 'wb') as f:
+                        f.write(data)
+                        f.close()
+                        print(f"{colored('INFO', 'green')}: File {final_file_name} is written", file=sys.stderr)
+                else:
+                    print(f"{colored('ERROR', 'red')}: Not found CID for {query} and extension {output_path_ext}", file=sys.stderr)
             else:
-                print(f"{colored('ERROR', 'red')}: Not found CID for {query}", file=sys.stderr)
-        else:
-            print(f"{colored('ERROR', 'red')}: Not found {query}", file=sys.stderr)
+                print(f"{colored('ERROR', 'red')}: Not found {query}", file=sys.stderr)
 
     @exception_handler
     async def random_cids(self, n: Optional[int] = None, space: Optional[str] = None):
@@ -133,6 +139,17 @@ class StcGeckCli:
         async with self.geck as geck:
             return await geck.random_cids(n=n)
 
+    async def _search(self, query: str, limit: int = 1, offset: int = 0):
+        logging.getLogger('statbox').info({'action': 'search', 'query': query})
+        summa_client = self.geck.get_summa_client()
+        search_request = {
+            'index_alias': self.index_alias,
+            'query': {'match': {'value': query.lower()}},
+            'collectors': [{'top_docs': {'limit': limit, 'offset': offset}}],
+            'is_fieldnorms_scoring_enabled': False,
+        }
+        return await summa_client.search_documents(search_request)
+
     @exception_handler
     async def search(self, query: str, limit: int = 1, offset: int = 0):
         """
@@ -146,17 +163,9 @@ class StcGeckCli:
         :return: metadata records
         """
         self.prompt()
-        async with self.geck as geck:
+        async with self.geck:
             print(f"{colored('INFO', 'green')}: Searching {query}...", file=sys.stderr)
-            logging.getLogger('statbox').info({'action': 'search', 'query': query})
-            summa_client = geck.get_summa_client()
-            query = {
-                'index_alias': self.index_alias,
-                'query': {'match': {'value': query.lower()}},
-                'collectors': [{'top_docs': {'limit': limit, 'offset': offset}}],
-                'is_fieldnorms_scoring_enabled': False,
-            }
-            return await summa_client.search_documents(query)
+            return await self._search(query, limit=limit, offset=offset)
 
     @exception_handler
     async def serve(self):
