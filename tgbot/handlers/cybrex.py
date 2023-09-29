@@ -57,13 +57,15 @@ class CybrexHandler(BaseHandler):
             return await event.reply(text)
 
         reply_message = await event.get_reply_message()
-        if reply_message:
+        request_context.statbox(action='found_reply_message', reply_message=str(reply_message))
+
+        if reply_message and reply_message.raw_text:
             wait_message = await event.reply('`All right, wait a sec...`')
 
             text = reply_message.raw_text
-            answer = await self.application.cybrex_ai.general_text_processing(query, text)
+            cybrex_response = await self.application.cybrex_ai.general_text_processing(query, text)
             response = f'🤔 **{query}**'
-            response = f'{response}\n\n🤖: {answer.strip()}'
+            response = f'{response}\n\n🤖: {cybrex_response.answer.strip()}'
             return await asyncio.gather(
                 wait_message.delete(),
                 reply_message.reply(response),
@@ -83,10 +85,10 @@ class CybrexHandler(BaseHandler):
         show_texts = False
 
         if cmd == 'semantic-search':
-            answer, chunks = None, response
+            answer, chunks = None, [scored_chunk.chunk for scored_chunk in response]
             show_texts = True
         else:
-            answer, chunks = response
+            answer, chunks = response.answer, response.chunks
 
         response = f'🤔 **{args[0]}**'
         if answer:

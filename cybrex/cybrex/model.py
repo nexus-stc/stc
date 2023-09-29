@@ -67,17 +67,17 @@ class CybrexModel:
                 'model_type': 'instructor',
             },
             'bge-small-en': {
-                'model_name': 'BAAI/bge-small-en',
+                'model_name': 'BAAI/bge-small-en-v1.5',
                 'model_kwargs': {'device': device},
                 'model_type': 'bge',
             },
             'bge-base-en': {
-                'model_name': 'BAAI/bge-base-en',
+                'model_name': 'BAAI/bge-base-en-v1.5',
                 'model_kwargs': {'device': device},
                 'model_type': 'bge',
             },
             'bge-large-en': {
-                'model_name': 'BAAI/bge-large-en',
+                'model_name': 'BAAI/bge-large-en-v1.5',
                 'model_kwargs': {'device': device},
                 'model_type': 'bge',
             },

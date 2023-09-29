@@ -1,5 +1,5 @@
 // @ts-nocheck
-const stamp = 'Nexus - Terra - 08 Sep 23';
+const stamp = 'Nexus - Terra - 29 Sep 23';
 const translations = {
   en: {
     about: 'About',
@@ -58,7 +58,7 @@ const translations = {
         <span class="font-monospace">+JavaScript language:-ru</span>
     </ul>
     <h5>List of fields</h5>
-    <p>abstract, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pub (publisher), ser (series), tags, title, type</p>
+    <p>abstract, ark_id, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pmid (pubmed_id), pub (publisher), ser (series), tags, title, type</p>
     <h5>Item types</h5> 
     <p>book, book-chapter, chapter, chapter, dataset, component, dissertation, edited-book, journal-article, monograph, peer-review, proceedings, proceedings-article, reference-book, report, standard</p>
     <h5>Extra field</h5>
@@ -74,12 +74,6 @@ const translations = {
     <ul>
       <li><span class="font-monospace">+JavaScript language:-en</span> returns JavaScript books <b>only</b> non-English books</li>
     </ul>
-    `,
-    help_popper: `
-      <p>mandatory words: +JavaScript</p>
-      <p>excluded words: -JavaScript</p>
-      <p>item types: book, book-chapter, chapter, chapter, dataset, component, dissertation, edited-book, journal-article, monograph, peer-review, proceedings, proceedings-article, reference-book, report, standard</p>
-      <p>fields: abstract, authors, concepts, content, doi, ev (event), extra (see below), isbns, issued_at (in Unixtime), issns, pub (publisher), ser (series), tags, title</p
     `,
     is_ipfs_enabled: 'Is local IPFS daemon enabled?',
     load_more: 'More',

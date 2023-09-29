@@ -20,7 +20,7 @@
       | ipfs config --json Experimental.OptimisticProvide true
       | ipfs config --json Routing.AcceleratedDHTClient true
       | ipfs config Reprovider.Interval --json '"23h"'
-  p Set the environment variable <code>GOMEMLIMIT=8GB</code> before launching the daemon to limit memory usage.
+  p Set the environment variable <code>GOMEMLIMIT=8GB</code> (choose right amount for your server) before launching the daemon to limit memory usage.
   p It's also recommended to have a public address set in your config or ensure it's correctly broadcasted using the <code>ipfs id</code> command.
   h6 Step 3: Pin Search Metadata (optional)
   p Use the following command to start the pinning process of search metadata and the Web STC:

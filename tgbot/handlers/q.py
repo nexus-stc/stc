@@ -30,15 +30,15 @@ class QHandler(BaseHandler):
             t("SEARCHING", request_context.chat['language']),
         )
         try:
-            chunks = await self.application.cybrex_ai.semantic_search(query, n_chunks=3, n_documents=0)
+            scored_chunks = await self.application.cybrex_ai.semantic_search(query, n_chunks=3, n_documents=0)
             response = f'🤔 **{query}**'
 
             references = []
-            for chunk in chunks[:3]:
-                field, value = chunk.document_id.split(':', 2)
+            for scored_chunk in scored_chunks[:3]:
+                field, value = scored_chunk.chunk.document_id.split(':', 2)
                 document_id = f'{field}:{value}'
-                reference = f' - **{chunk.title}** - `{document_id}`'
-                reference += f'\n**Text:** {remove_markdown(chunk.text)}'
+                reference = f' - **{scored_chunk.chunk.title}** - `{document_id}`'
+                reference += f'\n**Text:** {remove_markdown(scored_chunk.chunk.text)}'
                 references.append(reference)
 
             references = '\n\n'.join(references)

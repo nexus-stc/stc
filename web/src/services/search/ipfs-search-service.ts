@@ -25,6 +25,7 @@ export function get_index_config () {
       ),
       query_parser_config: {
         field_aliases: {
+          ark_id: 'id.ark_ids',
           author: 'authors.family',
           authors: 'authors.family',
           cid: 'links.cid',
@@ -35,12 +36,13 @@ export function get_index_config () {
           isbns: 'metadata.isbns',
           issns: 'metadata.issns',
           lang: 'languages',
-          lid: 'id.libgen_ids',
           ev: 'metadata.event.name',
+          nexus_id: 'id.nexus_id',
+          pmid: 'id.pubmed_id',
           pub: 'metadata.publisher',
+          pubmed_id: 'id.pubmed_id',
           rd: 'references.doi',
           ser: 'metadata.series',
-          zid: 'id.zlibrary_ids',
         },
         field_boosts: {
           authors: 2.7,

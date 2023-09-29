@@ -299,14 +299,30 @@ export default defineComponent({
     },
     id_query () {
       const dois = this.get_attr("dois");
+      const internal_iso = this.get_attr("internal_iso");
+      const internal_bs = this.get_attr("internal_bs");
+      const pubmed_id = this.get_attr("pubmed_id");
+      const ark_ids = this.get_attr("ark_ids");
       const libgen_ids = this.get_attr("libgen_ids");
       const zlibrary_ids = this.get_attr("zlibrary_ids");
+      const nexus_id = this.get_attr("nexus_id");
+
       if (dois && dois.length > 0) {
-        return `doi:${dois[0]}`;
-      } else if (libgen_ids && libgen_ids.length > 0) {
-        return `lid:${libgen_ids[0]}`;
+        return `id.dois:${dois[0]}`;
+      } else if (internal_iso) {
+        return `id.internal_iso:${internal_iso}`;
+      } else if (internal_bs) {
+        return `id.internal_bs:${internal_bs}`;
+      } else if (pubmed_id) {
+        return `id.pubmed_id:${pubmed_id}`;
+      } else if (ark_ids && ark_ids.length > 0) {
+        return `id.ark_ids:${ark_ids[0]}`;
       } else if (zlibrary_ids && zlibrary_ids.length > 0) {
-        return `zid:${zlibrary_ids[0]}`;
+        return `id.zlibrary_ids:${zlibrary_ids[0]}`;
+      } else if (libgen_ids && libgen_ids.length > 0) {
+        return `id.libgen_ids:${libgen_ids[0]}`;
+      } else if (nexus_id) {
+        return `id.nexus_id:${nexus_id}`;
       } else if(this.first_link) {
         return 'cid:' + this.first_link.cid;
       }

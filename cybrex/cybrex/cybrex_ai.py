@@ -349,18 +349,25 @@ class CybrexAI(AioThing):
         skip_downloading_pdf: bool = True
     ) -> List[ScoredChunk]:
         await self.upsert_documents(documents, skip_downloading_pdf=skip_downloading_pdf)
-        scored_chunks = await self._search_in_vector_storage(
+        return await self._search_in_vector_storage(
             query=query,
             n_chunks=n_chunks,
             field_values=[('document_id', document.document_id) for document in documents],
             minimum_score=minimum_score,
         )
-        return scored_chunks
 
-    async def semantic_search(self, query: str, n_chunks: int = 10, n_documents: int = 30, minimum_score: float = 0.5) -> List[ScoredChunk]:
+    async def semantic_search(
+        self,
+        query: str,
+        n_chunks: int = 10,
+        n_documents: int = 30,
+        minimum_score: float = 0.5,
+        skip_downloading_pdf: bool = True,
+    ) -> List[ScoredChunk]:
         """
         Flow for retrieving chunks by chunking documents relevant to `query`
 
+        :param skip_downloading_pdf:
         :param query:
         :param n_chunks:
         :param n_documents:
@@ -368,9 +375,9 @@ class CybrexAI(AioThing):
         :return:
         """
         documents = await self.search_documents(query, n_documents, use_only_keywords=True)
-        return await self.semantic_search_in_documents(
+        await self.upsert_documents(documents, skip_downloading_pdf=skip_downloading_pdf)
+        return await self._search_in_vector_storage(
             query=query,
-            documents=documents,
             n_chunks=n_chunks,
             minimum_score=minimum_score,
         )
@@ -447,7 +454,7 @@ class CybrexAI(AioThing):
             None,
             lambda: chain.process(chunks),
         )
-        return answer.strip(), chunks
+        return CybrexResponse(answer=answer.strip(), chunks=chunks)
 
     async def general_text_processing(self, request, text):
         """
@@ -463,4 +470,4 @@ class CybrexAI(AioThing):
                 self.model.llm_manager.prompter.general_text_processing(request=request, text=text)
             ),
         )
-        return answer.strip()
+        return CybrexResponse(answer=answer.strip(), chunks=[])

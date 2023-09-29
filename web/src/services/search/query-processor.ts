@@ -43,7 +43,9 @@ export class QueryProcessor {
         query_config,
       ),
       collectors: default_collectors(query_config),
-      is_fieldnorms_scoring_enabled: false
+      is_fieldnorms_scoring_enabled: false,
+      use_cache: true,
+      load_cache: true
     }
   }
 }
