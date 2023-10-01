@@ -114,6 +114,7 @@ en:
     `+` sign makes words or filtration by field mandatory:
     - `+JavaScript language:en` returns **all** JavaScript books but books in English will be ranked higher
     - `+JavaScript language:+en` returns JavaScript books **only** in English
+    - `title://(nuclear|atomic)// title://energ.*//` returns documents about nuclear/atomic energy/energetics
 
     `-` sign removes documents with the word
     - `fetal -hemoglobin` returns all articles about fetal whatever but not hemoglobin
@@ -180,6 +181,7 @@ en:
     `+` sign makes words or filtration by field mandatory:
     - `+JavaScript language:en` returns **all** JavaScript books but books in English will be ranked higher
     - `+JavaScript language:+en` returns JavaScript books **only** in English
+    - `title://(nuclear|atomic)// title://energ.*//` returns documents about nuclear/atomic energy/energetics
 
     `-` sign removes documents with the word
     - `fetal -hemoglobin` returns all articles about fetal whatever but not hemoglobin

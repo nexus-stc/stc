@@ -146,9 +146,9 @@ export default defineComponent({
         )
       }
       for (const extension of this.extensions) {
-        parts.push(extension.toUpperCase());
+        parts.push(extension);
       }
-      if (this.first_link && this.links.length < 2) {
+      if (this.first_link && this.links.length < 2 && this.first_link["filesize"] > 0) {
         parts.push(format_bytes(this.first_link["filesize"]))
       }
       if (this.document.languages) {

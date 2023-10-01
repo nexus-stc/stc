@@ -3,12 +3,12 @@
   h3 Build STC Box for Home or Library Use
   p You can set up STC on a small computer to act as a personal or group library.
   h5 Minimum Requirements
-  p For testing, we used an Orange PI 5 with 4GB of RAM, a Sandisk 128GB MicroSD, and a 16TB Seagate Exos HDD attached externally by a USB cord, all of which demonstrated strong performance.
+  p For testing, we used an Orange PI 5 with 16GB of RAM, a Sandisk 128GB MicroSD, and a 16TB Seagate Exos HDD attached externally by a USB cord, all of which demonstrated strong performance.
   p In general, you can use any computer with the following specs
   ul
     li A 4-core arm64 or x86-based CPU
-    li 4GB RAM
-    li 128GB+ of storage for the metadata database, 10TB+ for the entire dataset
+    li 16GB RAM
+    li 256GB+ of storage for the metadata database, 10TB+ for the entire dataset
   p If you are using Orange PI, take a note on power supply. We have experienced issues when attached HDD through USB3.0 but everything was all right after switching to left USB2.0.
   h5 System Configuration
   h6 Burning the MicroSD Card

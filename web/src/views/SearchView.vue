@@ -24,8 +24,8 @@
             .col-6.col-lg-4
               select.form-select.form-selectm(v-model="selected_timerange" @change="switch_parameter()")
                 option(v-for="[year, display_year] of years" :value="year") {{ display_year }}
-            .col-1.offset-5.col-lg-1.offset-lg-0
-              h4.mt-1.text-center(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
+            .col-6.col-lg-1
+              h4.mt-1.me-2.text-end(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
           div(v-if="total_documents !== null")
             hr
             i.ms-3 {{ total_documents }} {{ get_label('found') }}

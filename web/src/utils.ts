@@ -99,6 +99,12 @@ export function decode_html(html) {
     return txt.value;
 }
 
+export function extract_text_from_html(html) {
+    const parser = new DOMParser();
+    const document = parser.parseFromString(html || "", "text/html");
+    return document.getElementsByTagName("body")[0].textContent;
+}
+
 export function remove_unpaired_escaped_tags(str) {
     const openTags = [];
     const regex = /&lt;\/?([a-z][a-z0-9]*)\b[^&]*&gt;/gi;

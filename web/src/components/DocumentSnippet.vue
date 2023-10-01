@@ -1,10 +1,10 @@
 <template lang="pug">
 div
   .row
-    .col-2(v-if="with_cover && cover")
+    .col-3.col-lg-2(v-if="with_cover && cover")
       a(:href="item_link()")
         img.mb-3.img-thumbnail(width="100" :src="cover")
-    .col-10.col-xs-12
+    .col-9.col-lg-10
       a.text-decoration-none.h5(v-if="with_large_caption" v-html="prepared_title" :href="item_link()")
       a.text-decoration-none.h6(v-else v-html="prepared_title" :href="item_link()")
       .mt-1(v-html="coordinates")
@@ -24,7 +24,7 @@ import { defineComponent } from 'vue'
 
 import BaseDocument from "@/components/BaseDocument.vue";
 import { user_db } from "@/database";
-import {decode_html, remove_unpaired_escaped_tags} from "@/utils";
+import {decode_html, extract_text_from_html, remove_unpaired_escaped_tags} from "@/utils";
 
 export default defineComponent({
   name: 'DocumentSnippet',
@@ -86,6 +86,7 @@ export default defineComponent({
           abstract += '...'
         }
         abstract = abstract.replace( /(<([^>]+)>)/ig, '');
+        abstract = abstract.replace(/&lt;.*?&gt;/g, "")
       } else {
         const encoder = new TextEncoder()
         const original_length = encoder.encode(this.document.abstract).length
@@ -95,11 +96,14 @@ export default defineComponent({
         if (original_length > snippet_length) {
           abstract += '...'
         }
-        if (abstract[0] === abstract[0].toLowerCase()) {
+        const full_decoded_abstract = extract_text_from_html(this.document.abstract)
+        abstract = abstract.replace(/&lt;.*?&gt;/g, "");
+        const snippet_decoded_abstract = extract_text_from_html(abstract)
+        if (full_decoded_abstract.substring(0, 32) !== snippet_decoded_abstract.substring(0, 32)) {
           abstract = '...' + abstract
         }
       }
-      return abstract.replace(/&lt;.*?&gt;/g, "")
+      return abstract
     },
     prepared_title () {
       let title = (this.document.title || 'No title').slice(0, this.max_title_length)

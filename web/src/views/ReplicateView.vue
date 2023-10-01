@@ -4,7 +4,7 @@
   p The Standard Template Construct (STC) can be conveniently replicated on your personal computer or server. The STC consists of several critical components: search metadata, scholarly papers, and a web interface with a search engine (referred to as Web STC in subsequent references).
   p Replicating the search metadata and web interface can enhance your search performance. Simultaneously, replicating the scholarly papers can convert your computer into a comprehensive, standalone library.
   p To accomplish these tasks, you will need IPFS properly configured.
-  h5 Setting Up IPFS
+  h5 Set Up STC for Local Usage
   p IPFS is responsible for acquiring search metadata, scholarly papers, and the Web STC. The Web STC includes an embedded version of Summa Search, enabling you to have a full-fledged search function in your browser.
   h6 Step 1: Install IPFS
   p Follow the <a href="https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions" target="_blank">official guide</a>. Ensure you select the correct binaries for your CPU architecture.
@@ -15,12 +15,12 @@
       | # set to the amount of disk space you wish to use
       | ipfs config Datastore.StorageMax 10TB
       | # set to the amount of RAM you wish to use
-      | ipfs config Swarm.ResourceMgr.MaxMemory 8GB
+      | ipfs config Swarm.ResourceMgr.MaxMemory 16GB
       | ipfs config Routing.Type 'dhtclient'
       | ipfs config --json Experimental.OptimisticProvide true
       | ipfs config --json Routing.AcceleratedDHTClient true
       | ipfs config Reprovider.Interval --json '"23h"'
-  p Set the environment variable <code>GOMEMLIMIT=8GB</code> (choose right amount for your server) before launching the daemon to limit memory usage.
+  p Set the environment variable <code>GOMEMLIMIT=16GB</code> (choose right amount for your server) before launching the daemon to limit memory usage.
   p It's also recommended to have a public address set in your config or ensure it's correctly broadcasted using the <code>ipfs id</code> command.
   h6 Step 3: Pin Search Metadata (optional)
   p Use the following command to start the pinning process of search metadata and the Web STC:
@@ -29,7 +29,52 @@
   p Use the following command to start the pinning process for scholarly papers and books:
   pre ipfs pin add /ipns/hub.standard-template-construct.org --progress
   p Congrats, you have your own Web STC. Ensure that you have installed <a href="#/help/install-ipfs">IPFS Companion</a> and open <a href="http://standard-template-construct.org">Web STC</a>. It will be working as fast as possible.
-  h5 Setting Up Summa
+  h5 Set Up for Family or Community Usage
+  p This section describes how to configure STC for local usage based on the previous section, making it available over your local network or the Internet.
+  p The recommended approach is to set up a reverse NGINX proxy for the IPFS daemon. This allows other servers to make requests to an STC instance.
+  p Please note that it's essential to have SSL configured and a certificate for your domain name. Without a secure context, STC cannot function properly.
+  h6 Set Up NGINX
+  p Open and edit <code>/etc/nginx/sites-available/default</code> as shown below. Make sure to replace stc.local and the certificate paths with your own values:
+  pre
+    code
+      | server {
+      |     listen 443 ssl default_server;
+      |     listen [::]:443 ssl;
+      |     ssl_certificate stc-local.crt;
+      |     ssl_certificate_key stc-local.key;
+      |     server_name stc.local;
+      |
+      |     location / {
+      |         proxy_pass http://localhost:8080;
+      |         proxy_set_header Host $host;
+      |         proxy_cache_bypass $http_upgrade;
+      |         allow all;
+      |     }
+      | }
+      | server {
+      |     listen 80;
+      |     server_name stc.local;
+      |     return 301 https://stc.local$request_uri;
+      | }
+  h6 Adjust ~/.ipfs/config
+  p For proper functionality with the public name, the IPFS daemon must be configured as well:
+  pre
+    code
+      | {
+      |  ...
+      |   "Gateway": {
+      |     ...
+      |     "PublicGateways": {
+      |       "stc.local": {
+      |         "UseSubdomains": true,
+      |         "Paths": ["/ipfs", "/ipns"]
+      |       }
+      |     },
+      |     "RootRedirect": "/ipns/standard-template-construct.org"
+      |   }
+      | ...
+      | }
+  h5 Set Up for Intense Processing
   p Sometimes, having the Web STC is not enough. For example, you might want to create a website on top of the STC or build Telegram Bot.
   p You have the opportunity to set up a search server with STC data, which can be used in your project. Below are several ways of setting up the STC. Generally, all methods are similar, but some of them may be more suitable for you, depending on your skills and requirements.
   p Let's choose the most suitable method from the following options:
@@ -57,7 +102,7 @@
           | ipfs get /ipns/standard-template-construct.org/data --output data/bin/nexus_science --progress
       p Then, attach it to Summa
       pre
-        code summa-cli 0.0.0.0:82 attach-index nexus_free '{"file": {}}'
+        code summa-cli 0.0.0.0:82 attach-index nexus_science '{"file": {}}'
       p
         | <b>Pros:</b> ultra fast
         br

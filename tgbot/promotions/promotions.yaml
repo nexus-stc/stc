@@ -30,7 +30,16 @@ promotions:
       ru: ⤴️ Оставайся на связи с нами на @{related_channel} и в [Twitter]({twitter_contact_url})
     weight: 5
   - texts:
-      en: 🧬🪅 Join [Nexus Communities](https://t.me/+fPQIvxQmJGQ3MzU8), the spaces to discuss science
+      en: 🧬 Join [Nexus Communities](https://t.me/+fPQIvxQmJGQ3MzU8), the spaces to discuss science
+    weight: 50
+  - texts:
+      en: 🔥 Join [our Reddit](https://www.reddit.com/r/science_nexus) to learn more about Nexus/STC
+    weight: 50
+  - texts:
+      en: 🐦 Subscribe to our [Twitter](https://twitter.com/the_superpirate) to receive news first
+    weight: 50
+  - texts:
+      en: ✉️ Subscribe to our [Telegram](https://t.me/nexus_search) to stay with us
     weight: 50
   - texts:
       en: ⤴️ Try [Standard Template Construct](http://standard-template-construct.org) library
