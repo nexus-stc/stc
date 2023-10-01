@@ -170,7 +170,7 @@ class CybrexAI(AioThing):
         ipfs_http_base_url: str = 'http://127.0.0.1:8080',
         summa_endpoint: str = '127.0.0.1:10082',
         qdrant_base_url: str = 'http://127.0.0.1',
-        llm_name: Literal['llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b'] = 'llama-2-7b-uncensored',
+        llm_name: Literal['llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b', 'petals-stable-beluga'] = 'llama-2-7b-uncensored',
         embedder_name: Literal['instructor-xl', 'openai', 'bge-small-en'] = 'bge-small-en',
         device: str = 'cpu',
         gpu_layers: int = 50,
@@ -181,7 +181,7 @@ class CybrexAI(AioThing):
         :param ipfs_http_base_url: IPFS HTTP base url, i.e. `http://127.0.0.1:8080`
         :param summa_endpoint: Summa endpoint, i.e. `127.0.0.1:10082`
         :param qdrant_base_url:
-        :param llm_name: 'llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b'
+        :param llm_name: 'llama-2-7b', 'llama-2-7b-uncensored', 'llama-2-13b', 'openai', 'petals-llama-2-70b', 'petals-stable-beluga'
         :param embedder_name: 'instructor-xl', 'openai', 'bge-small-en''
         :param device: 'cpu' or 'cuda'
         :param gpu_layers: number of layers to enabled offloading part of calculations to GPU
