@@ -25,10 +25,16 @@
   h6 Step 3: Pin Search Metadata (optional)
   p Use the following command to start the pinning process of search metadata and the Web STC:
   pre ipfs pin add /ipns/standard-template-construct.org --progress
-  h6 Step 4: Pin Scholarly Papers (optional)
-  p Use the following command to start the pinning process for scholarly papers and books:
+  h6 Step 4a: Pin Stable Release of Scholarly Papers (optional)
+  p Use the following command to start the pinning process for scholarly papers. The command takes a snapshot of previous scholarly papers, which might be slightly outdated and does not include items without a DOI.
   pre ipfs pin add /ipns/hub.standard-template-construct.org --progress
-  p Congrats, you have your own Web STC. Ensure that you have installed <a href="#/help/install-ipfs">IPFS Companion</a> and open <a href="http://standard-template-construct.org">Web STC</a>. It will be working as fast as possible.
+  h6 Step 4b: Pin Actual Scholarly Papers and Books (optional)
+  p These commands require an installed version of Python. By the end, you will have all the items stored in STC pinned.
+  pre
+    code
+      | pip install stc-geck
+      | geck - documents | jq -r "select (.links != null) .links[].cid" | xargs -n 1 -P 8 -I{} ipfs pin add {} --timeout 600s
+  p Congrats, you have your own STC. Ensure that you have installed <a href="#/help/install-ipfs">IPFS Companion</a> and open <a href="http://standard-template-construct.org">Web STC</a>. It will be working as fast as possible.
   h5 Set Up for Family or Community Usage
   p This section describes how to configure STC for local usage based on the previous section, making it available over your local network or the Internet.
   p The recommended approach is to set up a reverse NGINX proxy for the IPFS daemon. This allows other servers to make requests to an STC instance.

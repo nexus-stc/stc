@@ -14,6 +14,7 @@ from qdrant_client.models import (
     FieldCondition,
     Filter,
     MatchValue,
+    PayloadSchemaType,
     PointStruct,
     Range,
     VectorParams,
@@ -69,7 +70,7 @@ class QdrantVectorStorage(BaseVectorStorage):
         self.db.create_payload_index(
             collection_name=collection_name,
             field_name="document_id",
-            field_schema="keyword",
+            field_schema=PayloadSchemaType.KEYWORD,
         )
 
     def get_by_field_values(self, field_values: Iterable[Tuple[str, str]], sort: bool = True) -> List[Chunk]:
