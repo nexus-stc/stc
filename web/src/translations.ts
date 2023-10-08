@@ -35,7 +35,8 @@ const translations = {
     all_languages: 'All languages',
     bookmarks: 'bookmarks',
     contacts: 'Contacts',
-    donate: `<p>STC creators devote the most of their time to make knowledge available to every human. By supporting this project, you will be contributing to the democratization of knowledge and ensuring that everyone has access to the latest scholarly publications, regardless of their financial or institutional constraints. Even the smallest gift to charity can make a huge impact.</p>
+    donate: 'Donate',
+    donate_content: `<p>STC creators devote the most of their time to make knowledge available to every human. By supporting this project, you will be contributing to the democratization of knowledge and ensuring that everyone has access to the latest scholarly publications, regardless of their financial or institutional constraints. Even the smallest gift to charity can make a huge impact.</p>
     <p>We will appreciate any donations that will allow us to continue development of STC.</p>`,
     everywhere: 'Everywhere',
     found: 'found',
@@ -75,6 +76,20 @@ const translations = {
       <li><span class="font-monospace">+JavaScript language:-en</span> returns JavaScript books <b>only</b> non-English books</li>
     </ul>
     `,
+    how_to_search: "How to Search?",
+    install_ipfs: "Install IPFS",
+    install_ipfs_content: `
+    <p>The Standard Template Construct (STC) is distributed through IPFS, an uncensorable distributed network. When using STC, you download portions of the library from multiple peers to your local computer for offline use.</p>
+    <p>You may have accessed this page through the public gateway. While this method is convenient, it's not always reliable because public gateways can potentially censor this site.</p>
+    <p>You'll need to install and configure specific software on your computer to access this site directly from the IPFS network.</p>
+    <h5>Step 1: Install and Launch IPFS Desktop and Launch</h5>
+    <p>Follow the <a href="https://docs.ipfs.tech/install/ipfs-desktop/" target="_blank">official guide</a> to install IPFS Desktop.</p>
+    <p>Do not forget to launch IPFS Desktop before the next step.</p>
+    <h5>Step 2: Install IPFS Companion for Your Browser</h5>
+    <p>The IPFS Companion is a browser extension that provides a smoother experience with IPFS. Follow the <a href="https://docs.ipfs.tech/install/ipfs-companion/" target="_blank">official guide</a> to install the appropriate extension for your browser.</p>
+    <h5>Step 3: Refresh Page</h5>
+    <p>Everything is ready, you just need to <a href="/" target="_blank">open STC</a> again. STC will be reloaded from local IPFS daemon.</p>
+    `,
     is_ipfs_enabled: 'Is local IPFS daemon enabled?',
     load_more: 'More',
     loading: 'loading',
@@ -107,6 +122,7 @@ const translations = {
     `,
     search: 'Search',
     search_placeholder: 'by title, authors, content, doi...',
+    stc_box: 'Build STC Box for Home or Library Use',
     stamp: stamp,
     unsupported_browser: 'Unfortunately, you have unsupported browser. Try to update it or use another browser.',
     what_to_read: 'What To Read'
@@ -114,7 +130,7 @@ const translations = {
   pb: {
     all_languages: 'Todas as línguas',
     bookmarks: 'favoritas',
-    donate: `<p>Os criadores do STC dedicam a maior parte de seu tempo para tornar o conhecimento disponível para todos os humanos. Ao apoiar este projeto, você estará contribuindo para a democratização do conhecimento e garantindo que todos tenham acesso às mais recentes publicações científicas, independentemente de suas restrições financeiras ou institucionais. Mesmo o menor presente para a caridade pode causar um grande impacto.</p>
+    donate_content: `<p>Os criadores do STC dedicam a maior parte de seu tempo para tornar o conhecimento disponível para todos os humanos. Ao apoiar este projeto, você estará contribuindo para a democratização do conhecimento e garantindo que todos tenham acesso às mais recentes publicações científicas, independentemente de suas restrições financeiras ou institucionais. Mesmo o menor presente para a caridade pode causar um grande impacto.</p>
     <p>Agradecemos qualquer doação que nos permita continuar o desenvolvimento do STC.</p>`,
     everywhere: 'Em toda parte',
     found: 'encontrado',
@@ -123,6 +139,7 @@ const translations = {
     loading_document: 'carregando documento',
     search: 'Procurar',
     search_placeholder: 'título, autor, conteúdo, doi...',
+    set_up_your_own_replica: 'Set Up Your Own Replica',
     what_to_read: 'O que ler'
   },
   ru: {
@@ -140,7 +157,7 @@ const translations = {
     all_languages: 'Все языки',
     bookmarks: 'закладок',
     contacts: 'Как связаться с нами',
-    donate: `<p>Создатели STC посвящают большую часть своего времени тому, чтобы сделать знания доступными для каждого человека. Поддерживая этот проект, вы внесете свой вклад в демократизацию знаний и обеспечите каждому доступ к последним научным публикациям, независимо от его финансовых или институциональных ограничений. Даже самый маленький взнос может оказать огромное влияние.</p>
+    donate_content: `<p>Создатели STC посвящают большую часть своего времени тому, чтобы сделать знания доступными для каждого человека. Поддерживая этот проект, вы внесете свой вклад в демократизацию знаний и обеспечите каждому доступ к последним научным публикациям, независимо от его финансовых или институциональных ограничений. Даже самый маленький взнос может оказать огромное влияние.</p>
     <p>Мы будем признательны за любые пожертвования, которые позволят нам продолжить развитие STC.</p>`,
     everywhere: 'Везде',
     found: 'найдено',

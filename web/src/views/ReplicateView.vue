@@ -1,6 +1,6 @@
 <template lang="pug">
 .container
-  h3 Set Up Your Own Replica
+  h3 {{ get_label ("set_up_your_own_replica") }}
   p The Standard Template Construct (STC) can be conveniently replicated on your personal computer or server. The STC consists of several critical components: search metadata, scholarly papers, and a web interface with a search engine (referred to as Web STC in subsequent references).
   p Replicating the search metadata and web interface can enhance your search performance. Simultaneously, replicating the scholarly papers can convert your computer into a comprehensive, standalone library.
   p To accomplish these tasks, you will need IPFS properly configured.

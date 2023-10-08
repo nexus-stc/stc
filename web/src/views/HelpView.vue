@@ -10,11 +10,11 @@
         li.nav-item
           router-link.btn.text-nowrap(to="/help/how-to-search")
             i.bi.bi-question-circle-fill
-            span.ms-2 How to Search
+            span.ms-2 {{ get_label("how_to_search") }}
         li.nav-item
           router-link.btn.text-nowrap(to="/help/donate")
             i.bi.bi-currency-dollar
-            span.ms-2 Donate
+            span.ms-2 {{ get_label("donate") }}
         hr
         li.nav-item
           button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#projects-collapse")
@@ -51,15 +51,15 @@
               li.nav-item
                 router-link.nav-link.text-secondary(to="/help/install-ipfs")
                   i.bi.bi-box
-                  span.ms-2 Install IPFS
+                  span.ms-2 {{ get_label("install_ipfs") }}
               li.nav-item
                 router-link.nav-link.text-secondary(to="/help/stc-box")
                   i.bi.bi-book
-                  span.ms-2 Build STC Box for Home or Library Use
+                  span.ms-2 {{ get_label("stc_box") }}
               li.nav-item
                 router-link.nav-link.text-secondary(to="/help/replicate")
                   i.bi.bi-cloud-download
-                  span.ms-2 Set Up Your Own Replica
+                  span.ms-2 {{ get_label("set_up_your_own_replica") }}
               li.nav-item
                 router-link.nav-link.text-secondary(to="/help/doomsday")
                   i.bi.bi-radioactive

@@ -1,7 +1,7 @@
 <template lang="pug">
 .container
-  h4 Donate
-  p(v-html='get_label("donate")')
+  h3 {{ get_label("donate") }}
+  p(v-html='get_label("donate_content")')
   .col-lg-6
     ul.nav.nav-tabs(id="currencies-tab" role="tablist")
       li.nav-item(role="presentation")
@@ -35,7 +35,7 @@ import { get_label } from '../translations'
 export default defineComponent({
   name: 'DonateView',
   created () {
-    document.title = 'Donate - Help - STC'
+    document.title = `${get_label("donate")} - Help - STC`
   },
   methods: { get_label }
 })

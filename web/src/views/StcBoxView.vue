@@ -1,6 +1,6 @@
 <template lang="pug">
 .container
-  h3 Build STC Box for Home or Library Use
+  h3 {{ get_label("stc_box") }}
   p You can set up STC on a small computer to act as a personal or group library.
   h5 Minimum Requirements
   p For testing, we used an Orange PI 5 with 16GB of RAM, a Sandisk 128GB MicroSD, and a 16TB Seagate Exos HDD attached externally by a USB cord, all of which demonstrated strong performance.
@@ -24,10 +24,11 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
+import {get_label} from "@/translations";
 export default defineComponent({
   name: 'StcBoxView',
   created () {
-    document.title = 'Build STC Box for Home or Library Use - Help - STC'
+    document.title = `${get_label("stc_box")} - Help - STC`
   }
 })
 </script>
