@@ -29,5 +29,5 @@ $badge-font-size: 0.85em;
   }
 }
 
-abstract > header { @extend h6; }
+abstract > header { @extend h5; }
 abstract > section header { @extend b; }

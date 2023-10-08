@@ -8,7 +8,7 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'HowToSearchView',
   created () {
-    document.title = 'How to Search - Help - STC'
+    document.title = 'How to Search? - Help - STC'
   }
 })
 </script>

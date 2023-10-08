@@ -16,7 +16,7 @@
   p Burn the image file (usually *.iso or *.img) onto your MicroSD card. On MacOS and Linux, this can be done using the <code>dd</code> utility (set <code>if</code> and <code>of</code> to correspond to your file and disk respectively):
   pre
     code
-      sudo dd if=file.img of=/dev/sde status=progress conv=fsync
+      | sudo dd if=file.img of=/dev/sde status=progress conv=fsync
   h6 IPFS Configuration
   p Follow Steps 1 and 2 from the <a href="#/help/replicate">replication guide</a> to set up IPFS.
   h5 Start Using It!
@@ -27,7 +27,7 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'StcBoxView',
   created () {
-    document.title = 'Create a Compact STC Box for Home or Library Use - Help - STC'
+    document.title = 'Build STC Box for Home or Library Use - Help - STC'
   }
 })
 </script>

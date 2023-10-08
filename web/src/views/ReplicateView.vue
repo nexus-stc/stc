@@ -125,7 +125,7 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   name: 'ReplicateView',
   created () {
-    document.title = 'Replicate - Help - STC'
+    document.title = 'Set Up Your Own Replica - Help - STC'
   }
 })
 </script>

@@ -13,7 +13,7 @@ div
     div(v-html="document.abstract")
   .text-end.mt-4
     document-buttons(:files="files" :query="id_query()")
-  div(v-if="referenced_bys.length > 0 || is_references_loading")
+  .mt-3(v-if="referenced_bys.length > 0 || is_references_loading")
     b Referenced by
     .card.mt-3
       .card-body

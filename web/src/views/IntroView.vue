@@ -19,7 +19,7 @@ import { get_label } from '../translations'
 export default defineComponent({
   name: 'IntroView',
   created () {
-    document.title = 'Intro - Help - STC'
+    document.title = 'Welcome - Help - STC'
     const description = document.querySelector('head meta[name="description"]')
     if (description != null) {
       description.setAttribute('content', get_label('about_intro'))

@@ -4,9 +4,9 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   scrollBehavior (to, from, savedPosition) {
-    if (to.hash) {
+    if (to.path.startsWith("/help") && from.path.startsWith("/help")) {
       return {
-        el: to.hash,
+        el: '#hrv',
         behavior: 'smooth',
       }
     }

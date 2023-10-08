@@ -4,15 +4,15 @@
     .col-md-4.col-lg-3.mb-3
       ul.nav.flex-column.mb-auto
         li.nav-item
-          a.btn.text-nowrap(href="#/help")
-            i.bi.bi-houme
+          router-link.btn.text-nowrap(to="/help")
+            i.bi.bi-house
             span.ms-2 Welcome
         li.nav-item
-          a.btn.text-nowrap(href="#/help/how-to-search")
+          router-link.btn.text-nowrap(to="/help/how-to-search")
             i.bi.bi-question-circle-fill
             span.ms-2 How to Search
         li.nav-item
-          a.btn.text-nowrap(href="#/help/donate")
+          router-link.btn.text-nowrap(to="/help/donate")
             i.bi.bi-currency-dollar
             span.ms-2 Donate
         hr
@@ -35,7 +35,7 @@
                   i.bi.bi-cpu
                   span.ms-2 Cybrex AI
               li.nav-item
-                a.nav-link.text-secondary(href="#/help/stc-hub-api")
+                router-link.nav-link.text-secondary(to="/help/stc-hub-api")
                   i.bi.bi-app
                   span.ms-2 STC Hub API
               li.nav-item
@@ -49,19 +49,19 @@
           .collapse.ms-3(id="guides-collapse")
             ul.btn-toggle-nav.list-unstyled.fw-normal.pb-1
               li.nav-item
-                a.nav-link.text-secondary(href="#/help/install-ipfs")
+                router-link.nav-link.text-secondary(to="/help/install-ipfs")
                   i.bi.bi-box
                   span.ms-2 Install IPFS
               li.nav-item
-                a.nav-link.text-secondary(href="#/help/stc-box")
+                router-link.nav-link.text-secondary(to="/help/stc-box")
                   i.bi.bi-book
                   span.ms-2 Build STC Box for Home or Library Use
               li.nav-item
-                a.nav-link.text-secondary(href="#/help/replicate")
+                router-link.nav-link.text-secondary(to="/help/replicate")
                   i.bi.bi-cloud-download
                   span.ms-2 Set Up Your Own Replica
               li.nav-item
-                a.nav-link.text-secondary(href="#/help/doomsday")
+                router-link.nav-link.text-secondary(to="/help/doomsday")
                   i.bi.bi-radioactive
                   span.ms-2 Doomsday Guide
         li.nav-item
@@ -104,7 +104,7 @@
                   span.ms-2 ultranymous@proton.me
         hr
     .col-md-8.col-lg-8
-      router-view
+      router-view(id="hrv")
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
@@ -115,3 +115,8 @@ export default defineComponent({
   }
 })
 </script>
+<style scoped lang="scss">
+.router-link-exact-active {
+  filter: brightness(150%);
+}
+</style>
