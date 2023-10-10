@@ -71,6 +71,10 @@
           .collapse.ms-3.show(id="links-collapse")
             ul.btn-toggle-nav.list-unstyled.fw-normal.pb-1
               li.nav-item
+                a.nav-link.text-secondary.text-nowrap(href="https://reddit.com/r/science_nexus" target="_blank")
+                  i.bi.bi-reddit
+                  span.ms-2 Reddit
+              li.nav-item
                 a.nav-link.text-secondary.text-nowrap(href="https://twitter.com/the_superpirate" target="_blank")
                   i.bi.bi-twitter
                   span.ms-2 Twitter

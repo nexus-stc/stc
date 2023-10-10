@@ -201,6 +201,7 @@ class LibrarianService(AioThing):
             if self.application.sciparser and field in ('doi', 'id.dois') and is_file:
                 if data := await self.try_download_media(message):
                     logging.getLogger('debug').debug({
+                        'internal_id': internal_id,
                         'action': 'found_media',
                         'mode': 'librarian_service',
                         'filesize': len(data),

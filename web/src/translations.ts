@@ -128,18 +128,109 @@ const translations = {
     what_to_read: 'What To Read'
   },
   pb: {
-    all_languages: 'Todas as línguas',
-    bookmarks: 'favoritas',
-    donate_content: `<p>Os criadores do STC dedicam a maior parte de seu tempo para tornar o conhecimento disponível para todos os humanos. Ao apoiar este projeto, você estará contribuindo para a democratização do conhecimento e garantindo que todos tenham acesso às mais recentes publicações científicas, independentemente de suas restrições financeiras ou institucionais. Mesmo o menor presente para a caridade pode causar um grande impacto.</p>
-    <p>Agradecemos qualquer doação que nos permita continuar o desenvolvimento do STC.</p>`,
-    everywhere: 'Em toda parte',
+    all_languages: 'Todos idiomas',
+    bookmarks: 'favoritos',
+    contacts: 'Contatos',
+    donate: 'Doe',
+    donate_content: `
+    <p>Os criadores do STC dedicam a maior parte do seu tempo para disponibilizar o conhecimento a todos os seres humanos. Ao apoiar este projeto, 
+    você contribuirá para a democratização do conhecimento e irá garantir que todos tenham acesso às mais recentes publicações acadêmicas, 
+    independentemente das suas restrições financeiras ou institucionais. 
+    Mesmo o menor presente para caridade pode causar um enorme impacto.</p>
+    <p>Agradecemos quaisquer doações que nos permitam continuar o desenvolvimento do STC.</p>`,
+    everywhere: 'Todos lugares',
     found: 'encontrado',
+    help: `
+    <h4 class="mt-4">Uso</h4>
+    <p>Basta digitar sua solicitação em palavras simples na <a href="#/">caixa de pesquisa</a>.</p>
+    <h5>Exemplos</h5>
+    <ul>
+    <li class="font-monospace">Divine Comedy Dante</li> <li class="font-monospace">doi:10.1159/000477855</li> <li>Buscar por autor:&nbsp;</li>
+    <span class="font-monospace">authors:Jack authors:London</span> <li>Combinação exata:&nbsp;</li>
+    <span class="font-monospace">"Fetal Hemoglobin"</span> <li>Filtrar formatos (todos, exceto pdf):&nbsp;</li>
+    <span class="font-monospace">+JavaScript extensão:+epub</span> <li>Tudo sobre JavaScript em russo:&nbsp;</li>
+    <span class="font-monospace">+JavaScript idioma:+ru</span> <li>Tudo sobre JavaScript, excluindo coisas em russo:&nbsp;</li> <span class="font-monospace">+JavaScript idioma:-ru</span>
+    </ul>
+    <h5>Lista de campos</h5>
+    <p>resumo, ark_id, autores, conceitos, conteúdo, doi, ev (evento), extra (veja abaixo), isbns,
+    issued_at (in Unixtime), issns, pmid (id_pubmde), pub (editora), ser (série), tags, título, tipo</p> <h5>Tipos de itens</h5>
+    <p>livro, capítulo-de-livro, capítulo, capítulo, conjunto de dados, componente, dissertação, livro-
+    editado, artigo-de-periódico, monografia, peer-review, procedimentos, artigos-de-procedimentos, livro de referência, relatório, padrão</p>
+    <h5>Campo extra</h5>
+    <p>Contém campos fora do esquema, por exemplo – números padrão ISO/BS que podem ser usados da seguinte maneira:</p>
+    <p><span class="font-monospace">extra:"iso iec 10279 1991"</span></p>
+    <h5>Sintaxe estendida</h5>
+    <p>sinal <span class="font-monospace">+</span> torna obrigatória a palavra ou filtragem por campo</p>
+    <ul>
+      <li><span class="font-monospace">+JavaScript idioma:en</span> retorna <b>todos</b> Livros JavaScript, mas livros em inglês terão classificação mais elevada</li>
+      <li><span class="font-monospace">+JavaScript idioma:+en</span> retorna livros JavaScript <b>apenas</b> em Inglês</li>
+    </ul>
+    <p>sinal <span class="font-monospace">-</span> remove documentos</p>
+    <ul>
+      <li><span class="font-monospace">+JavaScript idioma:-en</span> retorna livros JavaScript <b>apenas</b> livros não ingleses</li>
+    </ul>
+    `,
+    how_to_search: "Como Buscar?",
+    install_ipfs: "Instale o IPFS",
+    install_ipfs_content: `
+    <p>O Standard Template Construct (STC) é distribuído através do IPFS, uma rede distribuída não censurável. Ao usar o STC, você baixa partes da biblioteca de vários pares para o seu computador local para uso offline.</p>
+    <p>Você pode ter acessado esta página através do gateway público. Embora este método seja conveniente, nem sempre é confiável porque os gateways públicos podem potencialmente censurar este site.</p>
+    <p>Você precisará instalar e configurar software específico em seu computador para acessar este site diretamente da rede IPFS.</p>
+    <h5>Passo 1: Instale e inicie o IPFS Desktop e inicie</h5>
+    <p>Siga o <a href="https://docs.ipfs.tech/install/ipfs-desktop/" target="_blank">guia oficial</a> para instalar o IPFS Desktop.</p>
+    <p>Não se esqueça de iniciar o IPFS Desktop antes da próxima etapa.</p>
+    <h5>Passo 2: Instale o IPFS Companion para o seu navegador</h5>
+    <p>O IPFS Companion é uma extensão do navegador que oferece uma experiência mais
+    tranquila com o IPFS. Siga o <a href="https://docs.ipfs.tech/install/ipfs-companion/" target="_blank">guia oficial</a> para instalar a extensão apropriada para o seu navegador.</p>
+    <h5>Passo 3: Atualize a Página</h5>
+    <p>Está tudo pronto, você só precisa <a href="/" target="_blank">abrir STC</a> de novo. O STC será recarregado do daemon IPFS local.</p>
+    `,
+    is_ipfs_enabled: 'O daemon IPFS local está habilitado?',
     load_more: 'Mais',
     loading: 'carregando',
     loading_document: 'carregando documento',
-    search: 'Procurar',
-    search_placeholder: 'título, autor, conteúdo, doi...',
+    network_error: 'Erro de rede, tente recarregar a página',
+    replicate_intro: `
+    <h4>Replicar metadados de pesquisa</h4>
+    <p>
+      <b>Os metadados de pesquisa não incluem livros ou publicações acadêmicas</b>. 
+      Siga a última seção deste guia para aprender como replicá-los separadamente.
+    </p>
+    <p>O STC é construído sobre o <a href="https://izihawa.github.io/summa/">Summa</a> 
+    mecanismo de pesquisa usado para replicar e atender consultas. O STC inclui metadados de
+    pesquisa, mecanismo de pesquisa e interface da web reunidos em um único pacote disponível por meio do IPFS.</p>
+    <p>Este pacote pode ser acessado diretamente através de um navegador da web, ou o conjunto de dados separadamente pode ser aberto pela versão do servidor do Summa.</p>
+    <p>Portanto, aqui estão dois modos de replicação: leve e completo.</p> `,
+    replicate_replicate_data: `
+    <h4>Replicar dados</h4>
+    <p>Livros e artigos acadêmicos precisam ser replicados separadamente. Aqui estão duas opções para diferentes níveis de participação:</p>
+    <h5 class="mt-2">Modo autônomo</h5>
+    <p><i>Nível: Fácil / Médio</i></p>
+    <div><p>Veja listas CID publicadas recentemente em<a
+    href="https://t.me/nexus_search/">Telegram</a> e fixe esses CIDs.</p></div> <b>Linux/MacOS</b>
+    <div>Abra o terminal e execute o seguinte comando</div>
+    <div>
+        <code>cat doi-cids.txt | shuf | xargs -P8 -L1 bash -c 'ipfs pin add $1'</code>
+    </div>
+    <b>Windows</b>
+    <div>Abra o PowerShell e alterne o Bash digitando <code>bash</code>. Garanta que <code>IPFS_PATH</code> variável de ambiente está definida corretamente, caso contrário, defina- a para seu diretório IPFS: <code>export IPFS_PATH=/mnt/d/yourIPFSrepo/.ipfs/</code>. Então, comece a fixação:</div>
+    <div>
+        <code>cat doi-cids.txt | shuf | xargs -P8 -L1 bash -c 'ipfs pin add $1'</code>
+    </div>
+    <div>O tamanho médio do arquivo é 3,61 MB. Você pode usá-lo para calcular quantos arquivos você é capaz de fixar.</div>
+    <h5 class="mt-3">Junte-se ao cluster IPFS do Red Scriptorium</h5> 
+    <p><i>Nível: Médio</i></p>
+    <p>Esta abordagem requer que você instale o <a href="https://ipfscluster.io/documentation/deployment/setup/">software IPFS cluster</a> e participar da fixação de cluster.Você não precisará baixar CIDs por conta própria, mas será necessário instalar um agente de coordenação que receberá e armazenará arquivos e CIDs automaticamente.</p>
+    <p>Por favor, junte-se <a href="https://t.me/+wN8n75kr4nxlMmZi">chat do Telegram</a> para receber as orientações mais recentes.</p>
+    `,
+    load_more: 'Mais',
+    loading: 'carregando',
+    loading_document: 'carregando documento',
+    search: 'Buscar',
+    search_placeholder: 'por título, autores, conteúdo, doi...',
     set_up_your_own_replica: 'Set Up Your Own Replica',
+    stc_box: 'Construa uma box STC para uso doméstico ou em biblioteca',
+    unsupported_browser: 'Infelizmente, você tem um navegador não compatível. Tente atualizá-loou use outro navegador.',
     what_to_read: 'O que ler'
   },
   ru: {
