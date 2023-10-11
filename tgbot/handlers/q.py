@@ -37,7 +37,8 @@ class QHandler(BaseHandler):
             for scored_chunk in scored_chunks[:3]:
                 field, value = scored_chunk.chunk.document_id.split(':', 2)
                 document_id = f'{field}:{value}'
-                reference = f' - **{scored_chunk.chunk.title}** - `{document_id}`'
+                title = scored_chunk.chunk.title.split("\n")[0]
+                reference = f' - **{title}** - `{document_id}`'
                 reference += f'\n**Text:** {remove_markdown(scored_chunk.chunk.text)}'
                 references.append(reference)
 

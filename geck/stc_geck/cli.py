@@ -11,9 +11,8 @@ from typing import (
 
 import fire
 import humanfriendly
-from termcolor import colored
-
 from stc_geck.advices import BaseDocumentHolder
+from termcolor import colored
 
 from .client import StcGeck
 from .exceptions import IpfsConnectionError

@@ -145,7 +145,11 @@ class TelegramSearchRequestBuilder:
         string_query, query_traits = self.extract_traits(string_query)
 
         if string_query:
-            query_parser_config = get_query_parser_config(self.profile, query_traits.query_language or default_query_language)
+            query_parser_config = get_query_parser_config(
+                self.profile,
+                query_language=query_traits.query_language or default_query_language,
+                exact_matches_promoter_boost=max(float(string_query.count(' ')), 2.0),
+            )
             term_field_mapper_configs = default_term_field_mapper_configs
             if query_traits.skip_doi_isbn_term_field_mapper and 'doi_isbn' in term_field_mapper_configs:
                 term_field_mapper_configs = dict(term_field_mapper_configs)

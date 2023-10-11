@@ -10,7 +10,7 @@ from izihawa_loglib import configure_logging
 def main(config):
     configure_logging(config)
     loop = asyncio.new_event_loop()
-    loop.set_default_executor(ThreadPoolExecutor(128))
+    loop.set_default_executor(ThreadPoolExecutor(64))
     asyncio.set_event_loop(loop)
     loop.run_until_complete(TelegramApplication(config=config).start_and_wait())
     asyncio.get_running_loop().stop()

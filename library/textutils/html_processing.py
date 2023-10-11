@@ -28,16 +28,16 @@ def process_tags(soup):
             el.name = 'b'
         elif el.name == 'sec':
             el.name = 'section'
-        elif el.name in {'title', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}:
-            el.name = 'header'
         elif el.name == 'p' and 'ref' in el.attrs.get('class', []):
             el.name = 'ref'
         elif el.name == 'disp-formula':
             el.name = 'formula'
+        new_attrs = {}
         if 'href' in el.attrs:
-            el.attrs = {'href': el.attrs['href']}
-        else:
-            el.attrs = {}
+            new_attrs['href'] = el.attrs['href']
+        if 'class' in el.attrs:
+            new_attrs['class'] = el.attrs['class']
+        el.attrs = new_attrs
     return soup
 
 

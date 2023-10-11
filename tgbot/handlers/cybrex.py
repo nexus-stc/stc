@@ -99,7 +99,8 @@ class CybrexHandler(BaseHandler):
         for chunk in chunks[:3]:
             field, value = chunk.document_id.split(':', 2)
             document_id = f'{field}:{value}'
-            reference = f' - **{chunk.title}** - `{document_id}`'
+            title = chunk.title.split("\n")[0]
+            reference = f' - **{title}** - `{document_id}`'
             if show_texts:
                 reference += f'\n**Text:** {chunk.text}'
             else:

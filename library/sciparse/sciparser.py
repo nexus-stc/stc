@@ -30,19 +30,24 @@ SECTIONS_MAPS = {
     "CONCLUSIONS": "Conclusions",
     "CONCLUSIONS AND FUTURE APPLICATIONS": "Conclusions",
     "DISCUSSION": "Discussion",
-    "ACKNOWLEDGMENTS": "Acknowledgement",
+    "ACKNOWLEDGMENTS": "Acknowledgements",
     "TABLES": "Tables",
     "Tabnles": "Tables",
     "DISCLOSURE": "Disclosure",
     "CONFLICT OF INTEREST": "Disclosure",
     "Declaration of conflicting interests": "Disclosure",
+    'Declaration of competing interest': "Disclosure",
     "Acknowledgement": "Acknowledgements",
+    'Acknowledgments': 'Acknowledgements',
     'conflictofintereststatement': 'Disclosure',
     "FUNDING": 'Funding',
     'fundinginformation': 'Funding',
     "BIOGRAPHIES": "Biographies",
     'disclaimer': 'Disclosure',
-    'referencesfigure': 'References Figure'
+    'referencesfigure': 'References Figure',
+    'declaration of competing interest': 'Disclosure',
+    'conflict of interest disclosures': 'Disclosure',
+    'conflict of interest statement': 'Disclosure',
 }
 
 
@@ -107,7 +112,8 @@ class SciParser(AioThing):
                     'input': data,
                 },
             )
-        return BeautifulSoup(grobid_response, features="lxml")
+        parsed_response = BeautifulSoup(grobid_response, features="lxml")
+        return parsed_response
 
     async def parse_paper(self, document):
         if 'data' in document:

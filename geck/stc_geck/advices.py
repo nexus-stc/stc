@@ -79,15 +79,15 @@ async def get_documents_on_topic(
     })
 
 
-def get_full_query_parser_config(query_language: Optional[str] = None):
+def get_full_query_parser_config(query_language: Optional[str] = None, exact_matches_promoter_boost: float = 2.0):
     query_parser_config = {
         'default_fields': ['abstract', 'concepts', 'content', 'extra', 'title'],
         'term_limit': 20,
         'field_aliases': default_field_aliases,
         'field_boosts': default_field_boosts,
         'exact_matches_promoter': {
-            'slop': 0,
-            'boost': 2.0,
+            'slop': 1,
+            'boost': exact_matches_promoter_boost,
             'fields': ['abstract', 'extra', 'title']
         }
     }
@@ -108,9 +108,9 @@ def get_light_query_parser_config(query_language: Optional[str] = None):
     return query_parser_config
 
 
-def get_query_parser_config(profile: str, query_language: Optional[str] = None):
+def get_query_parser_config(profile: str, query_language: Optional[str] = None, exact_matches_promoter_boost: float = 2.0):
     if profile == 'full':
-        return get_full_query_parser_config(query_language)
+        return get_full_query_parser_config(query_language, exact_matches_promoter_boost)
     elif profile == 'light':
         return get_light_query_parser_config(query_language)
     else:
