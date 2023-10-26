@@ -26,8 +26,18 @@ BANNED_SECTIONS = {
     'acknowledgements',
     'supporting information',
     'conflict of interest disclosures',
+    'conflict of interest',
     'conflict of interest statement',
     'ethics statement',
+    'references',
+    'external links',
+    'further reading',
+    'works cited',
+    'bibliography',
+    'notes',
+    'sources',
+    'footnotes',
+    'suggested readings',
 }
 
 
@@ -66,7 +76,7 @@ def chunk_by_title(
         first_element = section[0]
 
         if isinstance(first_element, unstructured.documents.elements.Title):
-            current_title_parts[first_element.metadata.category_depth] = re.sub('\n+', ' ', str(first_element))
+            current_title_parts[first_element.metadata.category_depth] = re.sub('\n+', ' ', str(first_element).strip())
             last_title_parts = first_element.metadata.category_depth
             continue
 
@@ -126,24 +136,41 @@ class DocumentChunker:
         for section in list(soup.find_all('section')):
             for child in section.children:
                 if (
-                    child.name in {'header', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
-                    and child.text.lower().strip() in BANNED_SECTIONS
+                    child.name in {'header', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div'}
+                    and child.text.lower().strip(' :,.;') in BANNED_SECTIONS
                 ):
                     section.extract()
-                break
+                    break
+
+        for summary in list(soup.select('details > summary.section-heading')):
+            if summary.text.lower().strip(' :,.;') in BANNED_SECTIONS:
+                summary.parent.extract()
+
+        for b_tag in list(soup.select('b, i')):
+            b_tag.unwrap()
+
+        for p_tag in list(soup.find_all('p')):
+            sibling = p_tag.next_sibling
+            while sibling == '\n':
+                sibling = sibling.next_sibling
+            if sibling and sibling.name == 'blockquote':
+                new_p_tag = soup.new_tag('p')
+                new_p_tag.extend([p_tag.text, ' ', sibling.text])
+                p_tag.replace_with(new_p_tag)
+                sibling.extract()
 
         for header in list(soup.find_all('header')):
             header.name = 'h1'
 
-        for el in list(soup.select('nav, ref, formula, math, figure, .Affiliations, '
+        for el in list(soup.select('table, nav, ref, formula, math, figure, img, [role="note"], .Affiliations, '
                                    '.ArticleOrChapterToc, '
                                    '.AuthorGroup, .ChapterContextInformation, '
                                    '.Contacts, .CoverFigure, .Bibliography, '
                                    '.BookTitlePage, .BookFrontmatter, .CopyrightPage, .Equation, '
-                                   '.FootnoteSection, .Table')):
+                                   '.FootnoteSection, .Table, .reference, .side-box-text, .thumbcaption')):
             el.extract()
 
-        for el in list(soup.select('a')):
+        for el in list(soup.select('a, span')):
             el.unwrap()
 
         text = str(soup)
@@ -159,7 +186,6 @@ class DocumentChunker:
 
         chunks = []
         chunk_id = 0
-
         elements = chunk_by_title(elements)
         for element in elements:
             for chunk in self.text_splitter.split_text(str(element)):
@@ -170,7 +196,7 @@ class DocumentChunker:
                 title_parts = [document["title"]]
                 if self.add_metadata:
                     if element.metadata.section:
-                        title_parts.extend(element.metadata.section.split('\n'))
+                        title_parts.extend(filter(bool, element.metadata.section.split('\n')))
                     parts.append(f'TITLE: {" ".join(title_parts)}')
                     if 'issued_at' in document:
                         issued_at = datetime.utcfromtimestamp(document['issued_at'])

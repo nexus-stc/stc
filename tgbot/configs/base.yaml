@@ -71,6 +71,8 @@ metadata_retriever:
   enabled: false
   # Index for committing changes
   index_alias: nexus_science
+reddit:
+  url: https://reddit.com/r/science_nexus
 telegram:
   # Enabled handlers
   command_handlers:

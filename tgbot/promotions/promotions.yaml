@@ -23,11 +23,11 @@ promotions:
       en: 💬 Intellectual property is not a valid form of property
     weight: 1
   - texts:
-      en: ⤴️ Stay tuned with us at @{related_channel} and [Twitter]({twitter_contact_url})
-      es: ⤴️ Mantente en contacto con nosotros en @{related_channel} y [Twitter]({twitter_contact_url})
-      it: ⤴️ Resta aggiornato con noi su @{related_channel} e [Twitter]({twitter_contact_url})
-      pb: ⤴️ Fique ligado conosco em @{related_channel} e [Twitter]({twitter_contact_url})
-      ru: ⤴️ Оставайся на связи с нами на @{related_channel} и в [Twitter]({twitter_contact_url})
+      en: ⤴️ Stay tuned with us at @{related_channel}, [Twitter]({twitter_contact_url}) and [Reddit]({reddit_url})
+      es: ⤴️ Mantente en contacto con nosotros en @{related_channel}, [Twitter]({twitter_contact_url}) y [Reddit]({reddit_url})
+      it: ⤴️ Resta aggiornato con noi su @{related_channel}, [Twitter]({twitter_contact_url}) e [Reddit]({reddit_url})
+      pb: ⤴️ Fique ligado conosco em @{related_channel}, [Twitter]({twitter_contact_url}) e [Reddit]({reddit_url})
+      ru: ⤴️ Оставайся на связи с нами на @{related_channel}, [Twitter]({twitter_contact_url}) и в [Reddit]({reddit_url})
     weight: 5
   - texts:
       en: 🧬 Join [Nexus Communities](https://t.me/+fPQIvxQmJGQ3MzU8), the spaces to discuss science

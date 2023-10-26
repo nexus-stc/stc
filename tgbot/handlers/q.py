@@ -1,6 +1,7 @@
 import asyncio
 import re
 
+from bs4 import BeautifulSoup
 from telethon import events
 
 from library.telegram.base import RequestContext
@@ -9,6 +10,7 @@ from library.textutils.utils import remove_markdown
 
 from ..translations import t
 from .base import BaseHandler
+from ..views.telegram.common import encode_query_to_deep_link
 
 
 class QHandler(BaseHandler):
@@ -26,31 +28,25 @@ class QHandler(BaseHandler):
             return await event.reply(text)
         query = query.strip()
 
-        prefetch_message = await event.reply(
-            t("SEARCHING", request_context.chat['language']),
-        )
-        try:
-            scored_chunks = await self.application.cybrex_ai.semantic_search(query, n_chunks=3, n_documents=0)
-            response = f'🤔 **{query}**'
+        scored_chunks = await self.application.cybrex_ai.semantic_search(query, n_chunks=3, n_documents=0)
+        response = f'🤔 **{query}**'
 
-            references = []
-            for scored_chunk in scored_chunks[:3]:
-                field, value = scored_chunk.chunk.document_id.split(':', 2)
-                document_id = f'{field}:{value}'
-                title = scored_chunk.chunk.title.split("\n")[0]
-                reference = f' - **{title}** - `{document_id}`'
-                reference += f'\n**Text:** {remove_markdown(scored_chunk.chunk.text)}'
-                references.append(reference)
+        references = []
+        for scored_chunk in scored_chunks[:3]:
+            field, value = scored_chunk.chunk.document_id.split(':', 2)
 
-            references = '\n\n'.join(references)
-            if references:
-                response += f'\n\n**References:**\n\n{references}'
-            return await self.application.get_telegram_client(request_context.bot_name).edit_message(
-                request_context.chat['chat_id'],
-                prefetch_message.id,
-                response,
-                buttons=[close_button()],
-            )
-        except Exception as e:
-            await asyncio.gather(prefetch_message.delete(), event.delete())
-            raise e
+            document_id = f'{field}:{value}'
+            title = scored_chunk.chunk.title.replace('\n', ' - ')
+            text_title = BeautifulSoup(title or '', 'lxml').get_text(separator='')
+            deep_query = encode_query_to_deep_link(document_id, bot_name=request_context.bot_name)
+            if deep_query:
+                reference = f' - **{text_title}** - [{document_id}]({deep_query})'
+            else:
+                reference = f' - **{text_title}** - `{document_id}`'
+            reference += f'\n**Text:** {remove_markdown(scored_chunk.chunk.text)}'
+            references.append(reference)
+
+        references = '\n\n'.join(references)
+        if references:
+            response += f'\n\n**References:**\n\n{references}'
+        return await event.reply(response, buttons=[close_button()])

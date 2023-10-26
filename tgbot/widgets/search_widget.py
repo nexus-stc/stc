@@ -154,7 +154,7 @@ class InlineSearchWidget(BaseSearchWidget):
             title = holder.view_builder(self.chat['language']).add_icon().add_title(bold=False).limits(140).build()
             abstract = (
                 holder.view_builder(self.chat['language'])
-                .add_filedata(show_filesize=False).add_new_line().add_locator(markup=False).limits(160).build()
+                .add_filedata(show_filesize=False).add_new_line().add_locator(markup=False).limits(240).build()
             )
             response_text = holder.view_builder(self.chat['language']).add_short_description().build()
             buttons = holder.buttons_builder(self.chat['language']).add_remote_download_button(bot_name=request_context.bot_name).build()

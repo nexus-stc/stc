@@ -16,7 +16,7 @@ $badge-font-size: 0.85em;
 .inversion-filter {}
 @media (prefers-color-scheme: dark) {
   .inversion-filter {
-     filter: invert(100%);
+     filter: invert(100%) hue-rotate(180deg);
   }
 }
 
@@ -29,5 +29,116 @@ $badge-font-size: 0.85em;
   }
 }
 
-abstract > header { @extend h5; }
-abstract > section header { @extend b; }
+.content-view {
+  word-break: break-word !important;
+}
+
+.content-view header { @extend h5; }
+.content-view section header { @extend b; }
+
+.content-view .infobox {
+  font-family: sans-serif;
+  max-width: 320px;
+  float: right !important;
+  clear: right !important;
+  background-color: rgb(44, 50, 56) !important;
+  border: 1px solid #a2a9b1 !important;
+  border-spacing: 3px !important;
+  margin: 0.5em 0 0.5em 1em;
+  padding: 0.2em;
+  line-height: 1.5em;
+  width: 100%;
+  @extend small;
+  @extend .m-2;
+}
+
+.content-view .wikitable {
+  margin: 1em 0;
+  border: 1px solid #a2a9b1;
+  border-collapse: collapse;
+}
+
+.content-view .wikitable > tr > th, .wikitable > * > tr > th {
+    text-align: center;
+}
+
+.content-view .wikitable > tr > th, .wikitable > tr > td, .wikitable > * > tr > th, .wikitable > * > tr > td {
+    border: 1px solid #a2a9b1;
+    padding: 0.2em 0.4em;
+}
+
+.content-view .infobox > tbody {
+  font-family: sans-serif;
+  border-spacing: 3px;
+  line-height: 1.5em;
+  display: flex !important;
+  flex-flow: column nowrap !important;
+  @extend .m-2;
+}
+
+
+.content-view .infobox > tbody table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  display: inline-table;
+}
+
+.content-view .reflist {
+  @extend .small;
+}
+.content-view .refbegin {
+  @extend .small;
+}
+
+.content-view details > summary {
+  list-style: none;
+}
+.content-view details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.content-view .tright {
+  float: right !important;
+  clear: right !important;
+  margin: 14px 0 14px 14px;
+}
+
+.content-view .tleft {
+  float: left !important;
+  clear: left !important;
+  margin: 14px 14px 14px 0;
+}
+
+.content-view .thumb {
+  max-width: 704px;
+
+  box-sizing: content-box;
+  display: block !important;
+  position: static;
+  text-align: center !important;
+}
+
+.content-view .thumb .thumbinner {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.content-view .thumbcaption {
+  margin: 0.5em 0 0;
+  padding: 0 !important;
+  width: auto !important;
+  font-size: 0.8em;
+  line-height: 1.5;
+  @extend small;
+}
+
+.content-view .trow {
+  display: flex !important;
+}
+
+.content-view .hatnote {
+  @extend small;
+  @extend .m-2;
+}
+

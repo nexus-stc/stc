@@ -24,7 +24,18 @@ class GeckDataSource(BaseDataSource):
     ) -> List[SourceDocument]:
         documents = await self.geck.get_summa_client().search_documents({
             'index_alias': self.geck.index_alias,
-            'query': {'match': {'value': query.lower()}},
+            'query': {'boolean': {'subqueries': [
+                {'occur': 'must', 'query': {'match': {'value': query.lower()}}},
+                {'occur': 'must', 'query': {'term': {'field': 'languages', 'value': 'en'}}},
+                {'occur': 'must', 'query': {'boolean': {'subqueries': [
+                    {'occur': 'should', 'query': {'term': {'field': 'type', 'value': 'book'}}},
+                    {'occur': 'should', 'query': {'term': {'field': 'type', 'value': 'edited-book'}}},
+                    {'occur': 'should', 'query': {'term': {'field': 'type', 'value': 'monograph'}}},
+                    {'occur': 'should', 'query': {'term': {'field': 'type', 'value': 'reference-book'}}},
+                    {'occur': 'should', 'query': {'term': {'field': 'type', 'value': 'journal-article'}}},
+                    {'occur': 'should', 'query': {'term': {'field': 'type', 'value': 'wiki'}}},
+                ]}}},
+            ]}},
             'collectors': [{'top_docs': {'limit': limit}}],
             'is_fieldnorms_scoring_enabled': False,
         })

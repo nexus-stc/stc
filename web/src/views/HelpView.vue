@@ -6,7 +6,7 @@
         li.nav-item
           router-link.btn.text-nowrap(to="/help")
             i.bi.bi-house
-            span.ms-2 Welcome
+            span.ms-2 {{ get_label("welcome") }}
         li.nav-item
           router-link.btn.text-nowrap(to="/help/how-to-search")
             i.bi.bi-question-circle-fill
@@ -19,7 +19,7 @@
         li.nav-item
           button.btn.collapsed.text-nowrap(data-bs-toggle="collapse" data-bs-target="#projects-collapse")
             i.bi.bi-caret-down
-            span.ms-2 Projects
+            span.ms-2 {{ get_label("projects") }}
           .collapse.ms-3(id="projects-collapse")
             ul.btn-toggle-nav.list-unstyled.fw-normal.pb-1
               li.nav-item

@@ -1,6 +1,7 @@
 import json
 
 from izihawa_utils.common import filter_none
+from stc_geck.advices import get_default_scorer
 from telethon import events
 
 from library.telegram.base import RequestContext
@@ -51,52 +52,43 @@ class MltHandler(BaseHandler):
             'languages': source_document.get('languages'),
         })
 
-        requested_type = 'type:book type:edited-book type:monograph type:reference-book'
-        if source_document['type'] == 'journal-article':
-            requested_type += ' type:journal-article'
-
         subqueries = [{
             'occur': 'should',
             'query': {'more_like_this': {
+                'boost': '3.0',
+                'max_query_terms': 64,
                 'min_term_frequency': 1,
                 'min_doc_frequency': 1,
                 'document': json.dumps(document_dump)
             }}
         }]
 
-        if content := source_document.get('content'):
-            subqueries.append({
-                'occur': 'should',
-                'query': {
-                    'boost': {
-                        'query': {
-                            'more_like_this': {
-                                'min_term_frequency': 3,
-                                'min_doc_frequency': 1,
-                                'document': json.dumps({'content': content})
-                            }
-                        },
-                        'score': '0.35',
-                    }
-                }
-            })
+        requested_type = 'type:book type:"edited-book" type:monograph type:"reference-book" type:"journal-article"'
+        if source_document['type'] in {'book', 'edited-book', 'monograph', 'reference-book'}:
+            requested_type = 'type:book type:"edited-book" type:monograph type:"reference-book"'
+        elif source_document['type'] == 'journal-article':
+            requested_type = 'type:"journal-article"'
+        elif source_document['type'] == 'proceedings-article':
+            requested_type = 'type:"proceedings-article"'
 
         documents = await self.application.summa_client.search_documents({
             'index_alias': 'nexus_science',
             'query': {'boolean': {'subqueries': [
                 {'occur': 'must', 'query': {'boolean': {'subqueries': subqueries}}},
-                {'occur': 'must', 'query': {'match': {'value': requested_type}}}
+                {'occur': 'must', 'query': {'match': {'value': requested_type}}},
+                {'occur': 'must_not', 'query': {'match': {'value': BaseTelegramDocumentHolder(source_document).get_internal_id()}}}
             ]}},
-            'collectors': [{'top_docs': {'limit': 5}}],
+            'collectors': [{'top_docs': {'limit': 5, 'scorer': get_default_scorer(self.application.search_request_builder.profile)}}],
         })
 
         serp_elements = []
+        source_document = BaseTelegramDocumentHolder(source_document)
         for document in documents:
             serp_elements.append(BaseTelegramDocumentHolder(document).base_render(
                 request_context,
                 with_librarian_service=bool(self.application.librarian_service) and not self.application.is_read_only()
             ))
         serp = '\n\n'.join(serp_elements)
-        serp = f'**Similar To: {source_document.get("title")}**\n\n{serp}'
+        serp = f'**Similar To: {source_document.get_title_with_link(bot_name=request_context.bot_name)}**\n\n{serp}'
         await remove_button(event, '🖲', and_empty_too=True)
         return await prefetch_message.edit(serp, buttons=[close_button()])

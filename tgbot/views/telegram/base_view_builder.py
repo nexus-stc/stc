@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import math
 import re
 from html import unescape
@@ -27,7 +28,7 @@ from .common import (
     TooLongQueryError,
     add_expand_dot,
     encode_query_to_deep_link,
-    get_formatted_filesize,
+    get_formatted_filesize, fix_markdown,
 )
 
 preprints = {'10.1101', '10.21203'}
@@ -119,6 +120,11 @@ class TextPart:
                 self.part = ''
             else:
                 self.part = self.part[:limit]
+                # If part ends with link
+                if incomplete_link_1 := re.search(r'(\[)[^]]*]\s*\([^)]*$', self.part):
+                    self.part = self.part[:incomplete_link_1.start(1) - 1]
+                elif incomplete_link_2 := re.search(r'(\[)[^]]*$', self.part):
+                    self.part = self.part[:incomplete_link_2.start(1) - 1]
                 if with_dots:
                     self.part += '...'
 
@@ -181,30 +187,32 @@ class BaseViewBuilder:
         text = None
 
         if self.document_holder.snippets:
-            snippet = self.document_holder.snippets.get('abstract')
+            snippet = self.document_holder.snippets.get('abstract') or self.document_holder.snippets.get('content')
 
         is_snippet = snippet and snippet.highlights
 
         if is_snippet:
             text = snippet
             text = highlight_html_snippet(text)
-            text = bleach.clean(text, tags=['abstract', 'highlight'], strip=True, strip_comments=True)
-        elif abstract := self.document_holder.abstract:
+            text = bleach.clean(text, tags=['abstract', 'content', 'highlight'], strip=True, strip_comments=True)
+        elif abstract := self.document_holder.abstract or self.document_holder.content:
             text = abstract
             text = replace_broken_tags(text)
-            text = bleach.clean(text, tags=['abstract'], strip=True, strip_comments=True)
+            text = bleach.clean(text, tags=['abstract', 'content', 'figure', 'img'], strip=True, strip_comments=True)
 
         if not text:
             return self
 
-        text = highlight_md_converter.convert(text)
+        soup = BeautifulSoup(text)
+        for tag in list(soup.select('figure, img, [role="note"], a[href^="#"], .side-box-text')):
+            tag.extract()
+        text = highlight_md_converter.convert_soup(soup)
         text = re.sub('\n+', ' ', text).strip()
 
         if not text:
             return self
 
-        if not is_snippet:
-            text = add_expand_dot(text, 140)
+        text = fix_markdown(add_expand_dot(text, 360))
         text = f'__{text}__'
 
         if on_newline:
@@ -251,7 +259,11 @@ class BaseViewBuilder:
         if limit:
             current_length = 0
             for i, part in enumerate(self.parts):
-                current_length += len(part)
+                non_displaying_length = 0
+                for match in re.finditer(r'\[[^]]*]\s*(\([^)]*\))$', part.part):
+                    non_displaying_length += len(match.group(1))
+                part_len = len(part) - non_displaying_length
+                current_length += part_len
                 if current_length > limit:
                     part.limits(limit + len(part) - current_length, with_dots=with_dots)
                     if len(part) > 0:
@@ -387,6 +399,22 @@ class BaseViewBuilder:
             self.add(f'[{text}](https://pubmed.ncbi.nlm.nih.gov/{self.document_holder.pubmed_id}/)', escaped=True)
             return True
 
+    def add_wiki_link(self, label=None, text=None, is_short_text=False):
+        if self.document_holder.wiki:
+            self.add_new_line()
+            if label:
+                if isinstance(label, str):
+                    self.add(label, bold=True)
+                else:
+                    self.add('Wikipedia:', bold=True)
+            if text is None:
+                if is_short_text:
+                    text = 'Wikipedia:'
+                else:
+                    text = self.document_holder.title
+            self.add(f'[{text}]({self.document_holder.get_wikipedia_link()})', escaped=True)
+        return self
+
     def add_external_provider_link(self, with_leading_pipe=False, on_newline=False, label=False, text=None, is_short_text=False, end_newline=False):
         has_link = (
             self.add_doi_link(with_leading_pipe=with_leading_pipe, on_newline=on_newline, label=label, text=text, is_short_text=is_short_text)
@@ -440,6 +468,8 @@ class BaseViewBuilder:
         )
 
     def add_view(self, bot_name):
+        abstract_limit = 3000
+        all_limit = 4000
         view = (
             self.add_icon(with_cover=True)
                 .add_title()
@@ -448,13 +478,14 @@ class BaseViewBuilder:
                 .add_new_line(2)
                 .add_stats()
                 .add_links()
+                .add_wiki_link(label=True)
                 .add_metadata(bot_name=bot_name)
                 .add_new_line(2)
-                .add_abstract()
-                .limits(1500, with_dots=True)
+                .add_abstract(bot_name=bot_name)
+                .limits(abstract_limit, with_dots=True)
                 .add_new_line(2)
                 .add_tags(bot_name=bot_name)
-                .limits(3000)
+                .limits(all_limit)
         )
         return view
 
@@ -527,7 +558,7 @@ class BaseViewBuilder:
         return self
 
     def add_title(self, bold=True):
-        text_title = BeautifulSoup(self.document_holder.title or '', 'lxml').get_text(separator='')
+        text_title = BeautifulSoup(self.document_holder.title or '', 'lxml').get_text(separator='').replace('\n', ' ')
         title = text_title
         if self.document_holder.iso_id:
             title = f'{self.document_holder.iso_id.upper()}'
@@ -560,10 +591,15 @@ class BaseViewBuilder:
             self.add(filedata)
         return self
 
-    def add_abstract(self):
-        if self.document_holder.abstract:
-            text = replace_broken_tags(despace_abstract(self.document_holder.abstract or ''))
+    def add_abstract(self, bot_name):
+        abstract = self.document_holder.abstract or ''
+        if self.document_holder.type == 'wiki':
+            abstract += self.document_holder.content or ''
+        if abstract:
+            text = replace_broken_tags(despace_abstract(abstract or ''))
             soup = BeautifulSoup(text, 'html.parser')
+            for tag in list(soup.select('figure, img, [role="note"], .side-box-text, .thumbcaption')):
+                tag.extract()
             for tag in soup.find_all('i'):
                 i_tag = soup.new_tag('i')
                 i_tag.append(tag.get_text())
@@ -572,12 +608,37 @@ class BaseViewBuilder:
                 b_tag = soup.new_tag('b')
                 b_tag.append(tag.get_text())
                 tag.replace_with(b_tag)
-            abstract = escape_format(unescape(md_converter.convert_soup(soup)), escape_font=False)
+            for tag in soup.find_all('h1, h2, h3, h4, h5, h6, header'):
+                tag.name = 'b'
+            if self.document_holder.type == 'wiki':
+                for tag in list(soup.find_all('summary, details')):
+                    tag.unwrap()
+                for tag in list(soup.find_all('a')):
+                    if tag.attrs['href'].startswith('#'):
+                        tag.extract()
+                    elif '://' not in tag.attrs['href']:
+                        wiki_md5 = hashlib.md5(('A/' + tag.attrs['href']).encode()).hexdigest().lower()
+                        deep_query = encode_query_to_deep_link(f'id.wiki:{wiki_md5}', bot_name=bot_name)
+                        if deep_query:
+                            tag.attrs['href'] = deep_query
+                        else:
+                            tag.attrs['href'] = self.document_holder.get_wikipedia_link(title=tag.attrs['href'])
+                    text = tag.get_text()
+                    tag.clear()
+                    tag.append(text)
+                for tag in list(soup.find_all('blockquote')):
+                    text = tag.get_text()
+                    tag.clear()
+                    tag.append(text)
+                abstract = md_converter.convert(escape_format(str(soup), escape_font=False))
+            else:
+                abstract = unescape(escape_format(md_converter.convert_soup(soup), escape_font=False))
+            abstract = re.sub('\n{3,}', '\n\n', abstract)
             self.add(abstract.strip(), escaped=True)
         return self
 
     def add_stats(self, end_newline=True):
-        if self.document_holder.page_rank:
+        if self.document_holder.page_rank and abs(self.document_holder.page_rank - 0.15) > 0.001:
             star_rank = int(round(min(self.document_holder.page_rank, 1) * 5)) * '⭐'
             if star_rank:
                 self.add(f'**Rank**: {star_rank}', escaped=True)
@@ -595,19 +656,24 @@ class BaseViewBuilder:
 
 
 class BaseButtonsBuilder:
+    buttons_in_row = 3
+
     def __init__(self, document_holder, user_language, remote_request_link=None):
         self.document_holder = document_holder
         self.user_language = user_language
         self.remote_request_link = remote_request_link
         self.buttons = [[]]
 
+    def add_button(self, button):
+        if len(self.buttons[-1]) >= self.buttons_in_row:
+            self.buttons.append([])
+        self.buttons[-1].append(button)
+
     def add_back_button(self, back_command):
-        self.buttons[-1].append(
-            Button.inline(
-                text='⬅️',
-                data=back_command
-            )
-        )
+        self.add_button(Button.inline(
+            text='⬅️',
+            data=back_command
+        ))
         return self
 
     def add_download_button(self):
@@ -618,27 +684,29 @@ class BaseButtonsBuilder:
             label = [link["extension"].upper()]
             if link.get('filesize'):
                 label.append(get_formatted_filesize(link["filesize"]))
-            self.buttons[-1].append(
-                Button.inline(
-                    text=f'⬇️ {" | ".join(label)}',
-                    data=self.document_holder.get_download_command(link['cid']),
-                )
-            )
-            if len(self.buttons[-1]) > 5:
+            self.add_button(Button.inline(
+                text=f'⬇️ {" | ".join(label)}',
+                data=self.document_holder.get_download_command(link['cid']),
+            ))
+            if len(self.buttons[-1]) > self.buttons_in_row:
                 self.buttons.append([])
         return self
 
     def add_mlt_button(self):
         mlt_command = self.document_holder.get_mlt_command()
         if mlt_command:
-            self.buttons[-1].append(
-                Button.inline(
-                    text=f'🖲️ {t("SIMILAR", language=self.user_language)}',
-                    data=mlt_command,
-                )
-            )
-            if len(self.buttons[-1]) > 5:
-                self.buttons.append([])
+            self.add_button(Button.inline(
+                text=f'🖲️ {t("SIMILAR", language=self.user_language)}',
+                data=mlt_command,
+            ))
+        return self
+
+    def add_read_more_button(self):
+        if self.document_holder.type == 'wiki':
+            self.add_button(Button.url(
+                text=f'🌍 {t("READ_MORE", language=self.user_language)}',
+                url=self.document_holder.get_wikipedia_link(),
+            ))
         return self
 
     def add_remote_download_button(self, bot_name):
@@ -649,24 +717,18 @@ class BaseButtonsBuilder:
             internal_id = self.document_holder.get_internal_id()
             internal_id = internal_id.replace('id.dois', 'doi')
             encoded_query = encode_query_to_deep_link(internal_id, bot_name)
-            self.buttons[-1].append(Button.url('⬇', encoded_query))
+            self.add_button(Button.url('⬇', encoded_query))
         except TooLongQueryError:
             pass
         return self
 
     def add_remote_request_button(self):
         if self.remote_request_link:
-            self.buttons[-1].append(
-                Button.url('🤌', self.remote_request_link)
-            )
+            self.add_button(Button.url('🤌', self.remote_request_link))
         return self
 
     def add_close_button(self):
-        self.buttons[-1].append(close_button())
-        return self
-
-    def add_new_line(self):
-        self.buttons.append([])
+        self.add_button(close_button())
         return self
 
     def build(self):
@@ -675,12 +737,10 @@ class BaseButtonsBuilder:
     def add_linked_search_button(self, bot_name):
         if self.document_holder.referenced_by_count:
             try:
-                self.buttons[-1].append(
-                    Button.url(
-                        text=f'🔗 {self.document_holder.referenced_by_count or ""}',
-                        url=encode_query_to_deep_link(f'rd:{self.document_holder.doi}', bot_name=bot_name),
-                    )
-                )
+                self.add_button(Button.url(
+                    text=f'🔗 {self.document_holder.referenced_by_count or ""}',
+                    url=encode_query_to_deep_link(f'rd:{self.document_holder.doi}', bot_name=bot_name),
+                ))
             except TooLongQueryError:
                 pass
         return self
@@ -689,12 +749,10 @@ class BaseButtonsBuilder:
         try:
             if self.document_holder.has_field('issns'):
                 issn_query = f'issns:"{self.document_holder.issns[0]}" order_by:date'
-                self.buttons[-1].append(
-                    Button.url(
-                        text='📰',
-                        url=encode_query_to_deep_link(issn_query, bot_name=bot_name),
-                    )
-                )
+                self.add_button(Button.url(
+                    text='📰',
+                    url=encode_query_to_deep_link(issn_query, bot_name=bot_name),
+                ))
         except TooLongQueryError:
             pass
         return self
@@ -705,6 +763,7 @@ class BaseButtonsBuilder:
                 self.add_remote_download_button(bot_name)
                     .add_linked_search_button(bot_name)
                     .add_journal_search(bot_name)
+                    .add_read_more_button()
                     .add_close_button()
             )
         else:
@@ -713,6 +772,7 @@ class BaseButtonsBuilder:
                     .add_remote_request_button()
                     .add_linked_search_button(bot_name)
                     .add_journal_search(bot_name)
+                    .add_read_more_button()
                     .add_mlt_button()
                     .add_close_button()
             )

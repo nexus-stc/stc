@@ -6,7 +6,7 @@ from library.telegram.base import RequestContext
 from tgbot.translations import t
 from tgbot.views.telegram.common import (
     DecodeDeepQueryError,
-    decode_deep_query,
+    decode_deep_query, recode_base64_to_base36,
 )
 
 from .search import BaseSearchHandler
@@ -19,12 +19,17 @@ class StartHandler(BaseSearchHandler):
         raw_query = event.pattern_match.group(1)
         string_query = None
 
-        request_context.statbox(action='start', mode='start')
+        request_context.statbox(action='start', mode='start', text=event.text)
 
         try:
             string_query = decode_deep_query(raw_query)
-        except DecodeDeepQueryError as e:
-            request_context.error_log(e, mode='start', raw_query=raw_query)
+        except DecodeDeepQueryError as e1:
+            try:
+                cid = recode_base64_to_base36(raw_query)
+                string_query = f'links.cid:{cid}'
+            except DecodeDeepQueryError as e2:
+                request_context.error_log(e1, mode='start', raw_query=raw_query)
+                request_context.error_log(e2, mode='start', raw_query=raw_query)
 
         if string_query:
             request_context.statbox(action='query', mode='start', query=string_query)

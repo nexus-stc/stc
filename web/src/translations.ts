@@ -1,5 +1,5 @@
 // @ts-nocheck
-const stamp = 'Nexus - Terra - 29 Sep 23';
+const stamp = 'Nexus - Terra - 14 Oct 23';
 const translations = {
   en: {
     about: 'About',
@@ -33,6 +33,8 @@ const translations = {
     <li class="mt-3">Colonizing new worlds will require a reliable replication of knowledge, which is hardened by copyright</li>
     `,
     all_languages: 'All languages',
+    all_times: 'All times',
+    all_types: 'All types',
     bookmarks: 'bookmarks',
     contacts: 'Contacts',
     donate: 'Donate',
@@ -40,7 +42,8 @@ const translations = {
     <p>We will appreciate any donations that will allow us to continue development of STC.</p>`,
     everywhere: 'Everywhere',
     found: 'found',
-    help: `
+    help: 'Help',
+    help_content: `
     <h4 class="mt-4">Usage</h4>
     <p>Just type your request in plain words in the <a href="#/">search box</a>.</p>
     <h5>Examples</h5>    
@@ -88,13 +91,14 @@ const translations = {
     <h5>Step 2: Install IPFS Companion for Your Browser</h5>
     <p>The IPFS Companion is a browser extension that provides a smoother experience with IPFS. Follow the <a href="https://docs.ipfs.tech/install/ipfs-companion/" target="_blank">official guide</a> to install the appropriate extension for your browser.</p>
     <h5>Step 3: Refresh Page</h5>
-    <p>Everything is ready, you just need to <a href="/" target="_blank">open STC</a> again. STC will be reloaded from local IPFS daemon.</p>
+    <p>Everything is ready, you just need to <a href="https://ipfs.io/ipns/standard-template-construct.org" target="_blank">open STC</a> again. STC will be reloaded from local IPFS daemon.</p>
     `,
     is_ipfs_enabled: 'Is local IPFS daemon enabled?',
     load_more: 'More',
     loading: 'loading',
     loading_document: 'loading document',
     network_error: 'Network error, try to reload page',
+    projects: 'Projects',
     replicate_intro: `
     <h4>Replicate search metadata</h4>
     <p><b>Search metadata does not include books or scholar publications</b>. Follow the last section of this guide to learn about how to replicate them separately.</p>
@@ -120,15 +124,20 @@ const translations = {
     <p>This approach requires you to install the <a href="https://ipfscluster.io/documentation/deployment/setup/">IPFS cluster software</a> and participate in cluster pinning. You will not have to download CIDs on your own, but will need to install a coordination agent that will receive and store files and CIDs automatically.</p>
     <p>Please join <a href="https://t.me/+wN8n75kr4nxlMmZi">Telegram chat</a> to receive the latest guidance.</p>
     `,
+    report_a_bug: 'Report a bug',
     search: 'Search',
     search_placeholder: 'by title, authors, content, doi...',
+    set_up_your_own_replica: 'Set Up Your Own Replica',
     stc_box: 'Build STC Box for Home or Library Use',
     stamp: stamp,
     unsupported_browser: 'Unfortunately, you have unsupported browser. Try to update it or use another browser.',
+    welcome: 'Welcome',
     what_to_read: 'What To Read'
   },
-  pb: {
+  pt: {
     all_languages: 'Todos idiomas',
+    all_times: 'Todas as vezes',
+    all_types: 'Todos os tipos',
     bookmarks: 'favoritos',
     contacts: 'Contatos',
     donate: 'Doe',
@@ -140,7 +149,8 @@ const translations = {
     <p>Agradecemos quaisquer doações que nos permitam continuar o desenvolvimento do STC.</p>`,
     everywhere: 'Todos lugares',
     found: 'encontrado',
-    help: `
+    help: 'Ajuda',
+    help_content: `
     <h4 class="mt-4">Uso</h4>
     <p>Basta digitar sua solicitação em palavras simples na <a href="#/">caixa de pesquisa</a>.</p>
     <h5>Exemplos</h5>
@@ -152,10 +162,9 @@ const translations = {
     <span class="font-monospace">+JavaScript idioma:+ru</span> <li>Tudo sobre JavaScript, excluindo coisas em russo:&nbsp;</li> <span class="font-monospace">+JavaScript idioma:-ru</span>
     </ul>
     <h5>Lista de campos</h5>
-    <p>resumo, ark_id, autores, conceitos, conteúdo, doi, ev (evento), extra (veja abaixo), isbns,
-    issued_at (in Unixtime), issns, pmid (id_pubmde), pub (editora), ser (série), tags, título, tipo</p> <h5>Tipos de itens</h5>
-    <p>livro, capítulo-de-livro, capítulo, capítulo, conjunto de dados, componente, dissertação, livro-
-    editado, artigo-de-periódico, monografia, peer-review, procedimentos, artigos-de-procedimentos, livro de referência, relatório, padrão</p>
+    <p>abstract, ark_id, authors, concepts, content, doi, ev (evento), extra (veja abaixo), isbns, issued_at (in Unixtime), issns, pmid (pubmed_id), pub (editora), ser (série), tags, title, type</p>
+    <h5>Tipos de itens</h5>
+    <p>book, book-chapter, chapter, chapter, dataset, component, dissertation, edited-book, journal-article, monograph, peer-review, proceedings, proceedings-article, reference-book, report, standard</p>
     <h5>Campo extra</h5>
     <p>Contém campos fora do esquema, por exemplo – números padrão ISO/BS que podem ser usados da seguinte maneira:</p>
     <p><span class="font-monospace">extra:"iso iec 10279 1991"</span></p>
@@ -190,6 +199,7 @@ const translations = {
     loading: 'carregando',
     loading_document: 'carregando documento',
     network_error: 'Erro de rede, tente recarregar a página',
+    projects: 'Projetos',
     replicate_intro: `
     <h4>Replicar metadados de pesquisa</h4>
     <p>
@@ -223,14 +233,13 @@ const translations = {
     <p>Esta abordagem requer que você instale o <a href="https://ipfscluster.io/documentation/deployment/setup/">software IPFS cluster</a> e participar da fixação de cluster.Você não precisará baixar CIDs por conta própria, mas será necessário instalar um agente de coordenação que receberá e armazenará arquivos e CIDs automaticamente.</p>
     <p>Por favor, junte-se <a href="https://t.me/+wN8n75kr4nxlMmZi">chat do Telegram</a> para receber as orientações mais recentes.</p>
     `,
-    load_more: 'Mais',
-    loading: 'carregando',
-    loading_document: 'carregando documento',
+    report_a_bug: 'Reportar um erro',
     search: 'Buscar',
     search_placeholder: 'por título, autores, conteúdo, doi...',
-    set_up_your_own_replica: 'Set Up Your Own Replica',
+    set_up_your_own_replica: 'Configure sua própria réplica',
     stc_box: 'Construa uma box STC para uso doméstico ou em biblioteca',
     unsupported_browser: 'Infelizmente, você tem um navegador não compatível. Tente atualizá-loou use outro navegador.',
+    welcome: 'Bem-vindo',
     what_to_read: 'O que ler'
   },
   ru: {
@@ -246,17 +255,25 @@ const translations = {
     <p>Если вы хотите поддержать разработку STC, вы можете <a href="#/donate">сделать пожертвование в криптовалютах</a></p>
     `,
     all_languages: 'Все языки',
+    all_times: 'За все время',
+    all_types: 'Все типы',
     bookmarks: 'закладок',
     contacts: 'Как связаться с нами',
     donate_content: `<p>Создатели STC посвящают большую часть своего времени тому, чтобы сделать знания доступными для каждого человека. Поддерживая этот проект, вы внесете свой вклад в демократизацию знаний и обеспечите каждому доступ к последним научным публикациям, независимо от его финансовых или институциональных ограничений. Даже самый маленький взнос может оказать огромное влияние.</p>
     <p>Мы будем признательны за любые пожертвования, которые позволят нам продолжить развитие STC.</p>`,
     everywhere: 'Везде',
     found: 'найдено',
+    help: 'Помощь',
+    how_to_search: 'Как искать?',
     load_more: 'Ещё',
     loading: 'загрузка',
     loading_document: 'загрузка документа',
+    projects: 'Проекты',
+    report_a_bug: 'Сообщить об ошибке',
     search: 'Поиск',
     search_placeholder: 'заголовок, автор, содержание, doi...',
+    set_up_your_own_replica: 'Настроить свою копию STC',
+    welcome: 'Добро пожаловать',
     what_to_read: 'Что почитать'
   }
 }

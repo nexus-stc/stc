@@ -6,10 +6,10 @@ import {
   decode_html,
   remove_unpaired_escaped_tags,
   format_bytes,
-  cid_local_link,
-  generate_cid_external_links, generate_filename
+  generate_filename
 } from '@/utils'
 import TagsList from "@/components/TagsList.vue";
+import {utils} from "summa-wasm";
 
 const default_icon = '📝'
 type Author = { family: string, given: string, name: string, orcid: string }
@@ -30,11 +30,131 @@ const type_icons: {
   'proceedings-article': '🔬',
   'reference-book': '📚',
   'report': '📝',
-  'standard': '🛠'
+  'standard': '🛠',
+  'wiki': '📙'
 }
 
 function get_type_icon (type_name: string) {
+  if (type_name === undefined) {
+    return;
+  }
   return type_icons[type_name] ?? default_icon
+}
+
+export function cid_local_link (cid: string, filename: string) {
+  const { ipfs_hostname, ipfs_http_protocol } = utils.get_ipfs_hostname()
+  return new HttpFileLink(`${ipfs_http_protocol}//${ipfs_hostname}/ipfs/${cid}?filename=${filename}`, 'Local IPFS');
+}
+
+export class HttpFileLink {
+  url: string;
+  label: string;
+
+  constructor(url: string, label: string) {
+    this.url = url;
+    this.label = label;
+  }
+}
+
+export class FileLinksGroup {
+  cid: string;
+  label: string;
+  filename: string;
+  local_http_file_link?: HttpFileLink;
+  http_file_links: HttpFileLink[];
+
+  constructor(cid: string, label: string, filename: string) {
+    this.cid = cid;
+    this.label = label;
+    this.filename = filename;
+    this.http_file_links = [];
+  }
+
+  all_links() {
+    let links = [];
+    if (this.local_http_file_link) {
+      links.push(this.local_http_file_link)
+    }
+    if (this.http_file_links.length > 0) {
+      links.push(...this.http_file_links)
+    }
+    return links;
+  }
+  first_link() {
+    const all_links = this.all_links();
+    if (all_links.length > 0) {
+      return all_links[0];
+    }
+  }
+  first_external_link() {
+    if (this.http_file_links.length > 0) {
+      return this.http_file_links[0];
+    }
+  }
+}
+
+export class HttpLinks {
+  file_links_groups: FileLinksGroup[];
+  external_sources: HttpFileLink[];
+  constructor() {
+    this.file_links_groups = [];
+    this.external_sources = [];
+  }
+  add_external_sources(dois, issued_at) {
+    if (dois && dois.length > 0) {
+      if (issued_at < 1640984400) {
+        const doi = dois[0];
+        this.external_sources.push(new HttpFileLink(
+            `https://sci-hub.se/${doi}`,
+            "Sci-Hub.se",
+        ));
+        this.external_sources.push(new HttpFileLink(`http://library.lol/scimag/${doi}`, "Library.lol"));
+      }
+    }
+  }
+  add_file(cid: string, label: string, filename: string) {
+    let file = new FileLinksGroup(cid, label, filename);
+    file.local_http_file_link = cid_local_link(cid, filename);
+    file.http_file_links.push(...[
+      new HttpFileLink(
+        `https://${cid}.ipfs.w3s.link/?filename=${filename}`,
+        'Web3 Storage',
+      ),
+      new HttpFileLink(
+        `https://cloudflare-ipfs.com/ipfs/${cid}?filename=${filename}`,
+        'CloudFlare IPFS'
+      ),
+      new HttpFileLink(
+        `https://ipfs.io/ipfs/${cid}?filename=${filename}`,
+        'IPFS.io'
+      )
+    ]);
+    this.file_links_groups.push(file);
+  }
+  first_file_links_group() {
+    if (this.file_links_groups.length > 0) {
+      return this.file_links_groups[0]
+    }
+  }
+  first_file_links_group_first_external_link() {
+    if (this.file_links_groups.length > 0) {
+      return this.file_links_groups[0].first_external_link();
+    }
+  }
+  get_file_links_group_with_extension(extension) {
+    for (const file_links_group of this.file_links_groups) {
+      if (file_links_group.filename.endsWith(extension)) {
+        return file_links_group;
+      }
+    }
+  }
+
+  is_empty() {
+    for (const file_links_group of this.file_links_groups) {
+      return false;
+    }
+    return true;
+  }
 }
 
 export default defineComponent({
@@ -155,45 +275,30 @@ export default defineComponent({
         parts.push(...this.document.languages)
       }
       parts.push(this.icon)
-      if (this.first_link) {
-        const url = cid_local_link(this.first_link.cid, this.filename + '.' + this.first_link.extension)
-        parts.push(
-          `<a class="bi bi-globe2 text-decoration-none" href="${url.url}" target="_blank"></a>`
-        )
+      const first_file_links_group = this.http_links.first_file_links_group();
+      if (first_file_links_group !== undefined) {
+        const link = first_file_links_group.first_link();
+        if (link !== undefined) {
+          parts.push(
+            `<a class="bi bi-globe2 text-decoration-none" href="${link.url}" target="_blank"></a>`
+          )
+        }
       }
       return parts.join(' | ');
     },
-    files() {
-      const files = [];
-      const dois = this.get_attr("dois");
-      if (dois && dois.length > 0) {
-        if (this.document.issued_at < 1640984400) {
-          const external_links = [];
-          const doi = dois[0];
-          external_links.push({
-            url: `https://sci-hub.se/${doi}`,
-            name: "Sci-Hub.se",
-          });
-          external_links.push({url: `http://library.lol/scimag/${doi}`, name: "Library.lol"});
-          files.push({
-            label: "Mirrors",
-            external_links,
-          })
-        }
-      }
+    http_links() {
+      const http_links = new HttpLinks();
+      http_links.add_external_sources(this.get_attr("dois"), this.document.issued_at);
+
       for (const link of this.links) {
         const full_filename = this.filename + "." + link.extension;
         let label = link.extension.toUpperCase();
         if (link.filesize) {
           label += ` (${format_bytes(link.filesize, 1)})`
         }
-        files.push({
-          cid: link.cid,
-          label,
-          external_links: generate_cid_external_links(link.cid, full_filename),
-        })
+        http_links.add_file(link.cid, label, full_filename)
       }
-      return files
+      return http_links
     },
     filename () {
       return generate_filename(this.document.title)
@@ -273,6 +378,9 @@ export default defineComponent({
     },
   },
   async created () {
+    if (this.document === undefined) {
+      return;
+    }
     const isbns = this.get_attr('isbns')
     if (isbns && isbns.length > 0) {
       const cover = await fetch('https://covers.openlibrary.org/b/isbn/' + isbns[0] + '-M.jpg')
@@ -306,6 +414,7 @@ export default defineComponent({
       const libgen_ids = this.get_attr("libgen_ids");
       const zlibrary_ids = this.get_attr("zlibrary_ids");
       const nexus_id = this.get_attr("nexus_id");
+      const wiki = this.get_attr("wiki");
 
       if (dois && dois.length > 0) {
         return `id.dois:${dois[0]}`;
@@ -323,6 +432,8 @@ export default defineComponent({
         return `id.libgen_ids:${libgen_ids[0]}`;
       } else if (nexus_id) {
         return `id.nexus_id:${nexus_id}`;
+      } else if (wiki) {
+        return `id.wiki:${wiki}`;
       } else if(this.first_link) {
         return 'cid:' + this.first_link.cid;
       }

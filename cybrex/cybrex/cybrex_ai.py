@@ -120,8 +120,15 @@ class CybrexAI(AioThing):
                 'mode': 'cybrex',
                 'document_id': document.document_id,
             })
-            document_chunks = await self.generate_chunks_from_document(document)
-            all_chunks.extend(document_chunks)
+            try:
+                document_chunks = await self.generate_chunks_from_document(document)
+                all_chunks.extend(document_chunks)
+            except ValueError:
+                logging.getLogger('statbox').info({
+                    'action': 'broken_content',
+                    'mode': 'cybrex',
+                    'document_id': document.document_id,
+                })
         return all_chunks
 
     async def _search_in_vector_storage(self, query: str, n_chunks: int = 3,
@@ -363,6 +370,7 @@ class CybrexAI(AioThing):
         n_documents: int = 30,
         minimum_score: float = 0.5,
         skip_downloading_pdf: bool = True,
+        use_only_keywords: bool = True,
     ) -> List[ScoredChunk]:
         """
         Flow for retrieving chunks by chunking documents relevant to `query`
@@ -372,9 +380,10 @@ class CybrexAI(AioThing):
         :param n_chunks:
         :param n_documents:
         :param minimum_score:
+        :param use_only_keywords:
         :return:
         """
-        documents = await self.search_documents(query, n_documents, use_only_keywords=True)
+        documents = await self.search_documents(query, n_documents, use_only_keywords=use_only_keywords)
         await self.upsert_documents(documents, skip_downloading_pdf=skip_downloading_pdf)
         return await self._search_in_vector_storage(
             query=query,

@@ -28,10 +28,11 @@ def vote_button(language: str, case: str):
     )
 
 
-def encode_query_to_deep_link(query, bot_name):
-    encoded_query = encode_deep_query(query)
-    if len(encoded_query) <= 64:
-        return f'https://t.me/{bot_name}?start={encoded_query}'
+def encode_query_to_deep_link(query, bot_name, skip_encoding=False):
+    if not skip_encoding:
+        query = encode_deep_query(query)
+    if len(query) <= 64:
+        return f'https://t.me/{bot_name}?start={query}'
     raise TooLongQueryError()
 
 
@@ -96,6 +97,16 @@ def encode_link(bot_name, text, query) -> str:
             return encoded_query
     except TooLongQueryError:
         return text
+
+
+def fix_markdown(text: str):
+    if text.count('**') % 2 == 1:
+        position = text.rfind('**')
+        text = text[:position] + text[position + 2:]
+    if text.count('__') % 2 == 1:
+        position = text.rfind('__')
+        text = text[:position] + text[position + 2:]
+    return text
 
 
 def add_expand_dot(text, le: int):

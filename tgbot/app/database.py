@@ -120,7 +120,7 @@ class Database(AioThing):
         """, (message_id, decision))
         await self.users_db_wrapper.db.commit()
 
-    async def add_vote_broken_file(self, bot_name, user_id, internal_id, cid):
+    async def add_vote_broken_file(self, bot_name, user_id, internal_id, cid, reason):
         await self.users_db_wrapper.db.execute("""
         INSERT OR IGNORE into file_votes(bot_name, user_id, doi, cid, vote) VALUES (?, ?, ?, ?, ?)
         """, (bot_name, user_id, internal_id, cid, -1))

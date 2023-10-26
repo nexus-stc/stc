@@ -36,38 +36,7 @@ export function format_percent (v: number): string {
   return (v * 100).toFixed(2) + '%'
 }
 export const sleep = async (ms: number) => await new Promise((r) => setTimeout(r, ms))
-export function cid_local_link (cid: string, filename: string) {
-  const { ipfs_hostname, ipfs_http_protocol } = utils.get_ipfs_hostname()
-  return {
-    url: `${ipfs_http_protocol}//${ipfs_hostname}/ipfs/${cid}?filename=${filename}`,
-    name: 'Local IPFS'
-  }
-}
-export function generate_cid_external_links (cid: string, filename: string) {
-  return [
-    cid_local_link(cid, filename),
-    {
-      url: `https://${cid}.ipfs.w3s.link/?filename=${filename}`,
-      name: 'Web3 Storage'
-    },
-    {
-      url: `https://crustwebsites.net/ipfs/${cid}?filename=${filename}`,
-      name: 'Crust'
-    },
-    {
-      url: `https://cloudflare-ipfs.com/ipfs/${cid}?filename=${filename}`,
-      name: 'CloudFlare IPFS'
-    },
-    {
-      url: `https://gateway.pinata.cloud/ipfs/${cid}?filename=${filename}`,
-      name: 'Pinata'
-    },
-    {
-      url: `https://ipfs.io/ipfs/${cid}?filename=${filename}`,
-      name: 'IPFS.io'
-    }
-  ]
-}
+
 export function generate_filename (title: string) {
   return (
       (title || "unnamed")
@@ -131,4 +100,3 @@ export function remove_unpaired_escaped_tags(str) {
 
     return intermediateStr;
 }
-

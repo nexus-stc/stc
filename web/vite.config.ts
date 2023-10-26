@@ -38,7 +38,7 @@ export default defineConfig({
       }
     }),
     wasm(),
-    topLevelAwait()
+    topLevelAwait(),
   ],
   worker: {
     format: 'es',
@@ -62,6 +62,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/data/, ''),
+      },
+      '^/images': {
+        target: `${summa_config.ipfs_http_base_url}/ipns/en.wikipedia-on-ipfs.org/I`,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/images\/wiki/, ''),
       }
     }
   }

@@ -1,6 +1,8 @@
+from typing import Optional
 from urllib.parse import quote
 
 import orjson
+from bs4 import BeautifulSoup
 from stc_geck.advices import BaseDocumentHolder
 
 from library.textutils.utils import cast_string_to_single_string
@@ -38,13 +40,8 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
             .add_new_line()
         )
         need_pipe = False
-        if self.has_field('links'):
-            if self.is_group_mode:
-                el = el.add(self.get_ipfs_gateway_link(), escaped=True)
-            else:
-                el = el.add(self.get_view_command())
-            need_pipe = True
-        elif not self.is_group_mode and with_librarian_service:
+        request_link = False
+        if not self.has_field('links') and not self.is_group_mode and with_librarian_service:
             try:
                 if self.has_field('dois'):
                     deep_link = encode_query_to_deep_link('#r ' + self.doi, request_context.bot_name)
@@ -55,10 +52,14 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
                 else:
                     deep_link = None
                 if deep_link:
+                    request_link = True
                     el = el.add(f'[request]({deep_link})', escaped=True)
                     need_pipe = True
             except TooLongQueryError:
                 pass
+        if not request_link and (not self.is_group_mode or self.has_field('links')):
+            el = el.add(self.get_view_command(bot_name=request_context.bot_name), escaped=True)
+            need_pipe = True
         el = (
             el
             .add_external_provider_link(with_leading_pipe=need_pipe, is_short_text=True)
@@ -68,8 +69,12 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
         )
         return el
 
-    def get_view_command(self) -> str:
-        return f'/v_{self.links[0]["cid"]}'
+    def get_view_command(self, bot_name) -> str:
+        link = self.get_link(bot_name=bot_name, label='view')
+        if link:
+            return link
+        elif self.has_field('links'):
+            return f'/v_{self.links[0]["cid"]}'
 
     def get_formatted_filedata(self, show_format=True, show_language=True, show_filesize=False) -> str:
         parts = []
@@ -102,7 +107,7 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
         try_internal_id = self.get_internal_id().encode()
         if len(try_internal_id) < 62:
             return b'/n_' + try_internal_id
-        for link in self.get_links():
+        for link in self.get_links().links.values():
             return b'/m_' + recode_base36_to_base64(link['cid'])
 
     def generate_tags_links(self, bot_name):
@@ -160,3 +165,29 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
         if not filename:
             filename = link['cid']
         return filename
+
+    def get_wikipedia_link(self, host: str = 'en.wikipedia-on-ipfs.org', title: Optional[str] = None):
+        if not title:
+            title = self.title
+        return f'https://{host}/wiki/{quote(title.replace(" ", "_"))}'
+
+    def get_title_with_link(self, bot_name, title=None):
+        title = title or self.title
+        title = BeautifulSoup(title or '', 'lxml').get_text(separator='')
+        internal_id = self.get_internal_id()
+        link = self.get_link(bot_name=bot_name, internal_id=internal_id, label=title)
+        if link:
+            return link
+        else:
+            return f'{title} - `{internal_id}`)'
+
+    def get_link(self, bot_name, label=None, internal_id=None):
+        internal_id = internal_id or self.get_internal_id()
+        try:
+            deep_query = encode_query_to_deep_link(internal_id, bot_name)
+        except TooLongQueryError:
+            if not self.has_field('links'):
+                return
+            cid_encoded = recode_base36_to_base64(self.document['links'][0]["cid"]).decode()
+            deep_query = encode_query_to_deep_link(cid_encoded, bot_name, skip_encoding=True)
+        return f'[{label or internal_id}]({deep_query})'

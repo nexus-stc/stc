@@ -42,7 +42,6 @@ export default defineComponent({
   data () {
     return {
       page: 1,
-      page_size: 5,
       is_loading: false,
       loading_failure_reason: undefined,
       bookmarks: [],
@@ -89,11 +88,11 @@ export default defineComponent({
       try {
         const new_documents = []
         const bookmarks = this.bookmarks.slice(
-          (this.page - 1) * this.page_size,
-          this.page * this.page_size
+          (this.page - 1) * 5,
+          this.page * 5
         )
         for (const load_bookmark of bookmarks) {
-          const collector_outputs = await this.search_service.custom_search(load_bookmark.query, {
+          const collector_outputs = await this.search_service.search(load_bookmark.query, {
             page: 1,
             index_name: load_bookmark.index_name
           })

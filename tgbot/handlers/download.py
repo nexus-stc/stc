@@ -120,12 +120,12 @@ class DownloadTask(LongTask):
             )
             try:
                 thumb_task = asyncio.create_task(download_thumb(self.document_holder.isbns))
-                file = await self.download_document(
+                file = await asyncio.wait_for(self.download_document(
                     cid=self.download_link['cid'],
                     progress_bar=progress_bar_download,
                     request_context=request_context,
                     filesize=self.download_link.get('filesize'),
-                )
+                ), timeout=600)
                 if file:
                     request_context.statbox(
                         action='downloaded',

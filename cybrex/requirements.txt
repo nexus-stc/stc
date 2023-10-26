@@ -16,5 +16,5 @@ pyyaml>=6.0
 qdrant_client>=1.5.4
 tiktoken>=0.5.1
 safetensors==0.3.1
-stc-geck>=1.8.32
+stc-geck>=1.8.35
 unstructured[html]>=0.10.21

@@ -73,11 +73,12 @@ export default class DownloadProgress {
         'progress',
         that._downloadProgressUpdateProgress.bind(that, url)
       )
+      xhr.responseType = "arraybuffer";
       xhr.open('GET', url)
       xhr.onreadystatechange = function (index) {
         if (xhr.status === 200 && xhr.readyState === 4) {
           document.dispatchEvent(
-            that.events.afterLoading(xhr.responseText, that.files[index])
+            that.events.afterLoading(xhr.response, that.files[index])
           )
         }
       }.bind(that, index)
@@ -134,9 +135,10 @@ export async function tracked_download (files, progress_bar) {
     if (e.detail === Infinity) {
       downloaded = 0
     }
+
     progress_bar.value = `${downloaded.toFixed(0)}%`
   }).on('afterLoading', function () {
-    progress_bar.value = ''
+    progress_bar.value = undefined
   })
   dp.init()
   return await Promise.all(dp.promises)

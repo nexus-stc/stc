@@ -2,13 +2,11 @@
 .container
   .row
     .col-md-8.offset-md-2
-      div(v-if="is_loading" style="margin-top: 140px")
-        loading-spinner(:label="search_service.current_init_status.value")
-      div(v-else-if="loading_failure_reason !== undefined")
-        connectivity-issues-view(:reason="loading_failure_reason")
+      div(v-if="current_init_status !== undefined" style="margin-top: 140px")
+        loading-spinner(:label="current_init_status")
       div(v-else)
         div.float-end.small.mb-1
-          a(href="#/help/how-to-search" target="_blank") How to search?
+          a(href="#/help/how-to-search" target="_blank") {{ get_label('how_to_search') }}
         form(@submit.stop.prevent="on_search")
           div.input-group
             input.form-control.form-control-md(v-model="query" type="search" :placeholder="get_label('search_placeholder')" autofocus)
@@ -26,17 +24,29 @@
                 option(v-for="[year, display_year] of years" :value="year") {{ display_year }}
             .col-6.col-lg-1
               h4.mt-1.me-2.text-end(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
-          div(v-if="total_documents !== null")
-            hr
-            i.ms-3 {{ total_documents }} {{ get_label('found') }}
         div(v-if="is_documents_loading" style="margin-top: 140px")
           loading-spinner(:label="get_label('loading') + '...'")
         div(v-else-if="loading_documents_failure_reason !== undefined")
           connectivity-issues-view(:reason="loading_documents_failure_reason")
         div.mt-3(v-else)
+          div(v-if="total_documents !== null || (has_next || page > 1) && !is_rolled")
+            hr
+            div.float-start(v-if="total_documents !== null")
+              i.ms-3 {{ total_documents }} {{ get_label('found') }}
+            nav(v-if="(has_next || page > 1) && !is_rolled")
+              ul.pagination.pagination-lg.float-end
+                li.page-item(v-if="page > 2" v-on:click="set_page(1);")
+                  a.page-link &lt;&lt;
+                li.page-item(v-on:click="set_page(page - 1);")
+                  a.page-link &lt;
+                li.page-item.disabled
+                  a.page-link {{ page }}
+                li.page-item(v-if="has_next", v-on:click="set_page(page + 1);")
+                  a.page-link &gt;
+            .clearfix
           search-list(:scored_documents='scored_documents')
           nav(v-if="(has_next || page > 1) && !is_rolled")
-            ul.pagination.justify-content-center
+            ul.pagination.pagination-lg.justify-content-center
               li.page-item(v-if="page > 2" v-on:click="set_page(1);")
                 a.page-link &lt;&lt;
               li.page-item(v-on:click="set_page(page - 1);")
@@ -56,9 +66,10 @@ import ConnectivityIssuesView from '@/components/ConnectivityIssues.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SearchList from '@/components/SearchList.vue'
 import {Language, Type} from "@/services/search/query-processor";
+import {get_label} from "@/translations";
 
 function generate_year_ranges() {
-  let ranges = [[undefined, "All times"]];
+  let ranges = [[undefined, get_label("all_times")]];
   let current_year = new Date().getFullYear();
   for (let shift of [0, 1, 2]) {
     const left_date = new Date(Date.UTC(current_year - shift, 0, 1));
@@ -97,6 +108,7 @@ export default defineComponent({
   },
   data() {
     return {
+      current_init_status: this.search_service.current_init_status,
       current_query_id: 0,
       has_next: false,
       page: Number.parseInt((this.$route.query.p ?? 1).toString()),
@@ -108,13 +120,12 @@ export default defineComponent({
       is_loading: false,
       is_rolled: false,
       is_documents_loading: false,
-      languages: [[undefined, "All languages"], ...Object.entries(Language)],
+      languages: [[undefined, get_label("all_languages")], ...Object.entries(Language)],
       loading_documents_failure_reason: undefined,
-      loading_failure_reason: undefined,
       scored_documents: [],
       search_used: false,
       total_documents: null,
-      types: [[undefined, "All types"], ...Object.entries(Type)],
+      types: [[undefined, get_label("all_types")], ...Object.entries(Type)],
       years: generate_year_ranges(),
     }
   },
@@ -179,9 +190,8 @@ export default defineComponent({
       const guard = this.current_query_id.valueOf();
       const search_job = async () => {
         try {
-          const collector_outputs = await this.search_service.custom_search(this.query, {
+          const collector_outputs = await this.search_service.search(this.query, {
             page: 1,
-            page_size: 5,
             type: this.selected_type,
             language: this.selected_language,
             timerange: this.selected_timerange,
@@ -191,7 +201,6 @@ export default defineComponent({
             this.scored_documents = collector_outputs[0].collector_output.documents.scored_documents
           }
         } catch (e) {
-          console.error(e)
           if (guard == this.current_query_id) {
             this.loading_documents_failure_reason = e
           }
@@ -220,7 +229,7 @@ export default defineComponent({
       const guard = this.current_query_id.valueOf();
       const search_job = async () => {
         try {
-          const collector_outputs = await this.search_service.custom_search(
+          const collector_outputs = await this.search_service.search(
               this.query,
               {
                 type: this.selected_type,
@@ -238,7 +247,7 @@ export default defineComponent({
             this.has_next = collector_outputs[0].collector_output.documents.has_next
             // Pre-fetch next page
             if (this.page > 1 && this.has_next) {
-              this.search_service.custom_search(this.query, {
+              this.search_service.search(this.query, {
                 type: this.selected_type,
                 page: this.page + 1,
                 language: this.selected_language,

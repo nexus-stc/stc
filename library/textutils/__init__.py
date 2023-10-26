@@ -24,7 +24,7 @@ HIDDEN_CHAR = '‌'
 TELEGRAM_LINK_REGEX = re.compile('(?:https?://)?t\\.me/(?!joinchat/)([A-Za-z0-9_]+)')
 
 DOI_WILDCARD_REGEX_TEXT = r'(10.\d{4,9}).*\.\*'
-DOI_REGEX_TEXT = r'(?:doi.org/)?(10.\d{4,9})\s?/\s?([-._;()<>/:A-Za-z0-9]+[^.?\s])'
+DOI_REGEX_TEXT = r'(?:doi.org/)?(10.\d{4,9})\s?(?:/|%2[Ff])\s?([%-._;()<>/:A-Za-z0-9]+[^.?\s])'
 DOI_REGEX = re.compile(DOI_REGEX_TEXT)
 ISBN_REGEX = re.compile(r'^(?:[iI][sS][bB][nN]\:?\s*)?((97(8|9))?\-?\d{9}(\d|X))$')
 MD5_REGEX = re.compile(r'([A-Fa-f0-9]{32})')

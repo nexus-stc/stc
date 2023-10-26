@@ -6,6 +6,7 @@ from typing import (
     List,
     Tuple,
 )
+from urllib.parse import unquote
 
 import grpc.aio
 from izihawa_utils.exceptions import NeedRetryError
@@ -27,10 +28,9 @@ from tgbot.app.exceptions import (
 )
 from tgbot.translations import t
 from tgbot.views.telegram.base_holder import (
-    BaseDocumentHolder,
     BaseTelegramDocumentHolder,
 )
-from tgbot.views.telegram.common import encode_deep_query
+from tgbot.views.telegram.common import encode_deep_query, recode_base64_to_base36, DecodeDeepQueryError
 from tgbot.widgets.search_widget import (
     InlineSearchWidget,
     SearchWidget,
@@ -96,6 +96,20 @@ class BaseSearchHandler(BaseHandler, ABC):
         start_time = time.time()
         language = request_context.chat['language']
         librarian_service_id = None
+
+        # Fast hacks for enhancing search
+        string_query = string_query.removeprefix('DOI: ')
+        string_query = re.sub(
+            r'https?://pubmed\.ncbi\.nlm\.nih\.gov/(\d+)/?',
+            r'id.pubmed_id:\g<1>',
+            string_query
+        )
+        for doi_regex in reversed(list(re.finditer(DOI_REGEX, string_query))):
+            string_query = (
+                string_query[:doi_regex.start()]
+                + unquote(string_query[doi_regex.start():doi_regex.end()])
+                + string_query[doi_regex.end():]
+            )
 
         try:
             search_widget = await SearchWidget.create(

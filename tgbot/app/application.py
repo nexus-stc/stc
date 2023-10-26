@@ -76,7 +76,12 @@ class TelegramApplication(AioRootThing):
             )
             self.starts.append(self.cybrex_ai)
 
-        self.ipfs_http_client = IpfsHttpClient(base_url=config['ipfs']['http']['base_url'], retry_delay=5.0)
+        self.ipfs_http_client = IpfsHttpClient(
+            base_url=config['ipfs']['http']['base_url'],
+            max_retries=2,
+            retry_delay=5.0,
+            timeout=600,
+        )
         self.starts.append(self.ipfs_http_client)
 
         self.cloudflare_ipfs_http_client = IpfsHttpClient(base_url='https://cloudflare-ipfs.com', retry_delay=5.0)
@@ -142,6 +147,7 @@ class TelegramApplication(AioRootThing):
         self.promotioner = Promotioner(
             promotions=get_promotions(),
             promotion_vars=dict(
+                reddit_url=config['reddit']['url'],
                 twitter_contact_url=self.config['twitter']['contact_url'],
                 related_channel=self.config['telegram']['related_channel'],
             )

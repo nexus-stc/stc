@@ -10,14 +10,14 @@ from .base import BaseCallbackQueryHandler
 
 
 class ReportHandler(BaseCallbackQueryHandler):
-    filter = events.NewMessage(incoming=True, pattern=r'^(?:@\w+)?\s+\/r_([A-Za-z0-9_-]+)$')
+    filter = events.NewMessage(incoming=True, pattern=r'^(?:@\w+)?\s+\/r_([A-Za-z0-9_-]+)\s+(.*)$')
 
     def parse_pattern(self, event: events.ChatAction):
-        cid = event.pattern_match.group(1)
-        return cid
+        cid, reason = event.pattern_match.group(1),event.pattern_match.group(2)
+        return cid, reason
 
     async def handler(self, event: events.ChatAction, request_context: RequestContext):
-        cid = self.parse_pattern(event)
+        cid, reason = self.parse_pattern(event)
 
         request_context.add_default_fields(mode='report', cid=cid)
         request_context.statbox(action='report')
@@ -30,6 +30,7 @@ class ReportHandler(BaseCallbackQueryHandler):
             user_id=request_context.chat['chat_id'],
             internal_id=document_holder.get_internal_id(),
             cid=cid,
+            reason=reason,
         )
         async with safe_execution():
             return await asyncio.gather(

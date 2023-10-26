@@ -31,6 +31,7 @@ default_field_aliases = {
     'pubmed_id': 'id.pubmed_id',
     'rd': 'references.doi',
     'ser': 'metadata.series',
+    'wiki': 'id.wiki',
 }
 
 
@@ -209,6 +210,8 @@ class BaseDocumentHolder:
             return f'id.zlibrary_ids:{self.zlibrary_ids[-1]}'
         elif self.nexus_id:
             return f'id.nexus_id:{self.nexus_id}'
+        elif self.wiki:
+            return f'id.wiki'
         else:
             return None
 

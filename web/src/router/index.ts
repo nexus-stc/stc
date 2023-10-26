@@ -26,6 +26,16 @@ const router = createRouter({
       })
     },
     {
+      path: '/reader',
+      name: 'reader',
+      component: async () => await import('../views/Reader.vue'),
+      props: (route) => ({
+        cid: route.query.cid,
+        filename: route.query.filename,
+        anchor: route.query.anchor
+      })
+    },
+    {
       path: '/bookmarks',
       name: 'bookmarks',
       component: async () => await import('../views/BookmarksView.vue')

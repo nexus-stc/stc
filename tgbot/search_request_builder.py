@@ -65,6 +65,7 @@ type_icons = {
     'reference-book': '📚',
     'report': '📝',
     'standard': '🛠',
+    'wiki': '📙',
 }
 
 
@@ -191,7 +192,8 @@ class TelegramSearchRequestBuilder:
                 collector_struct['scorer'] = scorer
             collector_struct['snippet_configs'] = {
                 'title': 1024,
-                'abstract': 140,
+                'abstract': 1024,
+                'content': 1024,
             }
             if offset:
                 collector_struct['offset'] = offset

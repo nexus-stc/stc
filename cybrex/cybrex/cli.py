@@ -118,6 +118,7 @@ class CybrexCli:
         n_chunks: int = 5,
         n_documents: int = 10,
         minimum_score: float = 0.5,
+        use_only_keywords: bool = True,
     ):
         """
         Search related to query text chunks among `n` documents
@@ -126,6 +127,7 @@ class CybrexCli:
         :param n_chunks: number of chunks to return
         :param n_documents: the number of documents to extract from STC
         :param minimum_score:
+        :param use_only_keywords:
         """
         async with self.cybrex as cybrex:
             print(f"{colored('Q', 'green')}: {query}")
@@ -133,13 +135,15 @@ class CybrexCli:
                 query=query,
                 n_chunks=n_chunks,
                 n_documents=n_documents,
-                minimum_score=minimum_score
+                minimum_score=minimum_score,
+                use_only_keywords=use_only_keywords,
             )
             references = []
             for scored_chunk in scored_chunks:
                 field, value = scored_chunk.chunk.document_id.split(':', 1)
                 document_id = f'{field}:{value}'
-                references.append(f' - {document_id}: {scored_chunk.chunk.title}\n   {scored_chunk.chunk.text}')
+                title = scored_chunk.chunk.title.replace('\n', ' - ')
+                references.append(f' - {document_id}: {title}\n   {scored_chunk.chunk.text}')
             references = '\n'.join(references)
             print(f"{colored('References', 'green')}:\n{references}")
 

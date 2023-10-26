@@ -10,7 +10,7 @@ div.d-flex.flex-column.min-vh-100.w-100
           router-link.nav-link(to="/bookmarks" data-bs-toggle="tooltip" data-bs-placement="top" title="Bookmarks")
             div.text-center
               i.bi.bi-bookmark
-          router-link.nav-link(to="/help" data-bs-toggle="tooltip" data-bs-placement="top" title="help")
+          router-link.nav-link(to="/help" data-bs-toggle="tooltip" data-bs-placement="top" title="Help")
             div.text-center
               i.bi.bi-question-circle-fill
   .mb-3
@@ -18,21 +18,22 @@ div.d-flex.flex-column.min-vh-100.w-100
   footer.footer.mt-auto.text-end.small.mb-3
     .container.small
       div {{ get_label ("stamp") }}
-      a(href="https://github.com/nexus-stc/stc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=") Report a bug
+      a(href="https://github.com/nexus-stc/stc/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=") {{ get_label("report_a_bug") }}
       span &nbsp;|&nbsp;
-      a(href="/#/help") Help
+      a(href="/#/help") {{ get_label("help") }}
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import {defineComponent} from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import {SearchProviderStatus} from "@/services/search/search-provider";
 
 export default defineComponent({
   name: 'App',
   components: {
     RouterLink,
     RouterView
-  }
+  },
 })
 </script>
 <style scoped lang="scss">

@@ -15,6 +15,7 @@ class HowToHelpHandler(BaseHandler):
         request_context.statbox(action='show', mode='howtohelp')
         await event.reply(
             t('HOW_TO_HELP', request_context.chat['language']).format(
+                reddit_url=config['reddit'].get('url', '🚫'),
                 related_channel=config['telegram'].get('related_channel', '🚫'),
                 twitter_contact_url=config['twitter'].get('contact_url', '🚫')
             ))

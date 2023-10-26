@@ -1,4 +1,5 @@
 import dataclasses
+import hashlib
 import uuid
 from typing import (
     Iterable,
@@ -166,7 +167,7 @@ class QdrantVectorStorage(BaseVectorStorage):
             collection_name=self.collection_name,
             points=[
                 PointStruct(
-                    id=str(uuid.uuid1()),
+                    id=hashlib.md5(f'{chunk.document_id}@{chunk.chunk_id}'.encode()).hexdigest(),
                     vector=embedding,
                     payload=dataclasses.asdict(chunk)
                 )
