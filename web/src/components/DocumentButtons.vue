@@ -1,6 +1,6 @@
 <template lang="pug">
 div
-  .btn-group.btn-group-sm(v-if="is_readable()")
+  .btn-group.btn-group-sm(v-if="http_links.get_best_file_links_groups() !== undefined")
     button.btn.btn-secondary(@click.stop.prevent="launch_reader")
       i.bi.bi-book
   .btn-group.btn-group-sm.ms-2(v-if="http_links.first_file_links_group_first_external_link()")
@@ -72,27 +72,20 @@ export default defineComponent({
     async add_bookmark () {
       await user_db.add_bookmark(new Bookmark("nexus_science", this.query))
     },
-    is_readable () {
-      return !this.http_links.is_empty() && (
-          this.http_links.get_file_links_group_with_extension("pdf") !== undefined
-          || this.http_links.get_file_links_group_with_extension("epub") !== undefined
-      );
-    },
     async launch_reader () {
-      const epub_link =  this.http_links.get_file_links_group_with_extension("epub");
-      if (epub_link) {
+      const best_link = this.http_links.get_best_file_links_groups()
+      if (best_link) {
+        if (!best_link.filename.endsWith("pdf") && !best_link.filename.endsWith("epub") && !best_link.filename.endsWith("djvu")) {
+          return;
+        }
         this.$router.push({
             name: 'reader',
             query: {
-              cid: epub_link.cid,
-              filename: epub_link.filename,
+              cid: best_link.cid,
+              filename: best_link.filename,
             }
           })
           return;
-      }
-      const pdf_link =  this.http_links.get_file_links_group_with_extension("pdf");
-      if (pdf_link) {
-        window.location.href = pdf_link.first_link().url;
       }
     },
     async remove_bookmark () {

@@ -4,7 +4,7 @@ div.d-flex.flex-column.min-vh-100.w-100
     nav.navbar.navbar-expand
       .container-fluid
         router-link.ms-2.navbar-brand(to="/")
-          img.favicon-inversion-filter(src="/favicon-black.svg" alt="" width="48" height="48")
+          img.favicon-inversion-filter(src="/favicon-black.svg" alt="" width="36" height="36")
         .navbar-nav.me-auto
         .navbar-nav
           router-link.nav-link(to="/bookmarks" data-bs-toggle="tooltip" data-bs-placement="top" title="Bookmarks")

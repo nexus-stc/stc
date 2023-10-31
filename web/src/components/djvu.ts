@@ -1,4 +1,4 @@
-var DjVu = (function () {
+const DjVu = (function () {
     'use strict';
 
     function DjVuScript() {
@@ -15533,3 +15533,5 @@ var DjVu = (function () {
     return Object.assign(DjVuScript(), {DjVuScript});
 
 }());
+
+export default DjVu;

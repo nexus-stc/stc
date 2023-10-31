@@ -106,6 +106,6 @@ summa:
   endpoint: 127.0.0.0:10082
   embed:
     enabled: true
-    ipfs_data_directory: /ipns/standard-template-construct.org/data/
+    ipfs_data_directory: /ipns/libstc.cc/data/
 twitter:
   contact_url: https://twitter.com/the_superpirate

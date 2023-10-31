@@ -20,7 +20,7 @@
   h6 IPFS Configuration
   p Follow Steps 1 and 2 from the <a href="#/help/replicate">replication guide</a> to set up IPFS.
   h5 Start Using It!
-  p <a href="#/help/install-ipfs">Install IPFS</a> on any desktop in the same LAN, and then open <a href="http://standard-template-construct.org">STC</a>.
+  p <a href="#/help/install-ipfs">Install IPFS</a> on any desktop in the same LAN, and then open <a href="https://libstc.cc">STC</a>.
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'

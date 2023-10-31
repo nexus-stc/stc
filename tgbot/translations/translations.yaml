@@ -220,7 +220,7 @@ en:
 
     **Become a seeder**
     Books and articles should not be stored in a single place. For these purposes, databases are replicated by torrents and [IPFS](https://en.wikipedia.org/wiki/InterPlanetary_File_System). You can easily become a participant and use your drive and network to replicate data. Every piece you seed increases overall reliability and makes knowledge available for more people.
-    Visit our [guide](https://ipfs.io/ipns/standard-template-construct.org/#/help/replicate) to learn how to become a seeder.
+    Visit our [guide](https://libstc.cc/#/help/replicate) to learn how to become a seeder.
   INVALID_SYNTAX_ERROR: |
     ```Oops, something wrong with your query. Probably it is too clever for me.
     Try to send me DOI, MD5 or just the name of what you are looking for!
@@ -232,7 +232,7 @@ en:
   MAINTENANCE: |
     ```Oops! Something goes wrong and we are trying hard to revive. Please, try a little bit later.```
     
-    Meanwhile, you may visit [Standard Template Construct](http://standard-template-construct.org) and find your book or article there
+    Meanwhile, you may visit [Standard Template Construct](https://libstc.cc) and find your book or article there
     [‌]({error_picture_url})
   MAINTENANCE_WO_PIC: Oops! Please, try a little bit later.
   NAMELESS: Without name
@@ -585,7 +585,7 @@ ru:
 
     **Станьте сидером**
     Книги и статьи необходимо хранить распределенно и тогда не будет возможности уничтожить хранилище. Такие технологии как торренты и [IPFS](https://en.wikipedia.org/wiki/InterPlanetary_File_System) позволяют сохранить к себе часть базы данных статей и книг, а затем раздавать их нуждающимся. Все происходит в автоматическом режиме, от вас требуется лишь место на жестком диске и соединение с интернетом.
-    Вот [наша инструкция](https://ipfs.io/ipns/standard-template-construct.org/#/help/replicate) о том как стать сидером.
+    Вот [наша инструкция](https://libstc.cc/#/help/replicate) о том как стать сидером.
   INVALID_SYNTAX_ERROR: |
     ```Ух, сложноватый запрос для меня, кто-то где-то перемудрил:)
     Пришли мне DOI, MD5 или просто название того документа, который ты хотел найти!
@@ -598,7 +598,7 @@ ru:
     ```Упс! Что-то сломалось, но мы уже в курсе и чиним.
     Загляните к нам чуть позже.```
     
-    Пока можете поискать свою книгу в библиотеке [Стандартных Шаблонных Конструкций](http://standard-template-construct.org)
+    Пока можете поискать свою книгу в библиотеке [Стандартных Шаблонных Конструкций](https://libstc.cc)
     [‌]({error_picture_url})
   MAINTENANCE_WO_PIC: Упс! Загляните к нам чуть позже.
   NAMELESS: Без названия

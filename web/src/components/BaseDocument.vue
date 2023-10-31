@@ -42,8 +42,8 @@ function get_type_icon (type_name: string) {
 }
 
 export function cid_local_link (cid: string, filename: string) {
-  const { ipfs_hostname, ipfs_http_protocol } = utils.get_ipfs_hostname()
-  return new HttpFileLink(`${ipfs_http_protocol}//${ipfs_hostname}/ipfs/${cid}?filename=${filename}`, 'Local IPFS');
+  const { ipfs_hostname, ipfs_protocol } = utils.get_ipfs_hostname();
+  return new HttpFileLink(`${ipfs_protocol}//${ipfs_hostname}/ipfs/${cid}?filename=${filename}`, 'Local IPFS');
 }
 
 export class HttpFileLink {
@@ -150,10 +150,27 @@ export class HttpLinks {
   }
 
   is_empty() {
-    for (const file_links_group of this.file_links_groups) {
-      return false;
+    return this.file_links_groups.length == 0;
+  }
+
+  get_best_file_links_groups() {
+    const weights = {
+      "epub": 50,
+      "pdf": 40,
+      "djvu": 30,
+    };
+    const sorted_flgs = this.file_links_groups.sort(function(a, b){
+      const a_parts = a.filename.split(".");
+      const a_weight = weights[a_parts[a_parts.length - 1]] || 0;
+
+      const b_parts = b.filename.split(".");
+      const b_weight = weights[b_parts[b_parts.length - 1]] || 0;
+
+      return a_weight < b_weight ? 1 : -1;
+    })
+    if (sorted_flgs.length > 0) {
+      return sorted_flgs[0];
     }
-    return true;
   }
 }
 

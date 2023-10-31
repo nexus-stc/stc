@@ -199,7 +199,7 @@ class StcGeckCli:
 async def stc_geck_cli(
     ipfs_http_base_url: str = 'http://127.0.0.1:8080',
     ipfs_api_base_url: str = 'http://127.0.0.1:5001',
-    ipfs_data_directory: str = '/ipns/standard-template-construct.org/data',
+    ipfs_data_directory: str = '/ipns/libstc.cc/data',
     grpc_api_endpoint: str = '127.0.0.1:10082',
     index_alias: str = 'nexus_science',
     timeout: int = 120,

@@ -1,16 +1,16 @@
 # Standard Template Construct
 
 Welcome, developer!
-You've arrived at the repository for [STC](http://standard-template-construct.org), the library, search engine and AI tooling offering free access to academic knowledge and works of fictional literature.
+You've arrived at the repository for [STC](https://libstc.cc), the library, search engine and AI tooling offering free access to academic knowledge and works of fictional literature.
 
 ![](/web/public/favicon.svg)
 
-[STC](http://standard-template-construct.org) | [Help Center](http://standard-template-construct.org/#/help)
+[STC](https://libstc.cc) | [Help Center](https://libstc.cc/#/help)
 
 ## Getting Started
 
-- Explore our search features at [Web STC](http://standard-template-construct.org), or through one of the Telegram bots listed in the bio of our [channel](https://t.me/nexus_search) (not an ad, just a safety)
-- [Discover](http://standard-template-construct.org/#/help/replicate) how to set up your own STC instance, enabling you to enjoy the same search capabilities in your local environment
+- Explore our search features at [Web STC](https://libstc.cc), or through one of the Telegram bots listed in the bio of our [channel](https://t.me/nexus_search) (not an ad, just a safety)
+- [Discover](https://libstc.cc/#/help/replicate) how to set up your own STC instance, enabling you to enjoy the same search capabilities in your local environment
 - Learn about [how to access large corpus](/geck) of high-quality scholarly texts using Python and [use them in AI apps](/cybrex)
 
 ## Details
@@ -18,7 +18,7 @@ You've arrived at the repository for [STC](http://standard-template-construct.or
 In essence, STC is a search engine [Summa](https://github.com/izihawa/summa) coupled with databanks. 
 These databanks reside on [IPFS](https://ipfs.tech/) in a format that allows for searching without necessitating the download of the entire dataset. 
 The search engine library can function as a standalone server, an embeddable Python library (requiring no additional software!), and a WASM-compiled module that can be used in a browser.
-Last way allows to embed search engine in a static site that further can be deployed over IPFS too. This is how [Web STC](http://standard-template-construct.org) is live.
+Last way allows to embed search engine in a static site that further can be deployed over IPFS too. This is how [Web STC](https://libstc.cc) is live.
 
 Putting everything to IPFS allows you to open STC in your browser or on your server and avoid the use of centralized servers that may lose or censor data.
 
@@ -27,7 +27,7 @@ Putting everything to IPFS allows you to open STC in your browser or on your ser
 - [Web STC](/web) is a browser-based interface with embedded search engine that can be entirely deployed on IPFS and used in browsers
 - [GECK](/geck) is a Python library and Bash tool for setting up and interacting with STC programmatically
 - [Cybrex AI](/cybrex) library pairs STC with AI tools such as OpenAI or free LLM for processing stored data
-- [STC Hub API](http://standard-template-construct.org/#/help/stc-hub-api) is plain API for accessing scholarly publications by their DOIs through `kubo` command line tools or even through HTTP.
+- [STC Hub API](https://libstc.cc/#/help/stc-hub-api) is plain API for accessing scholarly publications by their DOIs through `kubo` command line tools or even through HTTP.
 - [Telegram Nexus Bot](/tgbot) allows users to access STC via Telegram, one of the most popular messaging platforms.
 
 ## Roadmap

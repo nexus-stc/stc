@@ -10,7 +10,7 @@ More technical description:
 
 ## Install
 
-You should have [installed IPFS](http://standard-template-construct.org/#/help/install-ipfs)
+You should have [installed IPFS](https://libstc.cc/#/help/install-ipfs)
 
 Then, you should install cybrex package
 ```bash

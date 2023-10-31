@@ -1,7 +1,6 @@
 <template lang="pug">
 .container.col-md-7.offset-md-2
-  div(v-if="is_loading" style="margin-top: 140px")
-    loading-spinner(:label="get_label('loading') + '...'")
+  loading-spinner(v-if="is_loading" style="margin-top: 140px" :label="get_label('loading') + '...'")
   div(v-else-if="loading_failure_reason !== undefined")
     connectivity-issues-view(:reason="loading_failure_reason")
   div(v-else)

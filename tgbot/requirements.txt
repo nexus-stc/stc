@@ -10,7 +10,7 @@ aiobaseclient
 aiocrossref
 aiokit>=1.2.3
 aiosqlite
-aiosumma>=2.46.8
+aiosumma>=2.47.3
 bleach
 base36
 cybrex[petals]>=1.11.11

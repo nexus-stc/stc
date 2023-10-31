@@ -27,6 +27,6 @@ Possible performance optimizations, from least to most complicated:
     ```
 - If you have mounted volumes to ipfs, pin the database to IPFS:
     ```bash
-    docker compose --env-file .env.light exec ipfs ipfs pin add /ipns/standard-template-construct.org --progress
+    docker compose --env-file .env.light exec ipfs ipfs pin add /ipns/libstc.cc --progress
     ```
 - Host the database directly (requires development experience).

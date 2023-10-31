@@ -1,5 +1,5 @@
 // @ts-nocheck
-const stamp = 'Nexus - Terra - 14 Oct 23';
+const stamp = 'Nexus - Terra - 30 Oct 23';
 const translations = {
   en: {
     about: 'About',
@@ -91,7 +91,7 @@ const translations = {
     <h5>Step 2: Install IPFS Companion for Your Browser</h5>
     <p>The IPFS Companion is a browser extension that provides a smoother experience with IPFS. Follow the <a href="https://docs.ipfs.tech/install/ipfs-companion/" target="_blank">official guide</a> to install the appropriate extension for your browser.</p>
     <h5>Step 3: Refresh Page</h5>
-    <p>Everything is ready, you just need to <a href="https://ipfs.io/ipns/standard-template-construct.org" target="_blank">open STC</a> again. STC will be reloaded from local IPFS daemon.</p>
+    <p>Everything is ready, you just need to <a href="https://libstc.cc" target="_blank">open STC</a> again. STC will be reloaded from local IPFS daemon.</p>
     `,
     is_ipfs_enabled: 'Is local IPFS daemon enabled?',
     load_more: 'More',

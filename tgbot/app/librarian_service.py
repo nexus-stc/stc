@@ -30,7 +30,7 @@ from tgbot.search_request_builder import get_type_icon
 from tgbot.views.telegram.base_holder import BaseTelegramDocumentHolder
 from tgbot.views.telegram.common import vote_button
 
-INTERNAL_ID_REGEX = re.compile(r'\[.*]\(https://standard-template-construct\.org/#/nexus_science/(id\.[^)]*)\)')
+INTERNAL_ID_REGEX = re.compile(r'\[.*]\(https://libstc\.cc/#/nexus_science/(id\.[^)]*)\)')
 
 
 def extract_internal_id(text):
@@ -301,7 +301,7 @@ class LibrarianService(AioThing):
                 'type': type_,
             })
             coordinates = await self.add_coordinates(document_holder, internal_id)
-            request_text = f'#request [{get_type_icon(type_)}](https://standard-template-construct.org/#/nexus_science/{quote(internal_id)}) {coordinates}'
+            request_text = f'#request [{get_type_icon(type_)}](https://libstc.cc/#/nexus_science/{quote(internal_id)}) {coordinates}'
             message = await self.bot_telegram_client.send_message(
                 self.group_name,
                 request_text,

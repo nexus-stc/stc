@@ -24,7 +24,7 @@
   p It's also recommended to have a public address set in your config or ensure it's correctly broadcasted using the <code>ipfs id</code> command.
   h6 Step 3: Pin Search Metadata (optional)
   p Use the following command to start the pinning process of search metadata and the Web STC:
-  pre ipfs pin add /ipns/standard-template-construct.org --progress
+  pre ipfs pin add /ipns/libstc.cc --progress
   h6 Step 4a: Pin Stable Release of Scholarly Papers (optional)
   p Use the following command to start the pinning process for scholarly papers. The command takes a snapshot of previous scholarly papers, which might be slightly outdated and does not include items without a DOI.
   pre ipfs pin add /ipns/hub.standard-template-construct.org --progress
@@ -34,7 +34,7 @@
     code
       | pip install stc-geck
       | geck - documents | jq -r "select (.links != null) .links[].cid" | xargs -n 1 -P 8 -I{} ipfs pin add {} --timeout 600s
-  p Congrats, you have your own STC. Ensure that you have installed <a href="#/help/install-ipfs">IPFS Companion</a> and open <a href="http://standard-template-construct.org">Web STC</a>. It will be working as fast as possible.
+  p Congrats, you have your own STC. Ensure that you have installed <a href="#/help/install-ipfs">IPFS Companion</a> and open <a href="https://libstc.cc">Web STC</a>. It will be working as fast as possible.
   h5 Set Up for Family or Community Usage
   p This section describes how to configure STC for local usage based on the previous section, making it available over your local network or the Internet.
   p The recommended approach is to set up a reverse NGINX proxy for the IPFS daemon. This allows other servers to make requests to an STC instance.
@@ -76,7 +76,7 @@
       |         "Paths": ["/ipfs", "/ipns"]
       |       }
       |     },
-      |     "RootRedirect": "/ipns/standard-template-construct.org"
+      |     "RootRedirect": "/ipns/libstc.cc"
       |   }
       | ...
       | }
@@ -105,7 +105,7 @@
       pre
         code
           | mkdir -p data/bin/nexus_science
-          | ipfs get /ipns/standard-template-construct.org/data --output data/bin/nexus_science --progress
+          | ipfs get /ipns/libstc.cc/data --output data/bin/nexus_science --progress
       p Then, attach it to Summa
       pre
         code summa-cli 0.0.0.0:82 attach-index nexus_science '{"file": {}}'

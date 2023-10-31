@@ -297,7 +297,7 @@ class BaseViewBuilder:
     def add_icon(self, with_cover=False, with_hidden_id=False):
         icon = get_type_icon(self.document_holder.type)
         if with_hidden_id:
-            icon = f'[{icon}](https://standard-template-construct.org/#/nexus_science/{quote(self.document_holder.get_internal_id())})'
+            icon = f'[{icon}](https://libstc.cc/#/nexus_science/{quote(self.document_holder.get_internal_id())})'
         elif with_cover and self.document_holder.isbns:
             icon = f'[{icon}](https://covers.openlibrary.org/b/isbn/{self.document_holder.isbns[0]}-L.jpg)'
         return self.add(icon, escaped=True)

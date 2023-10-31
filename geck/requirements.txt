@@ -1,6 +1,6 @@
 aiohttp>=3.8.5
 aiokit>=1.2.3
-aiosumma>=2.46.10
+aiosumma>=2.47.1
 humanfriendly>=10.0
 ipfs-hamt-directory-py>=0.1.1
 izihawa-ipfs-api>=1.0.7

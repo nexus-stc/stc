@@ -9,6 +9,7 @@ import {
     type SearchProvider, SearchProviderStatus,
 } from "@/services/search/search-provider";
 import {ref} from "vue";
+import {utils} from "summa-wasm";
 
 export class SearchService {
     search_providers: Array<SearchProvider>;
@@ -20,13 +21,27 @@ export class SearchService {
 
     constructor(logging_level: string) {
         this.current_init_status = ref(undefined);
-        this.search_providers = [
+        let search_providers = [];
+        let { ipfs_hostname, ipfs_protocol } = utils.get_ipfs_hostname();
+        const ipfs_hostname_stripped = ipfs_hostname.split(':')[0]
+        if (
+            ipfs_hostname_stripped !== 'localhost'
+            && ipfs_hostname_stripped !== 'ipfs.io'
+            && ipfs_hostname_stripped !== 'dweb.link'
+        ) {
+            search_providers.push(new RemoteSearchProvider(
+                `${ipfs_protocol}//api.${ipfs_hostname_stripped}`,
+                "Local API",
+            ));
+        }
+        search_providers.push(...[
             new RemoteSearchProvider(
-                "https://api.standard-template-construct.org",
+                "https://api.libstc.cc",
                 "Nebula Nomad Station",
             ),
             new IpfsSearchProvider(this.current_init_status, {logging_level}),
-        ];
+        ]);
+        this.search_providers = search_providers;
         this.current_provider_ix = ref(undefined);
         this.loading_failure_reason = ref(undefined);
         this.init_guard = (async () => {

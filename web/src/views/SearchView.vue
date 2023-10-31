@@ -2,8 +2,8 @@
 .container
   .row
     .col-md-8.offset-md-2
-      div(v-if="current_init_status !== undefined" style="margin-top: 140px")
-        loading-spinner(:label="current_init_status")
+      div(v-if="current_init_status !== undefined")
+        loading-spinner(style="margin-top: 140px" :label="current_init_status")
       div(v-else)
         div.float-end.small.mb-1
           a(href="#/help/how-to-search" target="_blank") {{ get_label('how_to_search') }}
@@ -24,8 +24,7 @@
                 option(v-for="[year, display_year] of years" :value="year") {{ display_year }}
             .col-6.col-lg-1
               h4.mt-1.me-2.text-end(v-if="!is_loading && !is_documents_loading" role="button" @click.stop.prevent="roll") 🎲
-        div(v-if="is_documents_loading" style="margin-top: 140px")
-          loading-spinner(:label="get_label('loading') + '...'")
+        loading-spinner(v-if="is_documents_loading" style="margin-top: 140px" :label="get_label('loading') + '...'")
         div(v-else-if="loading_documents_failure_reason !== undefined")
           connectivity-issues-view(:reason="loading_documents_failure_reason")
         div.mt-3(v-else)

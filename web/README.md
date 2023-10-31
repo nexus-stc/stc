@@ -1,7 +1,7 @@
 # Web STC
 
 Search engine in your browser that can retrieve all data through IPFS. Uncensorable, unblockable, yours.
-Original instance of STC lives at http://standard-template-construct.org
+Original instance of STC lives at http://libstc.cc
 
 Here you can find its source codes and make a contribution if you are a skilled developer.
 

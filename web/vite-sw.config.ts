@@ -7,7 +7,7 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       input: {
-        'service-worker': './node_modules/summa-wasm/dist/service-worker.js'
+        'service-worker': './node_modules/summa-wasm/dist/service-worker.js',
       },
       output: [
         {

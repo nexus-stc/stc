@@ -63,7 +63,7 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/data/, ''),
       },
-      '^/images': {
+      '^/images/wiki': {
         target: `${summa_config.ipfs_http_base_url}/ipns/en.wikipedia-on-ipfs.org/I`,
         changeOrigin: true,
         secure: false,
