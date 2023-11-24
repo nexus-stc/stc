@@ -114,6 +114,8 @@ export function default_queries(
     }
     return structured_query
 }
+const TEMPORAL_RANKING_FORMULA = "original_score * custom_score * fastsigm(abs(now - issued_at) / (86400 * 3) + 5, -1)"
+const PR_TEMPORAL_RANKING_FORMULA = `${TEMPORAL_RANKING_FORMULA} * 1.96 * fastsigm(iqpr(quantized_page_rank), 0.15)`
 
 export function default_collectors(
     query_config: QueryConfig,

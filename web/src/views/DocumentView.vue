@@ -3,7 +3,7 @@
   loading-spinner(v-if="is_loading" style="margin-top: 140px" :label="get_label('loading_document') + '...'")
   connectivity-issues-view(v-else-if="is_loading_failed")
   div(v-else-if="not_found") Not found
-  document.col-lg-9(v-else-if="document" :document="document")
+  document(v-else-if="document" :document="document")
 </template>
 
 <script lang="ts">

@@ -26,6 +26,8 @@ index_attributes:
       target_field: extra
     - source_field: metadata.event.name
       target_field: extra
+    - source_field: metadata.model_names
+      target_field: extra
     - source_field: metadata.publisher
       target_field: extra
     - source_field: metadata.series

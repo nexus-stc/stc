@@ -11,7 +11,8 @@ class BasePrompter:
             'beluga': BelugaPrompter(),
             'default': BasePrompter(),
             'llama2-7b': Llama27bPrompter(),
-            'openai': OpenAIPrompter()
+            'openai': OpenAIPrompter(),
+            'mistral-7b': Mistral7bPrompter(),
         }[type_]
 
     def qa_prompt(self, question, chunks: List[Chunk]) -> str:
@@ -97,6 +98,39 @@ Question:
 You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
 <</SYS>>
 [INST]
+Extracted parts:
+{summary}
+[/INST]'''.format(summary=self.generate_summary(chunks))
+
+
+class Mistral7bPrompter(BasePrompter):
+    def qa_prompt(self, question: str, chunks: List[Chunk]) -> str:
+        if len(chunks) >= 1:
+            return '''
+[INST]
+You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document and a question, create a final answer.
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+Extracted parts:
+{summary}
+
+Question:
+{question}
+[/INST]'''.format(question=question, summary=self.generate_summary(chunks))
+        else:
+            return '''
+<s>
+[INST]
+You are Cybrex AI created by People of Nexus. Answer the question.
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+Question:
+{question}
+[/INST]'''.format(question=question)
+
+    def summarize_prompt(self, chunks: List[Chunk]) -> str:
+        return '''
+<s>
+[INST]
+You are Cybrex AI created by People of Nexus. Given the following extracted parts of a long document, summarize its content.
 Extracted parts:
 {summary}
 [/INST]'''.format(summary=self.generate_summary(chunks))

@@ -25,6 +25,7 @@ default_field_aliases = {
     'issn': 'metadata.issns',
     'issns': 'metadata.issns',
     'lang': 'languages',
+    'manualslib_id': 'id.manualslib_id',
     'nexus_id': 'id.nexus_id',
     'pmid': 'id.pubmed_id',
     'pub': 'metadata.publisher',
@@ -211,7 +212,9 @@ class BaseDocumentHolder:
         elif self.nexus_id:
             return f'id.nexus_id:{self.nexus_id}'
         elif self.wiki:
-            return f'id.wiki'
+            return f'id.wiki:{self.wiki}'
+        elif self.manualslib_id:
+            return f'id.manualslib_id:{self.manualslib_id}'
         else:
             return None
 

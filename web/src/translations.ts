@@ -1,5 +1,5 @@
 // @ts-nocheck
-const stamp = 'Nexus - Terra - 30 Oct 23';
+const stamp = 'Nexus - Terra - 14 Nov 23';
 const translations = {
   en: {
     about: 'About',

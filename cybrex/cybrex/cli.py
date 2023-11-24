@@ -1,5 +1,4 @@
 import functools
-import json
 import logging
 import re
 import sys
@@ -32,11 +31,17 @@ class CybrexCli:
     def __init__(self, cybrex: Optional[CybrexAI] = None):
         self.cybrex = cybrex or CybrexAI()
 
-    async def add_all_documents(self):
+    async def add_all_documents(self, query: str = '', batch_size: int = 200):
         async with self.cybrex as cybrex:
-            async for document in cybrex.geck.get_summa_client().documents('nexus_science'):
-                document = json.loads(document)
-                await self.cybrex.upsert_documents([document])
+            batch = []
+            async for document in cybrex.data_source.stream_documents(query=query):
+                logging.getLogger('statbox').info({'action': 'collect_document', 'document': document.document_id})
+                batch.append(document)
+                if len(batch) >= batch_size:
+                    await self.cybrex.upsert_documents(batch)
+                    batch = []
+            if batch:
+                await self.cybrex.upsert_documents(batch)
 
     @exception_handler
     async def chat_doc(self, document_query: str, query: str, n_chunks: int = 5, minimum_score: float = 0.5):
@@ -94,7 +99,8 @@ class CybrexCli:
                 if document_id in visited:
                     continue
                 visited.add(document_id)
-                references.append(f'{document_id}: {chunk.title}')
+                title = chunk.title.replace('\n', ' - ')
+                references.append(f'{document_id}: {title}')
             references = '\n'.join(references)
             print(f"{colored('A', 'green')}: {answer}")
             print(f"{colored('References', 'green')}:\n{textwrap.indent(references, ' - ')}")
@@ -156,7 +162,7 @@ def cybrex_cli(debug: bool = False):
     logging.basicConfig(stream=sys.stdout, level=logging.INFO if debug else logging.ERROR)
     cybrex = CybrexCli()
     return {
-        'add-all-chunks': cybrex.add_all_documents,
+        'add-all-documents': cybrex.add_all_documents,
         'chat-doc': cybrex.chat_doc,
         'chat-sci': cybrex.chat_sci,
         'semantic-search': cybrex.semantic_search,

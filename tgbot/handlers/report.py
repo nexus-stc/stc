@@ -10,7 +10,7 @@ from .base import BaseCallbackQueryHandler
 
 
 class ReportHandler(BaseCallbackQueryHandler):
-    filter = events.NewMessage(incoming=True, pattern=r'^(?:@\w+)?\s+\/r_([A-Za-z0-9_-]+)\s+(.*)$')
+    filter = events.NewMessage(incoming=True, pattern=r'^(?:@\w+)?\s+\/r_([A-Za-z0-9_-]+)(?:\s+(.*))?$')
 
     def parse_pattern(self, event: events.ChatAction):
         cid, reason = event.pattern_match.group(1),event.pattern_match.group(2)

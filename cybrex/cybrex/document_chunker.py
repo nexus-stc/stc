@@ -4,14 +4,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import (
     List,
-    Optional,
+    Optional, cast, Any,
 )
 
 import unstructured.documents.elements
 from bs4 import BeautifulSoup
 from unstructured.chunking.title import (
     _split_elements_by_title_and_table,
-    chunk_table_element,
+    chunk_table_element, _NonTextSection, _TableSection, _TextSection,
 )
 from unstructured.cleaners.core import clean
 from unstructured.partition.html import partition_html
@@ -59,11 +59,12 @@ def chunk_by_title(
     elements: List[unstructured.documents.elements.Element],
     multipage_sections: bool = True,
 ) -> List[unstructured.documents.elements.Element]:
+    max_characters = 2 ** 31
     chunked_elements: List[unstructured.documents.elements.Element] = []
     sections = _split_elements_by_title_and_table(
         elements,
         multipage_sections=multipage_sections,
-        combine_text_under_n_chars=0,
+        max_characters=max_characters,
         new_after_n_chars=2 ** 31,
     )
     last_title_parts = -1
@@ -73,44 +74,62 @@ def chunk_by_title(
         if not section:
             continue
 
-        first_element = section[0]
+        if isinstance(section, _NonTextSection):
+            chunked_elements.append(section.element)
+            continue
+
+        elif isinstance(section, _TableSection):
+            chunked_elements.extend(chunk_table_element(section.table, max_characters=max_characters))
+            continue
+
+        text = ""
+        first_element = section.elements[0]
+        metadata = first_element.metadata
 
         if isinstance(first_element, unstructured.documents.elements.Title):
             current_title_parts[first_element.metadata.category_depth] = re.sub('\n+', ' ', str(first_element).strip())
             last_title_parts = first_element.metadata.category_depth
-            continue
 
-        if not isinstance(first_element, unstructured.documents.elements.Text):
-            chunked_elements.extend(section)
-            continue
-
-        elif isinstance(first_element, unstructured.documents.elements.Table):
-            chunked_elements.extend(chunk_table_element(first_element, max_characters=2 ** 63))
-            continue
-
-        text = ""
-        metadata = first_element.metadata
         if last_title_parts != -1:
             metadata.section = '\n'.join(current_title_parts[:last_title_parts + 1])
         start_char = 0
-        for i, element in enumerate(section):
+
+        for element_idx, element in enumerate(section.elements):
             if isinstance(element, unstructured.documents.elements.Text):
                 text += "\n\n" if text else ""
                 start_char = len(text)
                 text += element.text
+
             for attr, value in vars(element.metadata).items():
                 if isinstance(value, list):
+                    value = cast(List[Any], value)
                     _value = getattr(metadata, attr, []) or []
-
-                    if attr == "regex_metadata":
-                        for item in value:
-                            item["start"] += start_char
-                            item["end"] += start_char
-
                     _value.extend(item for item in value if item not in _value)
                     setattr(metadata, attr, _value)
 
-        chunked_elements.append(unstructured.documents.elements.CompositeElement(text=text, metadata=metadata))
+            element_regex_metadata = element.metadata.regex_metadata
+            if element_regex_metadata and element_idx > 0:
+                if metadata.regex_metadata is None:
+                    metadata.regex_metadata = {}
+                chunk_regex_metadata = metadata.regex_metadata
+                for regex_name, matches in element_regex_metadata.items():
+                    for m in matches:
+                        m["start"] += start_char
+                        m["end"] += start_char
+                    chunk_matches = chunk_regex_metadata.get(regex_name, [])
+                    chunk_matches.extend(matches)
+                    chunk_regex_metadata[regex_name] = chunk_matches
+
+        # -- split chunk into CompositeElements objects maxlen or smaller --
+        text_len = len(text)
+        start = 0
+        remaining = text_len
+
+        while remaining > 0:
+            end = min(start + max_characters, text_len)
+            chunked_elements.append(unstructured.documents.elements.CompositeElement(text=text[start:end], metadata=metadata))
+            start = end
+            remaining = text_len - end
 
     return chunked_elements
 

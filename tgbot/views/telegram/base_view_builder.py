@@ -126,6 +126,8 @@ class TextPart:
                 elif incomplete_link_2 := re.search(r'(\[)[^]]*$', self.part):
                     self.part = self.part[:incomplete_link_2.start(1) - 1]
                 if with_dots:
+                    if self.part.endswith(','):
+                        self.part += ' '
                     self.part += '...'
 
     def __add__(self, other):
@@ -253,6 +255,19 @@ class BaseViewBuilder:
                     self.document_holder.series,
                     escaped=True,
                 )
+        if self.document_holder.model_names:
+            self.add_new_line().add('Models:', bold=True)
+            model_links = []
+            for model_name in self.document_holder.model_names:
+                try:
+                    query = encode_query_to_deep_link(f'metadata.model_names:"{model_name}"', bot_name=bot_name)
+                    model_links.append(f'[{model_name}]({query})')
+                except TooLongQueryError:
+                    model_links.append(model_name)
+            self.add(
+                ', '.join(model_links),
+                escaped=True,
+            )
         return self
 
     def limits(self, limit=None, with_dots: bool = False):

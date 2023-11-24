@@ -45,14 +45,14 @@ export default defineComponent({
     await this.render(undefined);
   },
   mounted() {
-    this.hammer = Hammer(this.$refs.reader, { touchAction : 'auto' });
+    this.hammer = Hammer(this.$refs.reader, { touchAction : 'pan-y' });
     document.addEventListener("keyup", this.key_listener);
     this.hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL })
     this.hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
     this.hammer.get('pinch').set({ enable: true });
     this.hammer.on('panstart panmove', (ev) => ev.preventDefault());
-    this.hammer.on('swipeleft', () => this.previous_page());
-    this.hammer.on('swiperight', () => this.next_page());
+    this.hammer.on('swipeleft', () => this.next_page());
+    this.hammer.on('swiperight', () => this.previous_page());
     this.mounted = true
   },
   beforeUnmount() {

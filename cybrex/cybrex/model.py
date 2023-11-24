@@ -33,7 +33,7 @@ class CybrexModel:
     @classmethod
     def default_config(
         cls,
-        llm_name: str = 'llama-2-7b-uncensored',
+        llm_name: str = 'mistral-7b',
         embedder_name: str = 'bge-small-en',
         device: str = 'cpu',
         gpu_layers: int = 50,
@@ -90,6 +90,19 @@ class CybrexModel:
     @classmethod
     def standard_llms(cls, name):
         return {
+            'mistral-7b': {
+                'config': {
+                    'context_length': 8192,
+                    'max_new_tokens': 1024,
+                    'model_path_or_repo_id': 'TheBloke/Mistral-7B-Instruct-v0.1-GGUF',
+                    'model_file': 'mistral-7b-instruct-v0.1.Q5_K_M.gguf',
+                },
+                'max_prompt_chars': int(8192 * 2.5),
+                'model_type': 'mistral',
+                'prompter': {
+                    'type': 'mistral-7b'
+                }
+            },
             'llama-2-7b': {
                 'config': {
                     'context_length': 4096,
@@ -191,6 +204,13 @@ class CybrexModel:
     @lazy
     def llm_manager(self):
         if self.config['llm']['model_type'] == 'llama':
+            return LLMManager(
+                llm=AutoModelForCausalLM.from_pretrained(**self.config['llm']['config']),
+                prompter=BasePrompter.prompter_from_type(self.config['llm']['prompter']['type']),
+                config=self.config['llm']['config'],
+                max_prompt_chars=self.config['llm']['max_prompt_chars'],
+            )
+        elif self.config['llm']['model_type'] == 'mistral':
             return LLMManager(
                 llm=AutoModelForCausalLM.from_pretrained(**self.config['llm']['config']),
                 prompter=BasePrompter.prompter_from_type(self.config['llm']['prompter']['type']),

@@ -42,8 +42,12 @@ function get_type_icon (type_name: string) {
 }
 
 export function cid_local_link (cid: string, filename: string) {
-  const { ipfs_hostname, ipfs_protocol } = utils.get_ipfs_hostname();
-  return new HttpFileLink(`${ipfs_protocol}//${ipfs_hostname}/ipfs/${cid}?filename=${filename}`, 'Local IPFS');
+  if (window.location.hostname == "libstc.cc") {
+    return new HttpFileLink(`https://libstc.cc/d/${cid}?filename=${filename}`, 'Local IPFS');
+  } else {
+    const { ipfs_hostname, ipfs_protocol } = utils.get_ipfs_hostname();
+    return new HttpFileLink(`${ipfs_protocol}//${ipfs_hostname}/ipfs/${cid}?filename=${filename}`, 'Local IPFS');
+  }
 }
 
 export class HttpFileLink {
@@ -429,6 +433,7 @@ export default defineComponent({
       const pubmed_id = this.get_attr("pubmed_id");
       const ark_ids = this.get_attr("ark_ids");
       const libgen_ids = this.get_attr("libgen_ids");
+      const manualslib_id = this.get_attr("manualslib_id");
       const zlibrary_ids = this.get_attr("zlibrary_ids");
       const nexus_id = this.get_attr("nexus_id");
       const wiki = this.get_attr("wiki");
@@ -451,6 +456,8 @@ export default defineComponent({
         return `id.nexus_id:${nexus_id}`;
       } else if (wiki) {
         return `id.wiki:${wiki}`;
+      } else if (manualslib_id) {
+        return `id.manualslib_id:${manualslib_id}`;
       } else if(this.first_link) {
         return 'cid:' + this.first_link.cid;
       }

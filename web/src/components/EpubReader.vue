@@ -57,13 +57,13 @@ export default defineComponent({
     });
     this.rendition.on("rendered", (e) => {
       const iframe = document.querySelector('iframe').contentDocument;
-      const hammer = Hammer(iframe.body, { touchAction : 'auto' });
+      const hammer = Hammer(iframe.body);
       hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL })
       hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
       hammer.get('pinch').set({ enable: true });
       hammer.on('panstart panmove', (ev) => ev.preventDefault());
-      hammer.on('swipeleft', () => this.rendition.prev());
-      hammer.on('swiperight', () => this.rendition.next());
+      hammer.on('swipeleft', () => this.rendition.next());
+      hammer.on('swiperight', () => this.rendition.prev());
       iframe.addEventListener("keyup", this.key_listener, {capture: true});
     });
     this.setup_theme_processor();

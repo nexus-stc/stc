@@ -1,3 +1,4 @@
+import urllib
 from typing import Optional
 from urllib.parse import quote
 
@@ -93,12 +94,10 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
         return ' | '.join(parts)
 
     def get_ipfs_gateway_link(self):
-        link = self.links[0]
         ipfs_link = (
-            f'https://ipfs.io/ipfs/{link["cid"]}?'
-            f'filename={quote(self.get_purified_name(link), safe="")}.{link["extension"]}'
+            f'https://libstc.cc/#/nexus_science/{urllib.parse.quote_plus(self.get_internal_id())}'
         )
-        return f'[IPFS.io]({ipfs_link})'
+        return f'[LibSTC.cc]({ipfs_link})'
 
     def get_download_command(self, cid) -> bytes:
         return b'/d_' + recode_base36_to_base64(cid)
@@ -114,6 +113,8 @@ class BaseTelegramDocumentHolder(BaseDocumentHolder):
         if self.tags:
             links = [encode_link(bot_name, tag, f'tags:"{tag}"') for tag in self.tags]
             return links
+        elif self.category:
+            return [encode_link(bot_name, self.category, f'metadata.category:"{self.category}"')]
         return []
 
     def view_builder(self, user_language=None):

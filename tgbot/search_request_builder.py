@@ -58,6 +58,7 @@ type_icons = {
     'dissertation': '🧑‍🎓',
     'edited-book': '📚',
     'journal-article': '🔬',
+    'manual': '⚙️',
     'monograph': '📚',
     'peer-review': '🤝',
     'proceedings': '📚',

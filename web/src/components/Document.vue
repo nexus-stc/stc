@@ -1,32 +1,50 @@
 <template lang="pug">
 div
-  h3(v-html="document.title")
-  .mt-1
-    div(v-html="coordinates")
-  .text-secondary
-      span(v-html="extras")
-  img.mt-3.img-thumbnail(v-if="!is_default_cover" width="160" :src="cover")
-  .mt-3
-    tags-list(:tags="document.tags")
-  div(v-if="view")
-    hr
-    div.content-view(v-html="view")
-  .clearfix
-  .text-end.mt-4
-    document-buttons(:http_links="http_links" :query="id_query()")
-  .mt-3(v-if="referenced_bys.length > 0 || is_references_loading")
-    b Referenced by
-    .card.mt-3
-      .card-body
-        div
-          div(v-if="referenced_bys.length > 0")
-            references-list(:references="referenced_bys")
-            .d-grid(v-if="has_next")
-              hr
-              button.btn.btn-sm.btn-secondary(v-if="!is_references_loading" v-on:click="limit += 5; find_references()") {{ get_label('load_more') }}...
-              button.btn.btn-sm.btn-secondary(v-else) {{ get_label('loading') + '...' }}
-          loading-spinner(v-else-if="is_references_loading && referenced_bys.length === 0").mt-3.mb-3
-          span(v-else) No references have been found
+  .row
+    .col-12
+      h3(v-html="document.title")
+      .mt-1
+        div(v-html="coordinates")
+      .text-secondary
+          span(v-html="extras")
+      img.mt-3.img-thumbnail(v-if="!is_default_cover" width="160" :src="cover")
+      .mt-3
+        tags-list(:tags="document.tags")
+      hr
+  .row
+    .col-xl-8
+      div(v-if="view")
+        div.content-view(v-html="view")
+      .clearfix
+      .text-end.mt-4
+        document-buttons(:http_links="http_links" :query="id_query()")
+      .comments.mt-4.mb-4(v-if="is_comments_enabled()")
+        component(
+          :is="'script'"
+          async
+          src="https://comments.app/js/widget.js?3"
+          data-comments-app-website="a-HCA-_i"
+          data-limit="5"
+          data-color="FE9708"
+          data-dislikes="1"
+          data-colorful="1"
+          :data-page-id="id_query()"
+          v-if="is_comments_enabled"
+        )
+    .col-xl-4
+      div(v-if="referenced_bys.length > 0 || is_references_loading")
+        b Referenced by
+        .card.mt-3
+          .card-body
+            div
+              div(v-if="referenced_bys.length > 0")
+                references-list(:references="referenced_bys")
+                .d-grid(v-if="has_next")
+                  hr
+                  button.btn.btn-sm.btn-secondary(v-if="!is_references_loading" v-on:click="references_limit += 5; find_references()") {{ get_label('load_more') }}...
+                  button.btn.btn-sm.btn-secondary(v-else) {{ get_label('loading') + '...' }}
+              loading-spinner(v-else-if="is_references_loading && referenced_bys.length === 0").mt-3.mb-3
+              span(v-else) No references have been found
 </template>
 
 <script lang="ts">
@@ -110,6 +128,9 @@ export default defineComponent({
     }
   },
   methods: {
+    is_comments_enabled () {
+      return (location.hostname === "libstc.cc")
+    },
     async find_references () {
       const dois = this.get_attr("dois")
       if (!dois || dois.length == 0) {
@@ -124,6 +145,7 @@ export default defineComponent({
         })
         this.referenced_bys =
           response[0].collector_output.documents.scored_documents
+        this.has_next = response[0].collector_output.documents.has_next;
       } finally {
         this.is_references_loading = false
       }

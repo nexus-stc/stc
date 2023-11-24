@@ -59,6 +59,7 @@ class MltHandler(BaseHandler):
                 'max_query_terms': 64,
                 'min_term_frequency': 1,
                 'min_doc_frequency': 1,
+                'max_doc_frequency': 1_000_000,
                 'document': json.dumps(document_dump)
             }}
         }]
